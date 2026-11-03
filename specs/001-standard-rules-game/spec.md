@@ -384,7 +384,11 @@ Targets are proposals for this project, not measured baselines.
 
 ## Open Questions
 
-No open questions. New ones found during planning or building get added here.
+New questions found during planning or building get added here.
+
+| # | Question | Who | Blocking? |
+| --- | --- | --- | --- |
+| Q-17 | A Ram pushes a hero onto a square holding a unit (not a King). Is that allowed? The plan assumes yes for any side's unit, since the rulebook only forbids *voluntarily* ending a Move on an enemy unit. | Rules designer | No (default: allowed) |
 
 ### Resolved (2026-11-03, Luka)
 
