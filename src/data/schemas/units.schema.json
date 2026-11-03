@@ -1,0 +1,34 @@
+{
+  "$id": "units.schema.json",
+  "type": "object",
+  "required": ["types", "start", "promotion"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "types": {
+      "type": "object",
+      "required": ["king", "queen", "rook", "bishop", "knight", "pawn"],
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "directions": { "enum": ["all8", "orthogonal", "diagonal", "knight"] },
+          "maxSteps": { "type": "integer", "minimum": 1, "maximum": 7 },
+          "jump": { "type": "boolean" },
+          "royal": { "type": "boolean" },
+          "special": { "const": "pawn" }
+        }
+      }
+    },
+    "start": {
+      "type": "object", "required": ["light", "dark"],
+      "additionalProperties": {
+        "type": "object", "required": ["rank", "pawnRank", "order"],
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "pawnRank": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "order": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "enum": ["king", "queen", "rook", "bishop", "knight"] } }
+        }
+      }
+    },
+    "promotion": { "type": "array", "items": { "enum": ["queen", "rook", "bishop", "knight"] } }
+  }
+}

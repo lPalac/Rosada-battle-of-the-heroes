@@ -402,6 +402,8 @@ New questions found during planning or building get added here.
 | # | Question | Who | Blocking? |
 | --- | --- | --- | --- |
 | Q-17 | A Ram pushes a hero onto a square holding a unit (not a King). Is that allowed? The plan assumes yes for any side's unit, since the rulebook only forbids *voluntarily* ending a Move on an enemy unit. | Rules designer | No (default: allowed) |
+| Q-23 | A hero uses *Hero Retreat* into a friendly tavern at End of Turn. Do they also get the free Meal that turn? The build checks the free Meal when End of Turn starts, so a Retreating hero gets only the free Drink. | Rules designer | No (default: Drink only) |
+| Q-24 | Found while building: with the v1 modifiers a Lead made while the own King is in check always succeeds (War +2, check +4, so a roll of 1 totals 7), and only check-ending Leads are legal. So "King in check at the end of the Lead" can only happen when no Lead was possible, and a unit's Ram can never push a hero off the 10×10 grid. Is that intended? Both rules are built and tested directly anyway. | Rules designer | No |
 
 ### Resolved (2026-11-03, Luka)
 

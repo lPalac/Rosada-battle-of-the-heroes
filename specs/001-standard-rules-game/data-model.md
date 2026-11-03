@@ -36,6 +36,8 @@ type Phase =
 | `destiny` | DestinyLedger | |
 | `tokens` | Tokens | Peace/War, Revenge |
 | `pendingDecision` | PendingDecision \| null | Blocks all other actions |
+| `decisionQueue` | PendingDecision[] | Decisions waiting behind `pendingDecision` |
+| `sandboxMoved` | unitId[] | Units moved by hand in sandbox; set `hasBeenLed` on resume (FR-104) |
 | `result` | GameResult \| null | Set when `status = 'ended'` |
 | `log` | LogEntry[] | Every action, roll, Destiny change (FR-112). Roll values are stored here; no seed is kept (FR-037) |
 
@@ -102,6 +104,9 @@ skipped ──following turn, Beginning of Turn──▶ active, health = floor(
 | `movementLeft` | Set at `beginningOfTurn` (tavern −1, Banishment −1, cap −2) |
 | `movePath` | Squares moved through this turn |
 | `tavernShopOpen` | Tavern square where buying is allowed now, or null; closes when the hero leaves it (FR-060) |
+| `leftTaverns` | Taverns the hero has left this turn (no buying there again) |
+| `bothKingsInCheckAtBeginning` | For the draw check at End of Turn |
+| `doubleStepUnitId` | Pawn that made a 2-square Lead this turn; keeps its en passant target one more turn |
 | `leadAttempted` / `leadPossible` | Drive FR-031, FR-042 |
 | `kingInCheckAfterLead` | Blocks After Lead / End of Turn abilities and free Meal |
 | `checkBonusClaimed` | 2 D for checking, once per turn |
@@ -151,7 +156,9 @@ Gains (to the Common Pool unless noted): check +2 (once per turn), Destroy in Ba
 
 ## PendingDecision (union)
 
-`promotion { unitId, chooserHeroId }` · `unconsciousTavern { heroId, options: Coord[] }` · `advanceSquare { heroId, options: Coord[] }` · `inspiredLeadAmount { heroId, max }` · `payDestiny { heroId, cost }` · `drawOffer { fromSide }` · `revengeChoice { side }` (use token or roll).
+`promotion { unitId, chooserHeroId }` · `unconsciousTavern { heroId, options: Coord[] }` · `advanceSquare { heroId, options: Coord[] }` · `drawOffer { fromSide }`. Several decisions from one Lead (two heroes Unconscious, then Promotion, then the advance) wait in `GameState.decisionQueue` in that order.
+
+The Inspired Lead amount, the pool split and the Revenge choice are not decisions: they are fields of the action (`inspiredLead.destiny`, `pay`) or an action of their own (`useRevenge` while the roll is awaited).
 
 ## GameResult
 
@@ -159,7 +166,7 @@ Gains (to the Common Pool unless noted): check +2 (once per turn), Destroy in Ba
 
 ## LogEntry
 
-`{ turn, heroId, phase, type, text, data }`. `type` values include `move`, `lead`, `roll`, `battle`, `ram`, `wound`, `heal`, `destiny`, `token`, `phase`, `sandboxToggle`, `result`.
+`{ turn, heroId, phase, type, data }`: one entry per action (`type: 'action'`, the action in `data`) and one per event (`type` = the event type, the event in `data`). Text is made from the string file when shown (`src/game/log.ts`, A-02), so the log stays data.
 
 ---
 

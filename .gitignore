@@ -156,3 +156,10 @@ $RECYCLE.BIN/
 
 # Spec Kit: downloaded extension catalog cache (re-fetched on demand)
 .specify/extensions/.cache/
+
+# Node / Vite / Playwright
+node_modules/
+dist/
+test-results/
+playwright-report/
+.vite/

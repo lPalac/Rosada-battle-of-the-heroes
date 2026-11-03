@@ -1,0 +1,12 @@
+{
+  "$schema": "./schemas/rules.schema.json",
+  "leadTarget": 6, "die": 20,
+  "modifiers": { "war": 2, "kingInCheck": 4, "inspiredLeadPerDestiny": 2 },
+  "ramWounds": 3,
+  "tavern": { "drink": { "cost": 1, "heal": 1 }, "meal": { "cost": 2, "heal": 3 }, "startTurnMovementPenalty": 1 },
+  "maxMovementReduction": 2,
+  "revengeMax": 2,
+  "banishmentMovementPenalty": 1,
+  "destiny": { "wellInitial": 16, "heroPoolStart": 3, "check": 2, "destroyEnemy": 2, "ownUnitLost": 1, "woundEnemyHero": 1, "failedLead": 1 },
+  "abilities": { "heroRetreat": { "cost": 2 } }
+}

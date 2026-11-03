@@ -1,0 +1,14 @@
+{
+  "game": "Double Ram knocks H4 out, taverns, a failed roll, a check, then an agreed draw",
+  "turns": [
+    { "turn": 1, "well": 12, "common": { "light": 2, "dark": 0 }, "pools": { "H1": 3, "H2": 4, "H3": 3, "H4": 4 }, "health": { "H1": 10, "H2": 7, "H3": 5, "H4": 0 }, "peaceTreaty": "war" },
+    { "turn": 2, "well": 12, "common": { "light": 2, "dark": 0 }, "pools": { "H1": 3, "H2": 2, "H3": 3, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 5, "H4": 0 }, "peaceTreaty": "war" },
+    { "turn": 3, "well": 12, "common": { "light": 2, "dark": 0 }, "pools": { "H1": 3, "H2": 2, "H3": 2, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 6, "H4": 0 }, "peaceTreaty": "war" },
+    { "turn": 4, "well": 12, "common": { "light": 2, "dark": 0 }, "pools": { "H1": 3, "H2": 2, "H3": 2, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 6, "H4": 0 }, "peaceTreaty": "war" },
+    { "turn": 5, "well": 11, "common": { "light": 3, "dark": 0 }, "pools": { "H1": 3, "H2": 2, "H3": 2, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 6, "H4": 0 }, "peaceTreaty": "war" },
+    { "turn": 6, "well": 11, "common": { "light": 3, "dark": 0 }, "pools": { "H1": 3, "H2": 2, "H3": 2, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 6, "H4": 0 }, "peaceTreaty": "war" },
+    { "turn": 7, "well": 11, "common": { "light": 3, "dark": 0 }, "pools": { "H1": 3, "H2": 2, "H3": 2, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 6, "H4": 4 }, "peaceTreaty": "war" },
+    { "turn": 8, "well": 9, "common": { "light": 3, "dark": 2 }, "pools": { "H1": 3, "H2": 2, "H3": 2, "H4": 4 }, "health": { "H1": 10, "H2": 10, "H3": 6, "H4": 7 }, "peaceTreaty": "war" }
+  ],
+  "result": { "kind": "draw", "by": "agreed", "turnsPlayed": 9 }
+}

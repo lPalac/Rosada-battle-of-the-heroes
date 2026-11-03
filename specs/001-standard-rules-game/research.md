@@ -36,6 +36,8 @@ Phase 0 of `/speckit-plan`. Each entry: decision, why, what else was considered.
 
 **Why**: Constitution II says the rules MUST NOT import engine or DOM APIs. A compile-time and lint-time check makes that automatic instead of a review habit.
 
+**Change during implementation (T005)**: typescript-eslint 8.72 supports TypeScript only below 6.1, so ESLint cannot parse this TypeScript 7 project. ESLint was dropped. The boundary is enforced by `tsconfig.rules.json` (no DOM lib, no `@types`) plus `tests/boundaries.test.ts`, which fails on any forbidden import or DOM global in `src/rules/` or `src/game/`. Both run in `npm test`. Revisit when typescript-eslint supports TypeScript 7.
+
 ## R-05 Board coordinates
 
 **Decision**: One 10×10 grid, `x` = 0…9 (left→right from Light's side), `y` = 0…9 (Light's King's Court → Dark's King's Court).

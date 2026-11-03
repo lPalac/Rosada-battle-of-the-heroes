@@ -19,7 +19,7 @@ Technical approach:
 
 **Language/Version**: TypeScript 7.x on Node.js 24 LTS (build/test) and current desktop browsers (runtime)
 
-**Primary Dependencies**: three 0.187.x, @dimforge/rapier3d-compat 0.21.x, Vite 8.x; dev: Vitest 5.x, @playwright/test 1.64.x, ESLint 10.x, a JSON Schema validator for data files
+**Primary Dependencies**: three 0.187.x, @dimforge/rapier3d-compat 0.21.x, Vite 8.x; dev: Vitest 5.x, @playwright/test 1.64.x, ajv 8 (JSON Schema validator for data files), tsx. ESLint was planned but dropped (no TypeScript 7 support yet, research R-04)
 
 **Storage**: None in P0 (state in memory). P1 save/resume uses browser `localStorage` with the serialised `GameState`
 
@@ -48,7 +48,7 @@ Technical approach:
 | Principle | Check | Status |
 | --- | --- | --- |
 | I. Rulebook is the source of truth | Every rule maps to the rulebook or the spec's *Resolved* / *Clarifications*. The one design reading (Ram landing on a unit) is logged as Q-17, not built silently | ✅ Pass |
-| II. Engine-free rules core | `src/rules/` + `src/game/` compiled with no DOM lib and lint-blocked from `three`, `@dimforge/*`, UI folders (R-04); rolls enter as values (R-06) | ✅ Pass |
+| II. Engine-free rules core | `src/rules/` + `src/game/` compiled with no DOM lib and blocked from `three`, `@dimforge/*`, UI folders by `tests/boundaries.test.ts` (R-04; ESLint dropped, see R-04); rolls enter as values (R-06) | ✅ Pass |
 | III. Data-driven content | Heroes, health bars, board, units, tunables, assets and strings are JSON with schemas ([contracts/data-files.md](./contracts/data-files.md)) | ✅ Pass |
 | IV. Rules tested first | Test per acceptance scenario, failing test first for rule bugs, fixed rolls injected via `submitRoll`; random playout tests use a seeded generator inside `tests/` (R-13). No seed in the game itself (FR-037) | ✅ Pass |
 | V. Verifiable without a human | `npm test`, `npm run test:e2e` run headless; Playwright screenshots; test-only hook to force a roll | ✅ Pass |
@@ -113,8 +113,10 @@ tsconfig.rules.json        # src/rules + src/game, lib ES2022 only
 vite.config.ts
 vitest.config.ts
 playwright.config.ts
-eslint.config.js           # no-restricted-imports for engine-free folders
+scripts/check-data.ts      # npm run check:data (ajv + cross-file rules)
 ```
+
+Tests also live in `tests/physics/` (d20 faces and Rapier throws in Node), `tests/helpers/` (test PRNG, game helpers), `tests/game/` (save files, fixture export) and at `tests/` root (`boundaries.test.ts`, `i18n.test.ts`).
 
 **Structure Decision**: Single web project, because there is no backend in this feature. The engine-free folders (`src/rules`, `src/game`) are separated by folder, tsconfig and lint rule rather than separate packages. That is simpler, and it can be split into a workspace package when the Colyseus server arrives.
 

@@ -36,3 +36,28 @@ Decided Nov 3, 2026. This replaces the earlier Unity plan and may change later.
 6. `/speckit-tasks` – break the plan into tasks
 7. `/speckit-analyze` – *(optional)* cross-check spec, plan and tasks
 8. `/speckit-implement` – build it
+
+## Development
+
+Feature 001 (standard rules, generic heroes, 3D table, hot-seat, sandbox) is built. Requires Node.js 24 LTS.
+
+```powershell
+npm install
+npx playwright install chromium   # once, for browser tests
+npm run dev                       # the game on http://localhost:5173
+npm test                          # type checks, data schemas, rules tests (Vitest)
+npm run test:e2e                  # browser tests (Playwright, own server on port 5174)
+npm run build                     # static site in dist/
+```
+
+| Folder | What it is |
+| --- | --- |
+| `src/rules/` | Engine-free rules core: `createGame`, `legalActions`, `apply` (no Three.js, Rapier or DOM) |
+| `src/game/` | Engine-free session: action log, undo, replay, HUD model, log text, save files |
+| `src/data/` | JSON data: board, units, heroes, health bars, tunables, assets, UI strings (+ schemas) |
+| `src/table/` | Three.js table: board, pieces, highlights, picking, camera, dice view |
+| `src/physics/` | Rapier d20: tray, throw, top-face reading |
+| `src/ui/` | DOM HUD, setup wizard, dialogs, settings, result screen |
+| `tests/` | Vitest (`rules/`, `games/`, `physics/`, `game/`) and Playwright (`e2e/`) |
+
+See `specs/001-standard-rules-game/quickstart.md` for the manual check.

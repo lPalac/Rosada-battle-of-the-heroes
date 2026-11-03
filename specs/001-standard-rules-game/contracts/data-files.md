@@ -50,7 +50,7 @@ Rules: points ascending, unique, within 1…max. Resilient Destiny = count of po
 }
 ```
 
-`heroStartSquares[side][0]` goes to that side's first pick (FR-083).
+`heroStartSquares[side][0]` is the square behind the c-file Bishop, `[1]` behind the f-file Bishop. Each side chooses which hero starts where (FR-083).
 
 ## units.json
 

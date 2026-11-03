@@ -1,0 +1,212 @@
+// Public API of the rules core (contracts/rules-api.md). Pure: same input, same output; never mutates input.
+import { canHeroRetreat, canInspiredLead, heroRetreat, inspiredLead } from './abilities.ts';
+import { eq, taverns } from './board.ts';
+import { isInCheck } from './check.ts';
+import { activeHero, clone, emit, fail, hero, RuleFailure, type Ctx } from './ctx.ts';
+import { DATA, RULES, type StaticData } from './data.ts';
+import { available } from './destiny.ts';
+import { answerDraw, offerDraw } from './endgame.ts';
+import { isForbiddenEndSquare, legalMoveSquares, moveStep, placeHero } from './heroes.ts';
+import {
+  announceLead, awaitingRoll, leadOptionsForActiveHero, leadPreview, legalLeadTargets, promote, submitRoll, useRevenge,
+} from './lead.ts';
+import type { Action, DecisionAnswer, GameEvent, RuleError } from './model/actions.ts';
+import type { GameState, LogEntry, SetupChoices } from './model/state.ts';
+import { RANGE_TYPES } from './model/types.ts';
+import { freeRoll, sandboxPlace, sandboxSet, setEnforcement, validatePosition } from './sandbox.ts';
+import {
+  createGameState, createSetup, nextPicker, pickHero, picksComplete, setStartFile, setTurnOrder, setupReady, sidePicks,
+} from './setup.ts';
+import { buy, shopOpen } from './taverns.ts';
+import { autoAdvance, endPhase, startFirstTurn } from './turn.ts';
+
+export type ApplyResult = { ok: true; state: GameState; events: GameEvent[] } | { ok: false; error: RuleError };
+
+function toLog(s: GameState, type: string, data: Record<string, unknown>): LogEntry {
+  const started = s.status !== 'setup';
+  return { turn: s.turnNumber, heroId: started ? s.activeHeroId : null, phase: started ? s.phase : null, type, data };
+}
+
+function newCtx(state: GameState): Ctx {
+  const { log, ...rest } = state;
+  const s = clone(rest) as GameState;
+  s.log = log.slice();
+  return { s, events: [] };
+}
+
+function finish(ctx: Ctx, action: Action | null): GameState {
+  const { s } = ctx;
+  if (action) s.log.push(toLog(s, 'action', { action }));
+  for (const e of ctx.events) s.log.push(toLog(s, e.type, { ...e }));
+  return s;
+}
+
+/** Create a new game from completed setup choices and static data; turn 1 waits at the first player choice. */
+export function createGame(setup: SetupChoices, data: StaticData = DATA): GameState {
+  const ctx: Ctx = { s: createGameState(setup, data), events: [] };
+  startFirstTurn(ctx);
+  autoAdvance(ctx);
+  return finish(ctx, null);
+}
+
+export { createSetup };
+
+function decide(ctx: Ctx, answer: DecisionAnswer): void {
+  const { s } = ctx;
+  const d = s.pendingDecision;
+  if (!d || d.type === 'drawOffer') fail('NO_DECISION', 'Nothing to decide', 'Decisions');
+  if (d.type === 'promotion') {
+    if (answer.type !== 'promotion') fail('BAD_ANSWER', 'Choose a unit type', 'Promotion');
+    promote(ctx, d.unitId, answer.to);
+  } else {
+    if (answer.type !== 'square' || !d.options.some((o) => eq(o, answer.to))) fail('BAD_ANSWER', 'Choose one of the offered squares', 'Decisions');
+    const h = hero(s, d.heroId);
+    placeHero(ctx, h, answer.to, d.type === 'unconsciousTavern' ? 'unconscious' : 'advance');
+  }
+  s.pendingDecision = s.decisionQueue.shift() ?? null;
+}
+
+function dispatch(ctx: Ctx, action: Action): void {
+  const { s } = ctx;
+  if (s.status === 'setup') {
+    switch (action.type) {
+      case 'pickHero': return pickHero(ctx, action.side, action.rangeType);
+      case 'setTurnOrder': return setTurnOrder(ctx, action.side, action.first);
+      case 'setStartFile': return setStartFile(ctx, action.pickIndex, action.file);
+      case 'startGame': {
+        if (!setupReady(s.setup)) fail('SETUP_INCOMPLETE', 'Pick heroes, turn order and starting squares first', 'Setup');
+        const log = s.log;
+        ctx.s = createGameState(s.setup);
+        ctx.s.log = log;
+        startFirstTurn(ctx);
+        return;
+      }
+      default: fail('NOT_PLAYING', 'Finish setup first', 'Setup');
+    }
+  }
+  if (s.enforcement === 'sandbox') {
+    switch (action.type) {
+      case 'setEnforcement': return setEnforcement(ctx, action.mode);
+      case 'sandboxPlace': return sandboxPlace(ctx, action.target, action.to);
+      case 'sandboxSet': return sandboxSet(ctx, action.path, action.target, action.value);
+      case 'submitRoll': return freeRoll(ctx, action.value);
+      default: fail('SANDBOX_MODE', 'Rules are off: only sandbox actions work', 'Sandbox');
+    }
+  }
+  if (action.type === 'setEnforcement') return setEnforcement(ctx, action.mode);
+  if (s.status === 'ended') fail('GAME_ENDED', 'The game has ended', 'Ending the Game');
+  if (s.pendingDecision) {
+    if (action.type === 'decide') return decide(ctx, action.decision);
+    if (action.type === 'answerDraw') return answerDraw(ctx, action.accept);
+    fail('DECISION_PENDING', 'Answer the open decision first', 'Decisions');
+  }
+  switch (action.type) {
+    case 'endPhase': return endPhase(ctx);
+    case 'moveStep': return moveStep(ctx, action.to);
+    case 'buy': return buy(ctx, action.item, action.pay);
+    case 'inspiredLead': return inspiredLead(ctx, action.destiny, action.pay);
+    case 'heroRetreat': return heroRetreat(ctx, action.tavern, action.pay);
+    case 'announceLead': return announceLead(ctx, action.unitId, action.to, action.promoteTo);
+    case 'useRevenge': return useRevenge(ctx);
+    case 'submitRoll': return submitRoll(ctx, action.value);
+    case 'offerDraw':
+      if (awaitingRoll(s)) fail('ROLL_PENDING', 'Roll the die first', 'Lead');
+      return offerDraw(ctx);
+    default: fail('NOT_ALLOWED', `${action.type} is not possible now`, 'Rules');
+  }
+}
+
+/** Apply one action. Never mutates the input. */
+export function apply(state: GameState, action: Action): ApplyResult {
+  const ctx = newCtx(state);
+  try {
+    dispatch(ctx, action);
+    if (ctx.s.status === 'playing' && ctx.s.enforcement === 'rules') autoAdvance(ctx);
+  } catch (e) {
+    if (e instanceof RuleFailure) return { ok: false, error: e.error };
+    throw e;
+  }
+  return { ok: true, state: finish(ctx, action), events: ctx.events };
+}
+
+/** Every action the active player (or the player owning a pendingDecision) may take now. Sandbox placement and
+ * editing actions are open-ended and not listed. */
+export function legalActions(state: GameState): Action[] {
+  const s = state;
+  const out: Action[] = [];
+  if (s.status === 'setup') {
+    const picker = nextPicker(s.setup);
+    if (picker) for (const rangeType of RANGE_TYPES) out.push({ type: 'pickHero', side: picker, rangeType });
+    if (picksComplete(s.setup)) {
+      for (const side of ['light', 'dark'] as const) {
+        if (side === 'dark' && !s.setup.turnOrder.light) continue;
+        for (const p of sidePicks(s.setup, side)) out.push({ type: 'setTurnOrder', side, first: p.pickIndex });
+      }
+      for (const p of s.setup.picks) for (const file of ['c', 'f'] as const) out.push({ type: 'setStartFile', pickIndex: p.pickIndex, file });
+    }
+    if (setupReady(s.setup)) out.push({ type: 'startGame' });
+    return out;
+  }
+  if (s.enforcement === 'sandbox') {
+    if (validatePosition(s).length === 0) out.push({ type: 'setEnforcement', mode: 'rules' });
+    for (let v = 1; v <= RULES.die; v++) out.push({ type: 'submitRoll', value: v });
+    return out;
+  }
+  out.push({ type: 'setEnforcement', mode: 'sandbox' });
+  if (s.status === 'ended') return out;
+  const d = s.pendingDecision;
+  if (d) {
+    out.length = 0;
+    if (d.type === 'drawOffer') out.push({ type: 'answerDraw', accept: true }, { type: 'answerDraw', accept: false });
+    else if (d.type === 'promotion') for (const to of DATA.units.promotion) out.push({ type: 'decide', decision: { type: 'promotion', to } });
+    else for (const to of d.options) out.push({ type: 'decide', decision: { type: 'square', to } });
+    return out;
+  }
+  const ctx: Ctx = { s, events: [] };
+  const h = activeHero(s);
+  switch (s.phase) {
+    case 'move':
+      for (const to of legalMoveSquares(s)) out.push({ type: 'moveStep', to });
+      if (shopOpen(ctx)) {
+        for (const item of ['drink', 'meal'] as const) if (available(ctx, h) >= RULES.tavern[item].cost) out.push({ type: 'buy', item });
+      }
+      if (!isForbiddenEndSquare(s, h.side, h.pos)) out.push({ type: 'endPhase' });
+      break;
+    case 'beforeLead':
+      if (canInspiredLead(ctx)) for (let x = 1; x <= available(ctx, h); x++) out.push({ type: 'inspiredLead', destiny: x });
+      out.push({ type: 'endPhase' });
+      break;
+    case 'lead':
+      if (awaitingRoll(s)) {
+        for (let v = 1; v <= RULES.die; v++) out.push({ type: 'submitRoll', value: v });
+        if (s.tokens.revenge[h.side] > 0) out.push({ type: 'useRevenge' });
+      } else if (!s.turn.leadAttempted) {
+        for (const o of leadOptionsForActiveHero(s)) out.push({ type: 'announceLead', unitId: o.unitId, to: o.to });
+        if (!s.turn.leadPossible) out.push({ type: 'endPhase' });
+      } else out.push({ type: 'endPhase' });
+      break;
+    case 'endOfTurn':
+      if (canHeroRetreat(ctx)) for (const tavern of taverns(h.side)) out.push({ type: 'heroRetreat', tavern });
+      out.push({ type: 'endPhase' });
+      break;
+    default:
+      break;
+  }
+  if (!awaitingRoll(s)) out.push({ type: 'offerDraw' });
+  return out;
+}
+
+export { isInCheck, legalLeadTargets, legalMoveSquares, leadPreview, validatePosition };
+export { DATA, RULES, loadStaticData } from './data.ts';
+export type { StaticData } from './data.ts';
+export * from './model/types.ts';
+export type * from './model/actions.ts';
+export { REVEAL_EVENTS } from './model/actions.ts';
+export type * from './model/state.ts';
+export type { Hero, HeroStatus } from './model/hero.ts';
+export type { Unit } from './model/unit.ts';
+export { squareName, parseSquare, regionOf, chebyshev, tavernOwner, taverns, heroStartSquares, inGrid, isBattlefield } from './board.ts';
+export { nextPicker, picksComplete, setupReady, sidePicks, defaultPlayers } from './setup.ts';
+export { abilitiesBlocked } from './abilities.ts';
+export { awaitingRoll } from './lead.ts';
+export { isProtected, isCheckmate, threatenedSquares } from './check.ts';

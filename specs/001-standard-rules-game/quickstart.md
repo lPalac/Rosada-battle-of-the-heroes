@@ -32,12 +32,14 @@ npm run preview
 ## Tests
 
 ```powershell
-npm test             # rules core: type check without DOM, lint boundaries, Vitest
-npm run test:e2e     # Playwright: setup → one turn → sandbox toggle, saves screenshots to test-results/
+npm test             # type checks (rules core without DOM, whole app), data schemas, Vitest incl. boundary test
+npm run test:e2e     # Playwright: setup, one turn, quickstart steps, sandbox, perf; screenshots in test-results/
 npm run check:data   # validate src/data/*.json against their schemas
 ```
 
 `npm test` fails if any file in `src/rules/` or `src/game/` imports Three.js, Rapier or DOM APIs (research R-04).
+
+`npm run test:e2e` starts its own server on port 5174 in `e2e` mode (enables `window.__rosada.forceNextRoll(n)`), so it does not clash with `npm run dev` on 5173. The `gpu` project runs the frame-time check with the machine's GPU; plain headless Chromium renders WebGL in software.
 
 ## Manual check (5 minutes)
 

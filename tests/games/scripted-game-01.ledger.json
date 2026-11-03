@@ -1,0 +1,10 @@
+{
+  "game": "Fool's mate with generic heroes: Peace for three turns, Dark checks on turn 4 and mates",
+  "turns": [
+    { "turn": 1, "well": 16, "common": { "light": 0, "dark": 0 }, "pools": { "H1": 3, "H2": 3, "H3": 3, "H4": 3 }, "peaceTreaty": "peace" },
+    { "turn": 2, "well": 16, "common": { "light": 0, "dark": 0 }, "pools": { "H1": 3, "H2": 3, "H3": 3, "H4": 3 }, "peaceTreaty": "peace" },
+    { "turn": 3, "well": 16, "common": { "light": 0, "dark": 0 }, "pools": { "H1": 3, "H2": 3, "H3": 3, "H4": 3 }, "peaceTreaty": "peace" },
+    { "turn": 4, "well": 14, "common": { "light": 0, "dark": 2 }, "pools": { "H1": 3, "H2": 3, "H3": 3, "H4": 3 }, "peaceTreaty": "war" }
+  ],
+  "result": { "kind": "win", "winner": "dark", "by": "checkmate", "turnsPlayed": 5 }
+}
