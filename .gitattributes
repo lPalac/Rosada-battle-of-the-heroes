@@ -1,0 +1,77 @@
+# Normalize line endings for text files; Git converts to CRLF on Windows checkout as needed.
+* text=auto
+
+# Scripts
+*.sh    text eol=lf
+*.py    text eol=lf
+
+# Code & docs
+*.cs    text diff=csharp
+*.md    text
+*.json  text
+*.yml   text
+*.yaml  text
+*.shader text
+*.hlsl  text
+*.cginc text
+*.uxml  text
+*.uss   text
+*.asmdef text
+*.asmref text
+
+# Unity YAML (Force Text serialization). Keep LF so diffs stay stable across machines.
+*.unity        text eol=lf
+*.prefab       text eol=lf
+*.asset        text eol=lf
+*.meta         text eol=lf
+*.mat          text eol=lf
+*.anim         text eol=lf
+*.controller   text eol=lf
+*.overrideController text eol=lf
+*.physicMaterial text eol=lf
+*.physicsMaterial2D text eol=lf
+*.playable     text eol=lf
+*.mask         text eol=lf
+*.brush        text eol=lf
+*.flare        text eol=lf
+*.fontsettings text eol=lf
+*.guiskin      text eol=lf
+*.giparams     text eol=lf
+*.renderTexture text eol=lf
+*.spriteatlas  text eol=lf
+*.spriteatlasv2 text eol=lf
+*.terrainlayer text eol=lf
+*.mixer        text eol=lf
+*.shadervariants text eol=lf
+*.preset       text eol=lf
+*.signal       text eol=lf
+*.lighting     text eol=lf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.psd  binary
+*.tga  binary
+*.tif  binary
+*.tiff binary
+*.exr  binary
+*.hdr  binary
+*.fbx  binary
+*.obj  binary
+*.blend binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.aif  binary
+*.mp4  binary
+*.mov  binary
+*.ttf  binary
+*.otf  binary
+*.dll  binary
+*.so   binary
+*.a    binary
+*.pdf  binary
+*.zip  binary
+*.unitypackage binary
