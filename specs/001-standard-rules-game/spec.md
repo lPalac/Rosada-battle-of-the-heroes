@@ -46,7 +46,7 @@ Rošada only exists as a physical prototype, so every playtest needs the full bo
 ### Session 2026-11-03
 
 - Q: Revenge token limit? → A: 2 per side.
-- Q: Hero starting squares? → A: King's Court squares behind the friendly Bishops (corrected from Knights). Assigned by default.
+- Q: Hero starting squares? → A: King's Court squares behind the friendly Bishops (corrected from Knights). In hot-seat each side chooses which hero stands where (see the turn-order answer below).
 - Q: How is Range counted? → A: In any direction, including diagonally.
 - Q: Which way does a Knight Ram push? → A: One square back = one more square in the direction of the Knight's last 1-square step.
 - Q: Can heroes share squares? → A: Yes; all enemy heroes on a Rammed square are Rammed, friendly heroes are not.
@@ -56,12 +56,22 @@ Rošada only exists as a physical prototype, so every playtest needs the full bo
 - Q: Does a check (or no possible Lead) block the free Meal in a friendly tavern at End of Turn? → A: Yes, the free Meal is treated like an End of Turn ability and is blocked.
 - Q: Does the "Rammed hero may not Lead themself into Battle with the unit that Rammed them" rule apply in v1? → A: No. It only matters for Hero Units and is added with them later.
 - Q: Can players switch from sandbox back to enforced rules mid-game? → A: Yes, after the game checks that the position is legal.
-- Q: Do players choose turn order? → A: No. Players choose heroes; the game sets turn order and starting squares automatically.
+- Q: Do players choose turn order? → A: In local hot-seat, yes, as in the corrections file: after all heroes are picked, Light decides which of its heroes plays turn 1 and which turn 3, then Dark decides turns 2 and 4. Each side also chooses which of its heroes starts behind which Bishop. *(Superseded the earlier answer "automatic", 2026-11-03 analysis round.)* Online multiplayer (later) will only let players pick heroes and set everything else automatically.
 - Q: Are the Resilient Destiny points in FR-054 correct? → A: Yes.
 - Q: How is the d20 rolled? → A: Physics roll started with a Roll button; the throw decides the number.
 - Q: When can a hero buy in a tavern? → A: While standing in a tavern at the start of their turn, or when pausing their Move in a tavern; they then continue with leftover Movement. Once they leave, they cannot buy any more.
 - Q: With 3 players, who controls what? → A: The side with one player: that player controls both heroes of the side.
 - Q: Art? → A: Placeholders first; real images added in later stages.
+
+### Session 2026-11-03 (analysis round)
+
+- Q: Which way are friendly heroes pushed by King's Banishment? → A: One square in the direction the King is Led.
+- Q: Where the spec and the corrections file disagree, which wins? → A: The corrections file.
+- Q: Who decides turn order and starting squares? → A: In local hot-seat the players decide everything the rulebook lets them decide. In online multiplayer (later) players only pick heroes; the rest is automatic.
+- Q: Does an unused Inspired Lead bonus carry over? → A: No. The bonus applies only to the Lead of the turn in which Inspired Lead was used.
+- Q: How do picks work in Mirror mode? → A: Light chooses the 1st hero (for both sides), Dark chooses the 2nd hero (for both sides). Turn order is still 1 and 3 for Light, 2 and 4 for Dark.
+- Q: Where does a Rammed hero land when Rammed mid-path? → A: One square past the Led unit's end square, in the direction of the path (the reading in research R-10 is correct).
+- Q: Do games need a random seed? → A: No, unless it is technically needed. Every roll is recorded in the log, which is enough for undo and replay.
 
 ---
 
@@ -71,7 +81,7 @@ Personas: **Playtester** (a player at the device), **Designer** (Luka and the ru
 
 ### User Story 1 – Set up and start a game (Priority: P1)
 
-A group opens the game, picks 2, 3 or 4 players, splits into Light and Dark sides, picks the four generic heroes (a range type, Short or Long, for each) in Draft or Mirror order, and starts. Turn order and starting squares follow automatically from the picks. The board, units, heroes, Destiny Well (16), hero pools (3 each) and the Peace Treaty token are placed automatically.
+A group opens the game, picks 2, 3 or 4 players, splits into Light and Dark sides, picks the four generic heroes (a range type, Short or Long, for each) in Draft or Mirror order, then each side (Light first) decides its turn order and which hero starts behind which Bishop, and starts. The board, units, heroes, Destiny Well (16), hero pools (3 each) and the Peace Treaty token are placed automatically.
 
 **Why this priority**: Nothing else can be played or tested without it.
 
@@ -81,8 +91,10 @@ A group opens the game, picks 2, 3 or 4 players, splits into Light and Dark side
 
 1. **Given** the start screen, **When** the group chooses 2 players, **Then** each player controls both heroes of one side.
 2. **Given** 3 players, **When** setting up, **Then** the side with one player has that player control both of its heroes, and on the other side each player controls one hero.
-3. **Given** heroes are picked, **Then** turn order is set automatically from the pick order (FR-082): each side's first-picked hero plays first for that side, so Light's first pick is turn 1, Dark's first pick turn 2, Light's second pick turn 3, Dark's second pick turn 4. Players are not asked to choose turn order.
-4. **Given** setup is complete, **Then** the Destiny Well holds 16, each Hero Destiny Pool holds 3, each Common Pool holds 0, the Peace side is up and each hero stands on its starting square: the King's Court square directly behind a friendly Bishop's starting square (files c and f), one hero per square, assigned by default (FR-083).
+3. **Given** all four heroes are picked, **When** Light chooses which of its heroes plays first and then Dark does the same, **Then** Light's heroes take turns 1 and 3 and Dark's heroes take turns 2 and 4 in the chosen order (FR-082).
+4. **Given** setup is complete, **Then** the Destiny Well holds 16, each Hero Destiny Pool holds 3, each Common Pool holds 0, the Peace side is up and each hero stands on the starting square its side chose: one of the King's Court squares directly behind a friendly Bishop's starting square (files c and f), one hero per square (FR-083).
+5. **Given** Draft mode, **Then** picks go Light (1st hero), Dark (both its heroes), Light (its 2nd hero) (FR-081).
+6. **Given** Mirror mode, **Then** Light picks the 1st hero for both sides and Dark picks the 2nd hero for both sides, so both sides play the same two heroes (FR-081).
 
 ---
 
@@ -135,14 +147,14 @@ Enemy heroes in the path of a Lead are Rammed: pushed along the path, take 3 wou
 
 **Acceptance Scenarios**:
 
-1. **Given** an enemy hero stands on a square in the path of a successful Lead, **Then** that hero is pushed along the path, lands in the next square in the direction of the path, takes 3 wounds, and the Leading side gains 1 D.
+1. **Given** an enemy hero stands on a square in the path of a successful Lead, **Then** that hero is pushed along the path and lands one square past the Led unit's end square, in the direction of the path, takes 3 wounds, and the Leading side gains 1 D.
 2. **Given** two or more heroes share a square in the path, **Then** every enemy hero on that square is Rammed (each takes 3 wounds; the Leading side gains 1 D per hero wounded); friendly heroes on that square are not Rammed.
 3. **Given** a Knight is Led onto a square with one or more enemy heroes, **Then** each of them is Rammed: pushed one square back, i.e. one more square in the direction of the Knight's last 1-square step, and takes 3 wounds.
 4. **Given** the landing square holds a King or is off the board, **Then** the Rammed hero goes to their starting square instead.
 5. **Given** a push lands a hero on a square that already holds another hero, **Then** the push is allowed and the heroes share the square.
 6. **Given** a friendly hero stands in the path of a Lead, **Then** the path interacts with that square, but the friendly hero is not Rammed, not wounded and does not block the Lead.
 7. **Given** a hero is Rammed, **Then** no Lead restriction is applied on their next turn in v1 (the "may not Lead themself into Battle with the unit which Rammed them" rule only applies to Hero Units, added later). The game still records which unit Rammed the hero.
-8. **Given** a King's Lead Rams an enemy hero, **Then** King's Banishment applies: the hero goes to their starting square with −1 Movement next turn; friendly heroes in the King's path are pushed one square back.
+8. **Given** a King's Lead Rams an enemy hero, **Then** King's Banishment applies: the hero goes to their starting square with −1 Movement next turn; friendly heroes in the King's path are pushed one square back, meaning one square further in the direction the King is Led (pushed into the King's square or off the board → their starting square).
 9. **Given** a hero's health reaches 0, **Then** they are placed in a friendly tavern of their choice, skip their next turn, and at *Beginning of Turn* of the following turn heal to half max health.
 10. **Given** a hero starts their turn in a tavern, **Then** they may buy Drinks (1 D, heal 1) and Meals (2 D, heal 3) before leaving it, healing never exceeding max health.
 11. **Given** a hero is in a friendly tavern at *End of Turn*, **Then** they get a free Meal, unless their King was in check at the end of their Lead or no Lead was possible that turn (the free Meal counts as an End of Turn ability).
@@ -166,7 +178,7 @@ The game takes Destiny from the Well into the correct pool whenever it is earned
 2. **Given** a side destroys one or more enemy units in one Battle, **Then** it gains 2 D; the side that lost the unit gains 1 D per own unit destroyed.
 3. **Given** a hero takes wounds from an enemy, **Then** they gain 1 D into their Hero Pool for each Resilient Destiny point (FR-054) their health reaches or passes on the way down, not counting the point they start on; self/friendly wounds give none. *Example: a Short range hero at 10 takes 3 wounds from a Ram → health 7, passes 8 → gains 1 D. A Long range hero at 8 takes 5 wounds → health 3, passes 6 and 4 → gains 2 D (the rulebook example).*
 4. **Given** the Peace side is up, **When** either side gains Destiny, **Then** the token flips to War and all Leads get +2 from then on.
-5. **Given** a hero uses *Inspired Lead* in *Before Lead* spending X D, **Then** their next Lead gets +2×X.
+5. **Given** a hero uses *Inspired Lead* in *Before Lead* spending X D, **Then** the Lead of that same turn gets +2×X. If no Lead is made that turn, the bonus is lost; it never carries over to a later turn.
 6. **Given** a hero uses *Hero Retreat* (2 D) at *End of Turn*, **Then** they are placed in a friendly tavern and get a free Drink; it is unavailable if their King was in check at the end of their Lead or if no Lead was possible.
 7. **Given** a side's Queen is destroyed, **Then** that side gains a Revenge token, which can be discarded to auto-succeed a Lead instead of rolling. A side can hold at most 2 Revenge tokens; a Queen destroyed while the side already holds 2 gives no extra token.
 8. **Given** Destiny is spent before the Well has ever been depleted, **Then** it is removed from play, not returned to the Well.
@@ -221,7 +233,8 @@ The game is shown on a 3D table with 3D units, hero figures, d20, Destiny crysta
 - A single hit takes a hero past several Resilient Destiny points (for example 3 wounds from 16 to 13 on the 16 bar passes 14) → 1 D per point passed.
 - A hero goes Unconscious on the turn the Well runs out.
 - Gaining more Destiny than the Well holds: Well depletes, refills, the rest is taken (FAQ 11).
-- Inspired Lead is used and then no legal Lead exists.
+- Inspired Lead is used and then no legal Lead exists → the bonus is lost at the end of the turn and the Destiny spent stays spent.
+- A King's Lead pushes a friendly hero one square in the King's direction onto the King's own end square (for example while castling) → King's Majesty: the hero goes to their starting square.
 - King in check at the end of a Lead while the hero is in a friendly tavern → no After Lead / End of Turn abilities and no free Meal.
 - A hero pauses in a tavern with 0 Movement left → may buy, then the Move ends there.
 - A die lands tilted against another object or falls off the table → automatic re-roll; only a die resting flat counts.
@@ -265,18 +278,18 @@ The game is shown on a 3D table with 3D units, hero figures, d20, Destiny crysta
 - **FR-033**: No roll MUST be made for King Leads, while the Peace side is up, or when a Revenge token is discarded.
 - **FR-034**: The d20 MUST be rolled with physics: the player presses a **Roll** button, the die is thrown on the 3D table with a random throw, and the face that ends up on top is the result.
 - **FR-036**: A roll MUST be repeated automatically if the die does not come to rest flat on the table (tilted against an object, off the table, or still moving after a time limit).
-- **FR-037**: The rules core MUST receive the roll as an input value, so headless tests can supply fixed rolls; throws MUST use a seedable random source so a game can be replayed.
+- **FR-037**: The rules core MUST receive the roll as an input value, so headless tests can supply fixed rolls. Every roll MUST be recorded in the game log; undo and replay use the logged actions and rolls, so the physics throw needs no seeded random source.
 - **FR-035**: A failed Lead MUST leave the unit in place and give the side 1 D.
 
 **Check, mate, King**
 
 - **FR-040**: System MUST compute Threaten, Protected, Check, discovered check and Checkmate as defined in the rulebook.
-- **FR-041**: System MUST enforce King's powers that apply without abilities: no roll (Determination), Banishment, Majesty (no sharing, nothing pushed into its square).
+- **FR-041**: System MUST enforce King's powers that apply without abilities: no roll (Determination), Banishment (Rammed enemy heroes to their starting square with −1 Movement next turn; friendly heroes on the King's path pushed one square in the direction the King is Led), Majesty (no sharing, nothing pushed into its square).
 - **FR-042**: System MUST block After Lead and End of Turn abilities, including the free tavern Meal, when the own King is in check at the end of the Lead or when no Lead was possible.
 
 **Ram, Push, health**
 
-- **FR-050**: System MUST apply Ram to every enemy hero on each square the Lead's path interacts with: push along the path to the next square in the path direction, 3 wounds each; to starting square if that square has a King or is off the board.
+- **FR-050**: System MUST apply Ram to every enemy hero on each square the Lead's path interacts with: push along the path to the square one past the Led unit's end square, in the direction of the path's last step, 3 wounds each; to starting square if that square has a King or is off the board.
 - **FR-051**: System MUST track health 0…max, apply wounds and healing, and handle Unconscious (friendly tavern of choice, skip next turn, Heroic Recovery to half max at *Beginning of Turn*).
 - **FR-052**: For a Knight Lead (which interacts only with its start and end squares), every enemy hero on the end square MUST be Rammed: pushed one more square in the direction of the Knight's last 1-square step (after the 2-square leg), and 3 wounds. *Example: Knight b1→c3 (2 up, 1 right) Rams a hero on c3 → the hero lands on d3.*
 - **FR-053**: Unit paths MUST interact with squares holding friendly heroes (needed for King's Banishment now and for abilities later), but friendly heroes MUST NOT be Rammed or wounded by friendly Leads.
@@ -298,14 +311,14 @@ The game is shown on a 3D table with 3D units, hero figures, d20, Destiny crysta
 - **FR-070**: Peace Treaty token MUST start Peace side up and flip to War permanently when either side gains Destiny (or uses an ability affecting a unit, which cannot happen in v1).
 - **FR-071**: Revenge token MUST be gained when a side's Queen is destroyed, held up to a maximum of 2 per side, and discardable to auto-succeed a Lead instead of rolling.
 - **FR-072**: System MUST track the Destiny Well (16 at start), two Common Pools and four Hero Pools (3 each), all gains from the rulebook's *Common Destiny Pool* list, Resilient Destiny, and the Well depletion/refill rule. Spending MAY draw from the hero's pool, the side's Common Pool or both.
-- **FR-073**: System MUST offer the general abilities *Inspired Lead* (X D, Before Lead) and *Hero Retreat* (2 D, End of Turn), each once per turn.
+- **FR-073**: System MUST offer the general abilities *Inspired Lead* (X D, Before Lead; the bonus applies only to that turn's Lead and is lost if none is made) and *Hero Retreat* (2 D, End of Turn), each once per turn.
 
 **Setup flow**
 
 - **FR-080**: System MUST support 2, 3 or 4 players on one device. With 2 players each controls one side; with 3 the side with one player has that player control both its heroes; with 4 each player controls one hero.
-- **FR-081**: System MUST provide the Draft / Mirror choice as a setup step for picking heroes. With generic heroes a pick is a range type; the step MUST be kept so named heroes can use it later.
-- **FR-082**: Turn order MUST be set automatically from the pick order, without asking the players: Light's first pick = turn 1, Dark's first pick = turn 2, Light's second pick = turn 3, Dark's second pick = turn 4. *(Default proposed by Claude; easy to change.)*
-- **FR-083**: Starting squares MUST be assigned by default: each side's first-picked hero starts behind its c-file Bishop, the second behind its f-file Bishop. *(Default proposed by Claude; easy to change.)*
+- **FR-081**: System MUST provide the Draft / Mirror choice as a setup step for picking heroes. Draft: Light picks its 1st hero, Dark picks both its heroes, Light picks its 2nd hero. Mirror: Light picks the 1st hero for both sides, then Dark picks the 2nd hero for both sides. With generic heroes a pick is a range type; the step MUST be kept so named heroes can use it later.
+- **FR-082**: In local hot-seat, after all heroes are picked, Light MUST choose which of its heroes plays turn 1 and which turn 3, then Dark MUST choose which plays turn 2 and which turn 4 (rulebook *Setup*). *(Online multiplayer, later: set automatically, for example in pick order.)*
+- **FR-083**: In local hot-seat, each side MUST choose which of its heroes starts behind its c-file Bishop and which behind its f-file Bishop (FR-025). The screen MAY pre-select a suggestion (first in turn order behind the c-file Bishop) that players can change. *(Online multiplayer, later: assigned automatically.)*
 
 **End of game**
 
@@ -345,7 +358,7 @@ The game is shown on a 3D table with 3D units, hero figures, d20, Destiny crysta
 - Named heroes and abilities with phase hooks (*Before Move*, *Instead of Lead*, *After Lead*…), costs, Bloodied costs, once-per-turn tracking.
 - Epic Stage, Hero Destiny Generation, Achievements, Legendary Powers, Hero Units.
 - Auxiliary and special units (Buffalo, Carnivorous Monkey…), Mark/Create/Modify, ability and aura tokens.
-- Online rooms with an authoritative server (Colyseus) using the same rules modules.
+- Online rooms with an authoritative server (Colyseus) using the same rules modules. Online setup: players only pick heroes; turn order and starting squares are set automatically.
 - Touch controls for tablets.
 
 ### Key Entities
@@ -395,7 +408,7 @@ New questions found during planning or building get added here.
 | # | Decision | Where |
 | --- | --- | --- |
 | Q-01 | Revenge token limit is **2 per side**. Queen section of the rulebook fixed in the corrections file. | FR-071 |
-| Q-02 | Hero starting squares are the King's Court squares **behind the friendly Bishops** (corrected from Knights), assigned by default; turn order is automatic. | FR-025, FR-082, FR-083 |
+| Q-02 | Hero starting squares are the King's Court squares **behind the friendly Bishops** (corrected from Knights). *Updated in the analysis round:* in hot-seat each side chooses its turn order and which hero starts where, as in the corrections file; automatic only for online play later. | FR-025, FR-082, FR-083 |
 | Q-03 | Starting max health is **10 (Short) / 8 (Long)**, Epic **20 / 16**, from the health bars. FAQ 4 in the rulebook fixed ("short ranged" → "long ranged") in the corrections file. | FR-021 |
 | Q-04 | Range is counted **in any direction**. | FR-023 |
 | Q-06 | A Knight Ram pushes heroes **one square back = one more square in the direction of the Knight's last 1-square step**. | FR-052 |
@@ -410,6 +423,11 @@ New questions found during planning or building get added here.
 | Q-14 | Taverns: buy **at the start of the turn or when pausing the Move** in a tavern; not after leaving, not during a Lead advance. | FR-060 |
 | Q-15 | 3 players: the single player on a side **controls both** of its heroes. | FR-080 |
 | Q-16 | Art: **placeholders first**, real images later. | FR-113 |
+| Q-18 | King's Banishment: friendly heroes are pushed **one square in the direction the King is Led**. To be written into the corrections file. | FR-041, Story 4 AS8 |
+| Q-19 | Inspired Lead bonus applies **only to the Lead of the turn it is used**; lost otherwise. | FR-073, Story 5 AS5 |
+| Q-20 | Mirror: **Light picks the 1st hero, Dark the 2nd**, both for both sides; turns 1 and 3 Light, 2 and 4 Dark. | FR-081, FR-082 |
+| Q-21 | Ram landing: **one square past the Led unit's end square** in the path direction. | FR-050 |
+| Q-22 | **No game seed**: rolls are logged; undo and replay use the log. | FR-037 |
 
 ## Assumptions
 

@@ -41,7 +41,7 @@ npm run check:data   # validate src/data/*.json against their schemas
 
 ## Manual check (5 minutes)
 
-1. Start a 4-player Draft game. Pick Short, Long, Long, Short. Check the turn order and that each hero stands behind a Bishop.
+1. Start a 4-player Draft game. Pick Short (Light), Long, Long (Dark), Short (Light). Light chooses its turn order and which hero starts behind which Bishop, then Dark does the same. Check that the turn order shown matches the choices and that each hero stands behind the chosen Bishop.
 2. Turn 1 (Light): move the hero, Lead pawn e2→e4. No Roll button appears, because the Peace side is up.
 3. Play until a capture. The Common Pool shows +2, the token flips to War, and the next Lead shows the Roll button with a +2 modifier.
 4. Ram an enemy hero with a Rook. The hero lands one square past the Rook and loses 3 health, and the log shows the Resilient Destiny gained.

@@ -37,8 +37,7 @@ type Phase =
 | `tokens` | Tokens | Peace/War, Revenge |
 | `pendingDecision` | PendingDecision \| null | Blocks all other actions |
 | `result` | GameResult \| null | Set when `status = 'ended'` |
-| `log` | LogEntry[] | Every action, roll, Destiny change (FR-112) |
-| `rngSeed` | string | Seed for the dice-throw PRNG (R-06) |
+| `log` | LogEntry[] | Every action, roll, Destiny change (FR-112). Roll values are stored here; no seed is kept (FR-037) |
 
 **Validation**: at most one unit per square; units only on the Battlefield; nothing shares the King's square; exactly one King per side while playing. The same checks back FR-103 when leaving sandbox.
 
@@ -49,7 +48,9 @@ type Phase =
 | `mode` | `'draft' \| 'mirror'` | FR-081 |
 | `playerCount` | 2 \| 3 \| 4 | FR-080 |
 | `players` | `{ id, name, side, heroIds[] }[]` | With 3 players the single player on a side holds both heroIds |
-| `picks` | `{ side, rangeType, pickIndex }[4]` | In pick order; drives turn order (FR-082) and starting squares (FR-083) |
+| `picks` | `{ side, rangeType, pickIndex }[4]` | In pick order (Draft: L, D, D, L; Mirror: Light's pick fills hero 1 of both sides, Dark's pick hero 2) (FR-081) |
+| `turnOrder` | `{ light: [pickIndex, pickIndex], dark: [pickIndex, pickIndex] }` | Chosen by each side, Light first: first entry plays turn 1 (Light) / 2 (Dark), second turn 3 / 4 (FR-082) |
+| `startFiles` | `{ [pickIndex]: 'c' \| 'f' }` | Chosen by each side; one hero per Bishop file (FR-083) |
 
 ## Unit
 
@@ -105,7 +106,7 @@ skipped ──following turn, Beginning of Turn──▶ active, health = floor(
 | `kingInCheckAfterLead` | Blocks After Lead / End of Turn abilities and free Meal |
 | `checkBonusClaimed` | 2 D for checking, once per turn |
 | `abilitiesUsed` | Set of general abilities used (`inspiredLead`, `heroRetreat`) |
-| `inspiredLeadBonus` | +2 per D spent, consumed by the next Lead |
+| `inspiredLeadBonus` | +2 per D spent, used by this turn's Lead only; lost if no Lead is made (reset at `beforeTurn`) |
 | `lead` | LeadAttempt \| null |
 
 ## LeadAttempt

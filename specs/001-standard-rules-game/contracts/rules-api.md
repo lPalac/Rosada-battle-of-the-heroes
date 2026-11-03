@@ -8,7 +8,7 @@ This is the only interface between the rules core and everything else (3D table,
 
 ```ts
 // Create a new game from setup choices and static data.
-function createGame(setup: SetupChoices, data: StaticData, rngSeed: string): GameState;
+function createGame(setup: SetupChoices, data: StaticData): GameState;
 
 // Every action the active player (or the player owning a pendingDecision) may take now.
 // Used by the UI for highlights and by tests to check legality.
@@ -20,7 +20,8 @@ function apply(state: GameState, action: Action):
   | { ok: false; error: RuleError };
 
 // Undo the last action if no reveal event happened since (R-11).
-function undo(history: GameState[]): GameState[] | null;
+// The history is the action log; the state is rebuilt by re-applying it.
+function undo(history: Action[]): Action[] | null;
 
 // Position checks used when switching sandbox → rules (FR-103).
 function validatePosition(state: GameState): PositionProblem[];
@@ -37,15 +38,17 @@ function leadPreview(state: GameState): { needsRoll: boolean; modifiers: Modifie
 ```ts
 type Action =
   // setup
-  | { type: 'pickHero'; side: Side; rangeType: RangeType }
-  | { type: 'startGame' }
+  | { type: 'pickHero'; side: Side; rangeType: RangeType }   // Draft or Mirror order (FR-081)
+  | { type: 'setTurnOrder'; side: Side; first: number }      // pickIndex of the side's hero that plays first; Light before Dark (FR-082)
+  | { type: 'setStartFile'; pickIndex: number; file: 'c' | 'f' } // which Bishop the hero starts behind (FR-083)
+  | { type: 'startGame' }                                    // needs all picks, both turn orders and start files
   // phase control
   | { type: 'endPhase' }                        // advance when the phase has nothing mandatory left
   // move
   | { type: 'moveStep'; to: Coord }             // one adjacent square
   | { type: 'buy'; item: 'drink' | 'meal' }     // only while tavernShopOpen
   // general abilities
-  | { type: 'inspiredLead'; destiny: number }   // Before Lead
+  | { type: 'inspiredLead'; destiny: number }   // Before Lead; bonus only for this turn's Lead
   | { type: 'heroRetreat'; tavern: Coord }      // End of Turn
   // lead
   | { type: 'announceLead'; unitId: string; to: Coord; promoteTo?: UnitType }
@@ -93,5 +96,6 @@ Events marked as *reveal* for undo: `rolled`, `unitDestroyed`, `heroRammed`, `he
 1. `apply` never returns a state that fails `validatePosition` while `enforcement = 'rules'`.
 2. Every action in `legalActions(state)` succeeds with `apply`; any other action returns `ok: false`.
 3. `JSON.parse(JSON.stringify(state))` deep-equals `state`.
+3a. Re-applying the action log (with its roll values) to `createGame(setup, data)` gives the same state. No seed is needed.
 4. While `pendingDecision` is set, `legalActions` only contains answers to it.
 5. In `sandbox` mode only `sandbox*`, `setEnforcement` and `submitRoll` (free roll, not applied) are legal; no result is declared.
