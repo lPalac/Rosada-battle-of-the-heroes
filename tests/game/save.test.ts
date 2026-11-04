@@ -57,3 +57,18 @@ describe('fixture export (FR-204)', () => {
     expect(rebuilt.tokens.peaceTreaty).toBe('war');
   });
 });
+
+describe('003 – older saves load (T008)', () => {
+  it('a version 1 save (001/002 shape) gets the 003 defaults and replays', () => {
+    const initial = createSetup({ mode: 'draft', playerCount: 4 }) as unknown as Record<string, unknown>;
+    for (const k of ['stage', 'epicPending', 'royalFavors']) delete initial[k];
+    delete (initial.destiny as { well: Record<string, unknown> }).well.depletedBy;
+    const text = JSON.stringify({ ...toSaveFile(initial as never, setupActions), version: 1 });
+    const save = parseSaveFile(text);
+    expect(save.initial.stage).toBe('starting');
+    expect(save.initial.royalFavors.light.track).toEqual([]);
+    const s = replay(save.initial, save.actions);
+    expect(s.heroes.every((h) => h.epic === null && h.heroUnitId === null)).toBe(true);
+    expect(s.heroes.map((h) => h.heroUnitType)).toEqual(['knight', 'bishop', 'bishop', 'knight']);
+  });
+});

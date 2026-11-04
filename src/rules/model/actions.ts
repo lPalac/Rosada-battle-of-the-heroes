@@ -1,4 +1,4 @@
-import type { Coord, HeroId, Phase, RangeType, Side, UnitType } from './types.ts';
+import type { Coord, EpicDestiny, FavorId, HeroId, Phase, PowerId, RangeType, Side, UnitKind, UnitType } from './types.ts';
 import type { GameResult } from './state.ts';
 
 /** How a cost is split between the hero's own pool and the side's Common Pool (FR-072). */
@@ -21,6 +21,10 @@ export type Action =
   // general abilities
   | { type: 'inspiredLead'; destiny: number; pay?: Payment }
   | { type: 'heroRetreat'; tavern: Coord; pay?: Payment }
+  // Legendary Powers (Beginning of Turn; End of Turn with Swift Change)
+  | { type: 'becomeHeroUnit'; types: UnitType[] }
+  | { type: 'leaveHeroUnit' }
+  | { type: 'kingsForces' }
   // lead
   | { type: 'announceLead'; unitId: string; to: Coord; promoteTo?: UnitType }
   | { type: 'useRevenge' }
@@ -35,20 +39,26 @@ export type Action =
   | { type: 'sandboxPlace'; target: { unitId?: string; heroId?: string }; to: Coord | 'graveyard' }
   | {
       type: 'sandboxSet';
-      path: 'health' | 'pool' | 'common' | 'revenge' | 'peaceTreaty';
+      path: SandboxPath;
       target?: string;
       value: number | string;
     };
+
+export type SandboxPath =
+  | 'health' | 'pool' | 'common' | 'revenge' | 'peaceTreaty'
+  | 'stage' | 'destiny' | 'favor' | 'kingsForces' | 'heroUnit' | 'well';
 
 export type PendingDecision =
   | { type: 'promotion'; unitId: string; chooserHeroId: HeroId }
   | { type: 'unconsciousTavern'; heroId: HeroId; options: Coord[] }
   | { type: 'advanceSquare'; heroId: HeroId; options: Coord[] }
-  | { type: 'drawOffer'; fromSide: Side };
+  | { type: 'drawOffer'; fromSide: Side }
+  | { type: 'epicDestiny'; heroId: HeroId; options: EpicDestiny[] };
 
 export type DecisionAnswer =
   | { type: 'promotion'; to: UnitType }
-  | { type: 'square'; to: Coord };
+  | { type: 'square'; to: Coord }
+  | { type: 'destiny'; destiny: EpicDestiny };
 
 export type GameEvent =
   | { type: 'phaseChanged'; heroId: HeroId; phase: Phase }
@@ -60,7 +70,7 @@ export type GameEvent =
   | { type: 'leadAnnounced'; unitId: string; from: Coord; to: Coord; needsRoll: boolean }
   | { type: 'leadFailed'; unitId: string }
   | { type: 'unitLed'; unitId: string; from: Coord; to: Coord; path: Coord[] }
-  | { type: 'unitDestroyed'; unitId: string; by: 'battle' }
+  | { type: 'unitDestroyed'; unitId: string; by: 'battle'; leftPlay?: boolean }
   | { type: 'heroRammed'; heroId: HeroId; byUnitId: string; landing: Coord; sentToStart: boolean }
   | { type: 'heroPushed'; heroId: HeroId; byUnitId: string; landing: Coord; sentToStart: boolean }
   | { type: 'heroWounded'; heroId: HeroId; amount: number; health: number }
@@ -86,7 +96,14 @@ export type GameEvent =
   | { type: 'gameEnded'; result: GameResult }
   | { type: 'enforcementChanged'; mode: 'rules' | 'sandbox' }
   | { type: 'sandboxEdited'; what: string; target?: string; value: unknown }
-  | { type: 'setupChanged' };
+  | { type: 'setupChanged' }
+  | { type: 'epicStageStarted' }
+  | { type: 'destinyChosen'; heroId: HeroId; destiny: EpicDestiny }
+  | { type: 'favorProgress'; side: Side; id: FavorId; progress: number; target: number }
+  | { type: 'favorCompleted'; side: Side; id: FavorId; slot: number }
+  | { type: 'powerUnlocked'; side: Side; power: PowerId }
+  | { type: 'heroUnitChanged'; heroId: HeroId; on: boolean; types: UnitType[] }
+  | { type: 'unitCreated'; unitId: string; side: Side; unitType: UnitType; kind: UnitKind; at: Coord };
 
 /** Events that reveal new information: undo stops at them (FR-012, research R-11). */
 export const REVEAL_EVENTS: readonly GameEvent['type'][] = [

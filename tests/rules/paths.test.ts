@@ -56,3 +56,15 @@ describe('unit paths (FR-003, FR-004)', () => {
     expect(targets(s, 'a1')).toEqual([]);
   });
 });
+
+describe('003 – units with several path types (T009)', () => {
+  it('a Rook + Knight unit Leads and threatens along both paths', async () => {
+    const { attackSquares } = await import('../../src/rules/paths.ts');
+    const s = structuredClone(board({ d4: 'R', h1: 'K', a8: 'k' }));
+    const u = s.units.find((x) => x.id === 'L-R@d4')!;
+    u.extraTypes = ['knight'];
+    expect(targets(s, 'd4')).toEqual(expect.arrayContaining(['a4', 'd8', 'b3', 'b5', 'c2', 'c6', 'e2', 'e6', 'f3', 'f5']));
+    expect(targets(s, 'd4')).toHaveLength(14 + 8);
+    expect(attackSquares(s, u).map(name)).toEqual(expect.arrayContaining(['d1', 'h4', 'e6', 'f5']));
+  });
+});

@@ -168,3 +168,33 @@ describe('002 US3 – resume rules from a physical sandbox position', () => {
     expect(s.units.find((u) => u.id === 'L-R@h1')?.hasBeenLed).toBe(true);
   });
 });
+
+describe('003 – sandbox values for the Epic Stage, Royal Favors and Hero Units (FR-050, T047)', () => {
+  it('edits stage, destiny, Royal Favors, King’s Forces and Hero Units; the position check covers Hero Units', () => {
+    let s = act(board({ a2: 'P', b2: 'P', c2: 'P', d2: 'P' }, { heroes: { H1: 'e4' } }), { type: 'setEnforcement', mode: 'sandbox' }).state;
+    s = run(s, [
+      { type: 'sandboxSet', path: 'stage', value: 'epic' },
+      { type: 'sandboxSet', path: 'destiny', target: 'H1', value: 'fanatic' },
+      { type: 'sandboxSet', path: 'favor', target: 'light:overwhelm', value: 1 },
+      { type: 'sandboxSet', path: 'favor', target: 'light:decimate', value: 'done' },
+      { type: 'sandboxSet', path: 'favor', target: 'light:tidesOfDestiny', value: 2 },
+      { type: 'sandboxSet', path: 'kingsForces', target: 'light', value: 2 },
+      { type: 'sandboxSet', path: 'heroUnit', target: 'H1', value: 'rook,knight' },
+    ]).state;
+    expect(s.stage).toBe('epic');
+    expect(hero(s, 'H1')).toMatchObject({ maxHealth: 20, health: 20, epic: { destiny: 'fanatic' }, heroUnitId: 'HU-H1' });
+    expect(s.tokens.peaceTreaty).toBe('removed');
+    expect(s.royalFavors.light.status.overwhelm).toEqual({ progress: 1, done: false });
+    expect(s.royalFavors.light.track).toEqual(['decimate', 'tidesOfDestiny', 'tidesOfDestiny']);
+    expect(s.royalFavors.light.kingsForces).toBe(2);
+    expect(unitOn(s, 'e4')).toMatchObject({ kind: 'hero', type: 'rook', extraTypes: ['knight'] });
+    // Moving the Hero Unit moves its hero; a Hero Unit may not share a square.
+    s = act(s, { type: 'sandboxPlace', target: { unitId: 'HU-H1' }, to: sq('d2') }).state;
+    expect(name(hero(s, 'H1').pos)).toBe('d2');
+    const r = apply(s, { type: 'setEnforcement', mode: 'rules' });
+    expect(r.ok ? [] : r.error.problems?.map((p) => p.code)).toContain('HERO_UNIT_SHARES');
+    s = act(s, { type: 'sandboxPlace', target: { heroId: 'H1' }, to: sq('e5') }).state;
+    expect(unitOn(s, 'e5')?.id).toBe('HU-H1');
+    expect(act(s, { type: 'setEnforcement', mode: 'rules' }).state.enforcement).toBe('rules');
+  });
+});

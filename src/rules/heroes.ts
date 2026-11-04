@@ -7,7 +7,10 @@ import type { Hero } from './model/hero.ts';
 import type { GameState } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import type { Coord, Side } from './model/types.ts';
+import { heroIsBloodied } from './generation.ts';
+import { leadRange, removeHeroUnit } from './hero-unit.ts';
 import { unitAt } from './paths.ts';
+import { complete, progress } from './royal-favors.ts';
 import { onHeroEntersSquare, onHeroLeavesSquare } from './taverns.ts';
 
 /** Movement for a turn: base − penalties, never reduced by more than 2 (FR-022). */
@@ -43,7 +46,8 @@ export function moveStep(ctx: Ctx, to: Coord): void {
 }
 
 export function unitsInRange(state: GameState, hero: Hero): Unit[] {
-  return state.units.filter((u) => u.side === hero.side && chebyshev(u.pos, hero.pos) <= hero.range);
+  const range = leadRange(state, hero);
+  return state.units.filter((u) => u.side === hero.side && chebyshev(u.pos, hero.pos) <= range);
 }
 
 export function heal(ctx: Ctx, h: Hero, amount: number, reason: string): void {
@@ -59,12 +63,22 @@ export function heal(ctx: Ctx, h: Hero, amount: number, reason: string): void {
 export function wound(ctx: Ctx, h: Hero, amount: number, source: { enemySide: Side | null }): void {
   if (h.status.unconscious || amount <= 0) return;
   const before = h.health;
+  const wasBloodied = heroIsBloodied(ctx.s, h);
   h.health = Math.max(0, h.health - amount);
   emit(ctx, { type: 'heroWounded', heroId: h.id, amount: before - h.health, health: h.health });
   if (source.enemySide) {
     gain(ctx, { side: source.enemySide }, DESTINY.woundEnemyHero, 'woundEnemyHero');
     const resilient = resilientPointsPassed(h.healthBarId, before, h.health);
     gain(ctx, { side: h.side, heroId: h.id }, resilient, 'resilientDestiny');
+    // Vanquish your Foes: an enemy hero to 0 completes it; two different Epic enemies brought to Bloodied too.
+    if (h.health === 0) complete(ctx, source.enemySide, 'vanquishYourFoes');
+    else if (!wasBloodied && heroIsBloodied(ctx.s, h)) {
+      const rec = ctx.s.royalFavors[source.enemySide];
+      if (!rec.vanquishBloodied.includes(h.id)) {
+        rec.vanquishBloodied.push(h.id);
+        progress(ctx, source.enemySide, 'vanquishYourFoes', 1);
+      }
+    }
   }
   if (h.health === 0) {
     h.status.unconscious = true;
@@ -84,6 +98,8 @@ export function queueDecision(ctx: Ctx, d: GameState['decisionQueue'][number]): 
 export function placeHero(ctx: Ctx, h: Hero, to: Coord, reason: string): void {
   const from = h.pos;
   if (eq(from, to)) return;
+  // A hero placed elsewhere by a rule (Retreat, Unconscious) stops being a Hero Unit first (003 spec Q-37 default).
+  if (h.heroUnitId) removeHeroUnit(ctx, h);
   if (h.id === ctx.s.activeHeroId) onHeroLeavesSquare(ctx, h);
   h.pos = to;
   emit(ctx, { type: 'heroMoved', heroId: h.id, from, to, reason });

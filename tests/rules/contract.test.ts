@@ -123,3 +123,71 @@ describe('rules core guarantees (contracts/rules-api.md)', () => {
     expect(Math.max(...turns)).toBeGreaterThan(10);
   });
 });
+
+// 003 contracts/rules-api-changes.md guarantees 8–12, over playouts that reach the Epic Stage and use Hero Units.
+const SIX = ['overwhelm', 'decimate', 'greatIncursion', 'tacticalGenius', 'royalsFury', 'destinedForGreatness'] as const;
+const epicGames = Array.from({ length: 10 }, (_, i) => playout(seededRng(`epic-${i}`), 300,
+  board(START, {
+    heroes: { H1: 'd3', H2: 'e6', H3: 'f3', H4: 'c6' }, wellRemaining: 3,
+    ...(i % 2 ? { royalFavors: { light: [...SIX], dark: [...SIX] }, kingsForces: { light: 1, dark: 1 } } : {}),
+  })));
+
+describe('003 guarantees (contracts/rules-api-changes.md)', () => {
+  it('the playouts reach the Epic Stage and use Hero Units', () => {
+    expect(epicGames.filter((g) => g.states.at(-1)!.stage === 'epic').length).toBeGreaterThanOrEqual(3);
+    expect(epicGames.some((g) => g.states.some((s) => s.units.some((u) => u.kind === 'hero')))).toBe(true);
+  });
+
+  it('8. the Epic Stage starts once, at a Before Turn after the Well is depleted', () => {
+    for (const g of epicGames) {
+      const log = g.states.at(-1)!.log;
+      const starts = log.filter((l) => l.type === 'epicStageStarted');
+      expect(starts.length).toBeLessThanOrEqual(1);
+      if (starts.length) {
+        expect(log.findIndex((l) => l.type === 'wellDepleted')).toBeLessThan(log.indexOf(starts[0]));
+        const i = g.states.findIndex((s) => s.stage === 'epic');
+        expect(g.states[i - 1].phase).toBe('beforeTurn'); // the last destiny answer comes in Before Turn
+        expect(g.states[i - 1].pendingDecision?.type).toBe('epicDestiny');
+      }
+    }
+  });
+
+  it('9. no side ever holds one Fanatic and one Dominant hero', () => {
+    for (const g of epicGames) for (const s of g.states) for (const side of ['light', 'dark'] as const) {
+      const d = s.heroes.filter((h) => h.side === side).map((h) => h.epic?.destiny);
+      expect(d.includes('fanatic') && d.includes('dominant')).toBe(false);
+    }
+  });
+
+  it('10. each numbered Royal Favor at most once, Tides at most 5, the track never shrinks', () => {
+    for (const g of epicGames) {
+      let prev = { light: 0, dark: 0 };
+      for (const s of g.states) for (const side of ['light', 'dark'] as const) {
+        const rec = s.royalFavors[side];
+        expect(rec.track.length).toBeGreaterThanOrEqual(prev[side]);
+        prev = { ...prev, [side]: rec.track.length };
+        expect(rec.tides).toBeLessThanOrEqual(5);
+        const numbered = rec.track.filter((id) => id !== 'tidesOfDestiny');
+        expect(new Set(numbered).size).toBe(numbered.length);
+      }
+    }
+  });
+
+  it('11. a Hero Unit is on the Battlefield, alone among units, and its hero stands on it', () => {
+    for (const g of epicGames) for (const s of g.states) for (const u of s.units.filter((x) => x.kind === 'hero')) {
+      expect(u.pos.x >= 1 && u.pos.x <= 8 && u.pos.y >= 1 && u.pos.y <= 8).toBe(true);
+      expect(s.units.filter((x) => x.pos.x === u.pos.x && x.pos.y === u.pos.y)).toHaveLength(1);
+      const h = s.heroes.find((x) => x.id === u.heroId)!;
+      expect([h.heroUnitId, h.pos]).toEqual([u.id, u.pos]);
+    }
+  });
+
+  it('12. replaying the log rebuilds stage, destinies, Royal Favors and Hero Units', () => {
+    for (const g of epicGames) {
+      const end = g.states.at(-1)!;
+      const r = replay(g.initial, g.actions);
+      expect([r.stage, r.heroes.map((h) => [h.epic, h.heroUnitId]), r.royalFavors, r.units.filter((u) => u.kind !== 'main')])
+        .toEqual([end.stage, end.heroes.map((h) => [h.epic, h.heroUnitId]), end.royalFavors, end.units.filter((u) => u.kind !== 'main')]);
+    }
+  });
+});

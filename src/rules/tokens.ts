@@ -5,7 +5,7 @@ import type { Side } from './model/types.ts';
 
 /** The Peace Treaty flips to War permanently on the first Destiny gain. */
 export function flipToWar(ctx: Ctx): void {
-  if (ctx.s.tokens.peaceTreaty === 'war') return;
+  if (ctx.s.tokens.peaceTreaty !== 'peace') return; // War stays; after the Epic Stage the token is gone (003 FR-006).
   ctx.s.tokens.peaceTreaty = 'war';
   emit(ctx, { type: 'tokenChanged', token: 'peaceTreaty', value: 'war' });
 }

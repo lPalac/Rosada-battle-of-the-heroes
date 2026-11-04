@@ -33,7 +33,8 @@ export function formatLogEntry(e: LogEntry): string | null {
       });
     case 'wellDepleted': return t('log.wellDepleted');
     case 'tokenChanged':
-      return d.token === 'peaceTreaty' ? t('log.war') : t('log.revenge', { side: t(`side.${d.side}`), n: d.value });
+      if (d.token === 'peaceTreaty') return d.value === 'removed' ? t('log.warRemoved') : t('log.war');
+      return t('log.revenge', { side: t(`side.${d.side}`), n: d.value });
     case 'promoted': return t('log.promoted', { unit: d.unitId, to: t(`unit.${d.to}`) });
     case 'check': return t('log.check', { side: t(`side.${d.side}`) });
     case 'abilityUsed': return t(`log.ability.${d.ability}`, { hero: d.heroId, n: d.destiny });
@@ -43,6 +44,17 @@ export function formatLogEntry(e: LogEntry): string | null {
     case 'gameEnded': return t('log.gameEnded');
     case 'enforcementChanged': return t(`log.enforcement.${d.mode}`);
     case 'sandboxEdited': return t('log.sandboxEdited', { what: d.what, target: d.target ?? '' });
+    case 'epicStageStarted': return t('log.epicStageStarted');
+    case 'destinyChosen': return t('log.destinyChosen', { hero: d.heroId, destiny: t(`destiny.${d.destiny}`) });
+    case 'favorProgress':
+      return t('log.favorProgress', { side: t(`side.${d.side}`), favor: t(`favor.${d.id}.name`), n: d.progress, target: d.target });
+    case 'favorCompleted': return t('log.favorCompleted', { side: t(`side.${d.side}`), favor: t(`favor.${d.id}.name`) });
+    case 'powerUnlocked': return t('log.powerUnlocked', { side: t(`side.${d.side}`), power: t(`power.${d.power}.name`) });
+    case 'heroUnitChanged':
+      return d.on
+        ? t('log.heroUnitOn', { hero: d.heroId, types: (d.types as string[]).map((x) => t(`unit.${x}`)).join(' + ') })
+        : t('log.heroUnitOff', { hero: d.heroId });
+    case 'unitCreated': return t('log.unitCreated', { unit: d.unitId, square: sq(d.at) });
     default: return null;
   }
 }

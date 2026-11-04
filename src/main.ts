@@ -17,6 +17,12 @@ import { HighlightView } from './table/highlights.ts';
 import { Picker, type Pick } from './table/picking.ts';
 import { PiecesView } from './table/pieces.ts';
 import { createScene } from './table/scene.ts';
+import { createRoom } from './table/room.ts';
+import { SheetsView } from './table/sheets.ts';
+import { createStrip } from './table/strip.ts';
+import { TracksView } from './table/tracks.ts';
+import { renderTracker } from './ui/tracker.ts';
+import assetsJson from './data/assets.json';
 import { Dialogs } from './ui/dialogs.ts';
 import { button, el, mount } from './ui/dom.ts';
 import { renderActions, renderHelp } from './ui/hud/actions.ts';
@@ -50,6 +56,18 @@ const pieces = new PiecesView(ts);
 const hl = new HighlightView();
 const dice = new DiceView(ts);
 ts.scene.add(boardView.group, pieces.group, hl.group, dice.group);
+// 003 table: room and wooden slab, Graveyard / Well strip, hero sheets, Royal Favor tracks and medallions (US7).
+const room = createRoom(ts.scene);
+const strip = createStrip();
+const sheets = new SheetsView(() => ts.requestRender());
+const tracks = new TracksView();
+ts.scene.add(strip, sheets.group, tracks.group);
+function syncTable(s: GameState): void {
+  if (s.status === 'setup') return;
+  sheets.sync(s);
+  tracks.sync(s);
+  ts.requestRender();
+}
 const picker = new Picker(ts.camera, canvas, () => [pieces.group, boardView.group]);
 
 // --- ui ---
@@ -63,6 +81,7 @@ let carriedMoved = false;
 let rolling = false;
 let settingsOpen = false;
 let modal = false;
+let trackerOpen = false;
 let lastError: RuleError | null = null;
 let forcedRoll: number | null = null;
 let diceWorld: DiceWorld | null = null;
@@ -103,6 +122,7 @@ function dispatch(action: Action): boolean {
 
 function onChange(s: GameState, events: GameEvent[]): void {
   if (events.some((e) => e.type === 'wellDepleted')) toasts.wellDepleted();
+  if (events.some((e) => e.type === 'epicStageStarted')) toasts.show(t('log.epicStageStarted'), { testid: 'epic-notice' });
   if (events.some((e) => e.type === 'phaseChanged' || e.type === 'unitLed' || e.type === 'leadAnnounced')) selected = null;
   if (s.status === 'playing') {
     const active = s.heroes.find((h) => h.id === s.activeHeroId);
@@ -110,6 +130,7 @@ function onChange(s: GameState, events: GameEvent[]): void {
   }
   if (session && s.status !== 'setup') saveLocal(session.initial, session.actions);
   if (s.status !== 'setup') pieces.sync(s, events);
+  syncTable(s);
   syncPhysics(s);
   render();
 }
@@ -124,6 +145,7 @@ function startSession(initial: GameState, actions: Action[] = []): void {
   targeting = null;
   held = null;
   if (session.state.status !== 'setup') pieces.sync(session.state, [], false);
+  syncTable(session.state);
   syncPhysics(session.state);
   render();
 }
@@ -391,6 +413,8 @@ function render(): void {
       newGame: () => { settingsOpen = false; clearLocal(); session = null; wizard.reset(); render(); },
       close: () => { settingsOpen = false; render(); },
     }));
+  } else if (trackerOpen) {
+    mount(overlay, renderTracker(s, () => { trackerOpen = false; render(); }));
   } else overlay.replaceChildren();
 
   if (!modal) {
@@ -420,12 +444,16 @@ function render(): void {
             offerDraw: () => dispatch({ type: 'offerDraw' }),
             inspiredLead: () => void inspiredLead(),
             heroRetreat,
+            becomeHeroUnit: (types) => dispatch({ type: 'becomeHeroUnit', types }),
+            leaveHeroUnit: () => dispatch({ type: 'leaveHeroUnit' }),
+            kingsForces: () => dispatch({ type: 'kingsForces' }),
           })
         : null,
     ),
     renderLog(s.log),
     el('div', { class: 'tools' },
       button(t('action.settings'), () => { settingsOpen = true; render(); }, { testid: 'open-settings' }),
+      button(t('action.tracker'), toggleTracker, { testid: 'open-tracker' }),
       button(t('action.resetCamera'), () => camera.reset(), { testid: 'reset-camera' }),
     ),
     toasts.root,
@@ -437,6 +465,20 @@ function render(): void {
   hl.show(highlights(s, selected), selected, pieces, extra);
   ts.requestRender();
 }
+
+function toggleTracker(): void {
+  trackerOpen = !trackerOpen;
+  render();
+}
+
+// `A` opens and closes the Royal Favor tracker (research R-10).
+window.addEventListener('keydown', (e) => {
+  const tag = (e.target as HTMLElement | null)?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'a' || e.key === 'A') {
+    if (state() && state()!.status !== 'setup') toggleTracker();
+  } else if (e.key === 'Escape' && trackerOpen) toggleTracker();
+});
 
 function lastErrorProblemsOpen(): boolean {
   return dialogs.open && !!dialogRoot.querySelector('[data-testid="problems"]');
@@ -484,6 +526,24 @@ if (import.meta.env.DEV || isE2E) {
       return worst;
     },
     /** Largest tilt of any unit or upright hero, in degrees. */
+    /** 003 US7: which table elements exist and what the sheets, tracks and medallions show. */
+    tableElements: () => ({
+      tableTop: !!room.tableTop.parent,
+      roomFloor: !!room.floor.parent,
+      boardBorder: !!boardView.border.parent,
+      strip: !!strip.parent,
+      sheets: sheets.list(),
+      tracks: tracks.trackList(),
+      medallions: tracks.medallionList(),
+      assets: assetsJson,
+    }),
+    sheetScreen: (heroId: string) => {
+      const mesh = sheets.meshOf(heroId);
+      if (!mesh) return null;
+      const p = mesh.position.clone().project(ts.camera);
+      const rect = canvas.getBoundingClientRect();
+      return { x: rect.left + ((p.x + 1) / 2) * rect.width, y: rect.top + ((1 - p.y) / 2) * rect.height };
+    },
     maxPieceTilt: () => {
       let worst = 0;
       for (const { obj } of pieces.allPieces()) {

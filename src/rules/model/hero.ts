@@ -1,4 +1,4 @@
-import type { Coord, HeroId, RangeType, Side } from './types.ts';
+import type { Coord, EpicDestiny, HeroId, RangeType, Side, UnitType } from './types.ts';
 
 export interface HeroStatus {
   unconscious: boolean;
@@ -29,7 +29,13 @@ export interface Hero {
   /** Hero Destiny Pool, starts at 3. */
   pool: number;
   status: HeroStatus;
-  /** Recorded for the later Hero Unit rule (v1: no effect). */
-  rammedBy: string | null;
+  /** The unit that last Rammed this hero and on which turn (Hero Unit rule, FR-032). */
+  rammedBy: { unitId: string; turn: number } | null;
+  /** Chosen when the Epic Stage starts. */
+  epic: { destiny: EpicDestiny } | null;
+  /** The unit this hero is while a Hero Unit. */
+  heroUnitId: string | null;
+  /** From heroes.json: Short range → knight, Long range → bishop. */
+  heroUnitType: UnitType;
   art: string;
 }

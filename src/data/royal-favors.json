@@ -1,0 +1,95 @@
+{
+  "$schema": "./schemas/royal-favors.schema.json",
+  "favors": [
+    {
+      "id": "bloodyTheCastleGates",
+      "order": 1,
+      "kind": "once"
+    },
+    {
+      "id": "overwhelm",
+      "order": 2,
+      "kind": "half",
+      "target": 2
+    },
+    {
+      "id": "greatIncursion",
+      "order": 3,
+      "kind": "once"
+    },
+    {
+      "id": "tacticalGenius",
+      "order": 4,
+      "kind": "once"
+    },
+    {
+      "id": "deployTroops",
+      "order": 5,
+      "kind": "once"
+    },
+    {
+      "id": "royalsFury",
+      "order": 6,
+      "kind": "count",
+      "target": 3
+    },
+    {
+      "id": "decimate",
+      "order": 7,
+      "kind": "once"
+    },
+    {
+      "id": "offenseIsTheBestDefense",
+      "order": 8,
+      "kind": "once"
+    },
+    {
+      "id": "vanquishYourFoes",
+      "order": 9,
+      "kind": "half",
+      "target": 2
+    },
+    {
+      "id": "destinedForGreatness",
+      "order": 10,
+      "kind": "once"
+    },
+    {
+      "id": "tidesOfDestiny",
+      "order": 11,
+      "kind": "once",
+      "repeat": 5
+    },
+    {
+      "id": "manifestEpicDestiny",
+      "order": 12,
+      "kind": "once"
+    }
+  ],
+  "powers": [
+    {
+      "id": "heroUnit",
+      "threshold": 6
+    },
+    {
+      "id": "kingsForces",
+      "threshold": 7
+    },
+    {
+      "id": "advancedWarfare",
+      "threshold": 8
+    },
+    {
+      "id": "farReach",
+      "threshold": 9
+    },
+    {
+      "id": "swiftChange",
+      "threshold": 10
+    },
+    {
+      "id": "finalForm",
+      "threshold": 11
+    }
+  ]
+}

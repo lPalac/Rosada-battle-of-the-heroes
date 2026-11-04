@@ -39,7 +39,7 @@ Decided Nov 3, 2026. This replaces the earlier Unity plan and may change later.
 
 ## Development
 
-Feature 001 (standard rules, generic heroes, 3D table, hot-seat, sandbox) is built. Requires Node.js 24 LTS.
+Features 001 (standard rules, generic heroes, 3D table, hot-seat, sandbox), 002 (sandbox physics) and 003 (Epic Stage, Royal Favors, Legendary Powers, table visuals) are built. Requires Node.js 24 LTS.
 
 ```powershell
 npm install
@@ -61,5 +61,7 @@ npm run build                     # static site in dist/
 | `tests/` | Vitest (`rules/`, `games/`, `physics/`, `game/`) and Playwright (`e2e/`) |
 
 See `specs/001-standard-rules-game/quickstart.md` and `specs/002-sandbox-physics/quickstart.md` for the manual checks.
+
+Feature 003 adds the rest of the basic rules: the Epic Stage (destiny choice, Common Pool split, Epic health, the War bonus ends), Hero Destiny Generation, Bloodied, the 12 Royal Favors with a tracker (button or `A`) and a track per side on the table, and the six Legendary Powers (Hero Units are units with `kind: 'hero'`; King's Forces creates auxiliary units). The table now looks closer to the Tabletop Simulator version: wooden table in a dim room, illustrated board border, Graveyard / Well strip, hero sheets with portrait, health track and Epic art, Royal Favor tracks and turn-order medallions. Older saves load with defaults for the new fields. See `specs/003-epic-stage/quickstart.md`; open rule questions are Q-35…Q-37 in its spec.
 
 Feature 002 adds physics to sandbox mode (pick up, drop and knock over units and hero figures; `src/physics/sandbox.ts`), a 25% larger board, and up to 2 friendly units per square (a Battle there destroys all of them).

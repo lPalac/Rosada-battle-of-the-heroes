@@ -23,7 +23,7 @@ describe('Destiny core (research R-09, FR-070, FR-072)', () => {
     const ctx = ctxOf();
     ctx.s.destiny.well.initialRemaining = 1;
     gain(ctx, { side: 'light' }, 3, 'test');
-    expect(ctx.s.destiny.well).toEqual({ initialRemaining: 0, depleted: true });
+    expect(ctx.s.destiny.well).toMatchObject({ initialRemaining: 0, depleted: true });
     expect(ctx.s.destiny.common.light).toBe(3);
     expect(ctx.events.filter((e) => e.type === 'wellDepleted')).toHaveLength(1);
     gain(ctx, { side: 'light' }, 2, 'test');

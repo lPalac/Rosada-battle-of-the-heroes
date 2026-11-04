@@ -13,7 +13,11 @@ test('US2-AS1 squares are at least 20% wider than in 001 and two units stand sid
   await page.waitForTimeout(800);
   const a = await hook<{ x: number; y: number }>(page, 'unitScreenOf', 'L-P-c');
   const b = await hook<{ x: number; y: number }>(page, 'unitScreenOf', 'L-P-d');
-  expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(20); // not on top of each other
+  // Not on top of each other: apart by a good part of a square at the current zoom (003 moved the camera back).
+  const c = await hook<{ x: number; y: number }>(page, 'screenOf', 'c3');
+  const e = await hook<{ x: number; y: number }>(page, 'screenOf', 'e3');
+  const squarePx = Math.hypot(c.x - e.x, c.y - e.y) / 2;
+  expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(0.3 * squarePx);
   await page.screenshot({ path: 'test-results/shared-square.png' });
 });
 

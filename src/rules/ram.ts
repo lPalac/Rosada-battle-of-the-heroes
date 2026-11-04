@@ -9,6 +9,7 @@ import type { Unit } from './model/unit.ts';
 import type { Coord } from './model/types.ts';
 import type { LeadOption } from './paths.ts';
 import { unitsAt } from './paths.ts';
+import { progress } from './royal-favors.ts';
 
 /** Landing is blocked by a King (King's Majesty) or the edge of the 10×10 grid → starting square. */
 function resolveLanding(ctx: Ctx, h: Hero, landing: Coord): { pos: Coord; sentToStart: boolean } {
@@ -30,7 +31,8 @@ export function applyRams(ctx: Ctx, unit: Unit, opt: LeadOption): RamOutcome[] {
   const hit = new Set<string>();
   for (const sq of opt.path) {
     for (const h of s.heroes) {
-      if (!eq(h.pos, sq) || hit.has(h.id) || h.status.unconscious) continue;
+      // Hero Units are never Rammed or pushed (003 FR-031a).
+      if (!eq(h.pos, sq) || hit.has(h.id) || h.status.unconscious || h.heroUnitId) continue;
       hit.add(h.id);
       if (h.side !== unit.side) {
         let landing: { pos: Coord; sentToStart: boolean };
@@ -42,9 +44,10 @@ export function applyRams(ctx: Ctx, unit: Unit, opt: LeadOption): RamOutcome[] {
         }
         const from = h.pos;
         h.pos = landing.pos;
-        h.rammedBy = unit.id;
+        h.rammedBy = { unitId: unit.id, turn: s.turnNumber };
         outcomes.push({ heroId: h.id, landing: landing.pos, sentToStart: landing.sentToStart, wounds: RULES.ramWounds, friendly: false });
         emit(ctx, { type: 'heroRammed', heroId: h.id, byUnitId: unit.id, landing: landing.pos, sentToStart: landing.sentToStart });
+        progress(ctx, unit.side, 'overwhelm', 1);
         emit(ctx, { type: 'heroMoved', heroId: h.id, from, to: landing.pos, reason: 'ram' });
       } else if (isKing) {
         // King's Banishment: friendly heroes are pushed one square in the direction the King is Led (spec Q-18).

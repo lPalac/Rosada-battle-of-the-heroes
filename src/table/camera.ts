@@ -11,17 +11,20 @@ export interface TableCamera {
   reset(): void;
 }
 
-const TARGET = new Vector3(0.6 * SQUARE, 0, 0);
+/** Looks slightly towards the active side so its hero sheets are in view with the whole board (003 FR-042). */
+function target(side: Side): Vector3 {
+  return new Vector3(0.6 * SQUARE, 0, (side === 'light' ? 1.4 : -1.4) * SQUARE);
+}
 
 /** Default view from the active side, scaled with the board (002 T015). */
 function homePosition(side: Side): Vector3 {
-  return new Vector3(0.6 * SQUARE, 13.5 * SQUARE, (side === 'light' ? 11.5 : -11.5) * SQUARE);
+  return new Vector3(0.6 * SQUARE, 14 * SQUARE, (side === 'light' ? 13.2 : -13.2) * SQUARE);
 }
 
 export function createCamera(ts: TableScene, canvas: HTMLCanvasElement): TableCamera {
   const { camera } = ts;
   const controls = new OrbitControls(camera, canvas);
-  controls.target.copy(TARGET);
+  controls.target.copy(target('light'));
   controls.enableDamping = false;
   controls.minDistance = 7 * SQUARE;
   controls.maxDistance = 30 * SQUARE;
@@ -29,13 +32,13 @@ export function createCamera(ts: TableScene, canvas: HTMLCanvasElement): TableCa
   controls.addEventListener('change', () => ts.requestRender());
   let side: Side = 'light';
   camera.position.copy(homePosition(side));
-  camera.lookAt(TARGET);
+  camera.lookAt(target(side));
   controls.update();
 
   function moveTo(pos: Vector3, animate: boolean): void {
     if (!animate) {
       camera.position.copy(pos);
-      controls.target.copy(TARGET);
+      controls.target.copy(target(side));
       controls.update();
       ts.requestRender();
       return;
@@ -50,7 +53,7 @@ export function createCamera(ts: TableScene, canvas: HTMLCanvasElement): TableCa
       const p = from.clone().lerp(pos, k);
       p.y += Math.sin(k * Math.PI) * 4;
       camera.position.copy(p);
-      controls.target.copy(fromTarget.clone().lerp(TARGET, k));
+      controls.target.copy(fromTarget.clone().lerp(target(side), k));
       controls.update();
       return t < 1;
     });

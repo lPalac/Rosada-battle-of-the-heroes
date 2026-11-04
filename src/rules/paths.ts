@@ -111,32 +111,43 @@ export function basicLeads(state: UnitView, unit: Unit, opts: PathOptions = {}):
     }
     return out;
   }
-  const def = DATA.units.types[unit.type];
-  const maxSteps = def.maxSteps ?? 1;
-  for (const d of directions(def.directions)) {
-    if (def.jump) {
-      const to = add(unit.pos, d);
-      if (!isBattlefield(to)) continue;
-      const occ = occupancy(state, unit, to);
-      if (occ.friendly && !friendlyEnd(to)) continue;
-      out.push({
-        ...base, to, isBattle: occ.enemies.length > 0, battleUnitIds: occ.enemies, path: [to], pushDir: knightPushDir(unit.pos, to),
-      });
-      continue;
-    }
-    const path: Coord[] = [];
-    let p = unit.pos;
-    for (let step = 0; step < maxSteps; step++) {
-      p = add(p, d);
-      if (!isBattlefield(p)) break;
-      const occ = occupancy(state, unit, p);
-      if (occ.friendly && !friendlyEnd(p)) break;
-      path.push(p);
-      out.push({ ...base, to: p, isBattle: occ.enemies.length > 0, battleUnitIds: occ.enemies, path: [...path], pushDir: d });
-      if (occ.friendly || occ.enemies.length) break;
+  // Several path types (Final Form): the union, first type wins when two reach the same square (003 FR-034).
+  for (const type of pathTypes(unit)) {
+    const def = DATA.units.types[type];
+    const maxSteps = def.maxSteps ?? 1;
+    const add1 = (o: LeadOption) => {
+      if (!out.some((x) => eq(x.to, o.to))) out.push(o);
+    };
+    for (const d of directions(def.directions)) {
+      if (def.jump) {
+        const to = add(unit.pos, d);
+        if (!isBattlefield(to)) continue;
+        const occ = occupancy(state, unit, to);
+        if (occ.friendly && !friendlyEnd(to)) continue;
+        add1({
+          ...base, to, isBattle: occ.enemies.length > 0, battleUnitIds: occ.enemies, path: [to], pushDir: knightPushDir(unit.pos, to),
+        });
+        continue;
+      }
+      const path: Coord[] = [];
+      let p = unit.pos;
+      for (let step = 0; step < maxSteps; step++) {
+        p = add(p, d);
+        if (!isBattlefield(p)) break;
+        const occ = occupancy(state, unit, p);
+        if (occ.friendly && !friendlyEnd(p)) break;
+        path.push(p);
+        add1({ ...base, to: p, isBattle: occ.enemies.length > 0, battleUnitIds: occ.enemies, path: [...path], pushDir: d });
+        if (occ.friendly || occ.enemies.length) break;
+      }
     }
   }
   return out;
+}
+
+/** The unit's path types: its type plus any extra types (pawn and castling rules only apply to the primary type). */
+export function pathTypes(unit: Unit): Unit['type'][] {
+  return [unit.type, ...(unit.extraTypes ?? []).filter((t) => t !== unit.type && t !== 'pawn')];
 }
 
 /** Squares a unit threatens (rulebook *Threaten*): includes the first friendly unit on a line (protection). */
@@ -145,21 +156,26 @@ export function attackSquares(state: UnitView, unit: Unit): Coord[] {
     const f = forward(unit.side);
     return [c(unit.pos.x - 1, unit.pos.y + f), c(unit.pos.x + 1, unit.pos.y + f)].filter(isBattlefield);
   }
-  const def = DATA.units.types[unit.type];
-  const maxSteps = def.maxSteps ?? 1;
   const out: Coord[] = [];
-  for (const d of directions(def.directions)) {
-    if (def.jump) {
-      const to = add(unit.pos, d);
-      if (isBattlefield(to)) out.push(to);
-      continue;
-    }
-    let p = unit.pos;
-    for (let step = 0; step < maxSteps; step++) {
-      p = add(p, d);
-      if (!isBattlefield(p)) break;
-      out.push(p);
-      if (unitAt(state, p)) break;
+  const push = (p: Coord) => {
+    if (!out.some((x) => eq(x, p))) out.push(p);
+  };
+  for (const type of pathTypes(unit)) {
+    const def = DATA.units.types[type];
+    const maxSteps = def.maxSteps ?? 1;
+    for (const d of directions(def.directions)) {
+      if (def.jump) {
+        const to = add(unit.pos, d);
+        if (isBattlefield(to)) push(to);
+        continue;
+      }
+      let p = unit.pos;
+      for (let step = 0; step < maxSteps; step++) {
+        p = add(p, d);
+        if (!isBattlefield(p)) break;
+        push(p);
+        if (unitAt(state, p)) break;
+      }
     }
   }
   return out;

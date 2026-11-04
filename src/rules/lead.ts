@@ -1,22 +1,31 @@
 // Lead: choose unit → announce square → roll → place; Battle/Destroy, Destiny, Promotion, Short range advance
 // (FR-030…FR-037, FR-005).
 import { adjacent8, eq } from './board.ts';
-import { allLegalLeads, isInCheck, legalLeadsForUnit } from './check.ts';
-import { activeHero, emit, fail, type Ctx } from './ctx.ts';
+import { allLegalLeads, isDiscoveredCheck, isInCheck, legalLeadsForUnit } from './check.ts';
+import { activeHero, emit, fail, hero, type Ctx } from './ctx.ts';
 import { DATA, RULES } from './data.ts';
 import { DESTINY, gain } from './destiny.ts';
 import { endGame } from './endgame.ts';
-import { isForbiddenEndSquare, queueDecision, unitsInRange } from './heroes.ts';
+import { isForbiddenEndSquare, queueDecision, unitsInRange, wound } from './heroes.ts';
+import type { Hero } from './model/hero.ts';
+import type { Unit } from './model/unit.ts';
 import type { GameState, LeadAttempt, Modifier } from './model/state.ts';
 import { otherSide, type Coord, type UnitType } from './model/types.ts';
-import { isPromotionSquare, type LeadOption } from './paths.ts';
+import { enemyRoyalRank, isPromotionSquare, type LeadOption } from './paths.ts';
 import { applyRams } from './ram.ts';
+import { complete, progress } from './royal-favors.ts';
 import { gainRevenge, useRevengeToken } from './tokens.ts';
 
 /** Legal Lead destinations for a unit the active hero could Lead now (in Range, check-legal). */
 export function leadOptionsForActiveHero(state: GameState): LeadOption[] {
   const h = activeHero(state);
-  return unitsInRange(state, h).flatMap((u) => legalLeadsForUnit(state, u));
+  return unitsInRange(state, h).flatMap((u) => legalLeadsForUnit(state, u)).filter((o) => !rammedByTarget(state, h, o));
+}
+
+/** A Hero Unit may not Lead itself into Battle with the unit that Rammed it on the last turn (003 FR-032). */
+function rammedByTarget(state: GameState, h: Hero, o: LeadOption): boolean {
+  if (o.unitId !== h.heroUnitId || !h.rammedBy || h.rammedBy.turn !== state.turnNumber - 1) return false;
+  return o.battleUnitIds.includes(h.rammedBy.unitId);
 }
 
 export function legalLeadTargets(state: GameState, unitId: string): { to: Coord; isBattle: boolean; path: Coord[] }[] {
@@ -32,16 +41,20 @@ export function noEligibleUnits(state: GameState): boolean {
   return allLegalLeads(state, activeHero(state).side).length === 0;
 }
 
-export function computeModifiers(state: GameState, unitType: UnitType): { needsRoll: boolean; modifiers: Modifier[] } {
+export function computeModifiers(
+  state: GameState, unitType: UnitType, kind: Unit['kind'] = 'main',
+): { needsRoll: boolean; modifiers: Modifier[] } {
   const side = activeHero(state).side;
   const modifiers: Modifier[] = [];
+  // War +2 only while the token shows War; it is gone from the Epic Stage on (003 FR-006).
   if (state.tokens.peaceTreaty === 'war') modifiers.push({ source: 'war', value: RULES.modifiers.war });
+  if (kind === 'hero') modifiers.push({ source: 'heroUnit', value: RULES.heroUnit.selfLeadBonus });
   if (isInCheck(state, side)) modifiers.push({ source: 'check', value: RULES.modifiers.kingInCheck });
   if (state.turn.inspiredLeadBonus > 0) modifiers.push({ source: 'inspiredLead', value: state.turn.inspiredLeadBonus });
   // No roll for King Leads (Determination), while the Peace side is up, or when even a 1 would reach the
   // target, so the Lead cannot fail (FR-033, spec Q-24).
   const lowest = 1 + modifiers.reduce((a, m) => a + m.value, 0);
-  const needsRoll = unitType !== 'king' && state.tokens.peaceTreaty === 'war' && lowest < RULES.leadTarget;
+  const needsRoll = unitType !== 'king' && state.tokens.peaceTreaty !== 'peace' && lowest < RULES.leadTarget;
   return { needsRoll, modifiers };
 }
 
@@ -50,7 +63,7 @@ export function leadPreview(state: GameState, unitId?: string): { needsRoll: boo
   const lead = state.turn.lead;
   if (lead) return { needsRoll: lead.needsRoll, modifiers: lead.modifiers, target: RULES.leadTarget };
   const unit = unitId ? state.units.find((u) => u.id === unitId) : undefined;
-  const { needsRoll, modifiers } = computeModifiers(state, unit?.type ?? 'pawn');
+  const { needsRoll, modifiers } = computeModifiers(state, unit?.type ?? 'pawn', unit?.kind);
   return { needsRoll, modifiers, target: RULES.leadTarget };
 }
 
@@ -68,8 +81,11 @@ export function announceLead(ctx: Ctx, unitId: string, to: Coord, promoteTo?: Un
     fail(unit.type === 'king' ? 'KING_THREATENED_SQUARE' : 'LEAD_LEAVES_KING_IN_CHECK',
       unit.type === 'king' ? 'A King may not be Led into a threatened square' : 'That Lead is not legal', unit.type === 'king' ? 'Threaten' : 'Check');
   }
+  if (rammedByTarget(s, h, opt)) {
+    fail('RAMMED_BY_TARGET', 'A Hero Unit may not Lead itself into Battle with the unit that Rammed it last turn', 'Ram');
+  }
   if (promoteTo && !DATA.units.promotion.includes(promoteTo)) fail('BAD_PROMOTION', 'Not a promotion choice', 'Promotion');
-  const { needsRoll, modifiers } = computeModifiers(s, unit.type);
+  const { needsRoll, modifiers } = computeModifiers(s, unit.type, unit.kind);
   const lead: LeadAttempt = {
     unitId, from: unit.pos, to, path: opt.path, isBattle: opt.isBattle, isCastling: opt.isCastling,
     isEnPassant: opt.isEnPassant, needsRoll, usedRevenge: false, roll: null, modifiers,
@@ -131,17 +147,25 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
     return;
   }
   const unit = s.units.find((u) => u.id === lead.unitId)!;
-  // Battle / Destroy: every enemy unit on the square (002 FR-006).
+  const discovered = isDiscoveredCheck(s, opt);
+  // Battle / Destroy: every enemy unit on the square (002 FR-006). Auxiliary and Hero Units leave play (003 FR-036).
   const victims = s.units.filter((u) => opt.battleUnitIds.includes(u.id));
   s.units = s.units.filter((u) => !opt.battleUnitIds.includes(u.id));
   for (const victim of victims) {
-    s.graveyard.push({ ...victim, enPassantTarget: null });
-    emit(ctx, { type: 'unitDestroyed', unitId: victim.id, by: 'battle' });
+    const leftPlay = victim.kind !== 'main';
+    if (!leftPlay) s.graveyard.push({ ...victim, enPassantTarget: null });
+    emit(ctx, { type: 'unitDestroyed', unitId: victim.id, by: 'battle', ...(leftPlay ? { leftPlay } : {}) });
   }
+  for (const victim of victims) if (victim.kind === 'hero') heroUnitDestroyed(ctx, hero(s, victim.heroId!), side);
   const destroyedKing = victims.some((v) => v.type === 'king');
   const from = unit.pos;
   unit.pos = opt.to;
   unit.hasBeenLed = true;
+  if (unit.kind === 'hero') {
+    const owner = hero(s, unit.heroId!);
+    emit(ctx, { type: 'heroMoved', heroId: owner.id, from: owner.pos, to: opt.to, reason: 'heroUnit' });
+    owner.pos = { ...opt.to };
+  }
   unit.enPassantTarget = null;
   if (opt.isDoubleStep) {
     unit.enPassantTarget = opt.path[0];
@@ -164,10 +188,14 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
     gain(ctx, { side }, DESTINY.destroyEnemy, 'destroyEnemy');
     for (const victim of victims) gain(ctx, { side: victim.side }, DESTINY.ownUnitLost, 'ownUnitLost');
     for (const victim of victims) if (victim.type === 'queen') gainRevenge(ctx, victim.side);
+    // Royal Favors from the Battle (rulebook *Royal Favors* 1 and 6).
+    if (opt.to.y === enemyRoyalRank(side)) complete(ctx, side, 'bloodyTheCastleGates');
+    if (unit.kind !== 'hero' && (unit.type === 'king' || unit.type === 'queen')) progress(ctx, side, 'royalsFury', victims.length);
   }
   const enemy = otherSide(side);
   if (isInCheck(s, enemy)) {
     emit(ctx, { type: 'check', side: enemy });
+    if (discovered) complete(ctx, side, 'tacticalGenius');
     if (!s.turn.checkBonusClaimed) {
       s.turn.checkBonusClaimed = true;
       gain(ctx, { side }, DESTINY.check, 'check');
@@ -180,10 +208,21 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
     if (lead.promoteTo) promote(ctx, unit.id, lead.promoteTo);
     else queueDecision(ctx, { type: 'promotion', unitId: unit.id, chooserHeroId: h.id });
   }
-  if (h.rangeType === 'short' && !h.status.unconscious) {
+  // A Hero Unit Leading others stays where it is (003 FR-031).
+  if (h.rangeType === 'short' && !h.status.unconscious && !h.heroUnitId) {
     const options = advanceOptions(s, opt.to, side);
     if (options.length > 0) queueDecision(ctx, { type: 'advanceSquare', heroId: h.id, options });
   }
+}
+
+/** A destroyed Hero Unit: 3 wounds, back to the starting square, no longer a Hero Unit (003 FR-031). */
+function heroUnitDestroyed(ctx: Ctx, h: Hero, by: GameState['heroes'][number]['side']): void {
+  h.heroUnitId = null;
+  emit(ctx, { type: 'heroUnitChanged', heroId: h.id, on: false, types: [] });
+  const from = h.pos;
+  h.pos = { ...h.startSquare };
+  emit(ctx, { type: 'heroMoved', heroId: h.id, from, to: h.pos, reason: 'heroUnitDestroyed' });
+  wound(ctx, h, RULES.heroUnit.destroyedWounds, { enemySide: by });
 }
 
 /** Squares adjacent to the Led unit not occupied by a King or an enemy unit (US2-AS3). */

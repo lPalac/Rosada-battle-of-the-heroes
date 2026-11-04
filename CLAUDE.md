@@ -4,7 +4,7 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ## Active feature
 
-`specs/002-sandbox-physics/`: physics in sandbox (pick up, drop, knock over), squares 25% larger, up to 2 friendly units per square (Battle destroys all; position check rules). Builds on `specs/001-standard-rules-game/` (built). Read the 002 `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
+`specs/003-epic-stage/` (built): Epic Stage (destiny choice, War +2 ends), Destiny generation, Bloodied, Royal Favors with a tracker, Legendary Powers (Hero Units as units, King's Forces + auxiliary units), and a table look based on the Tabletop Simulator version. Builds on `specs/001-standard-rules-game/` and `specs/002-sandbox-physics/` (both built). Read the 003 `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
 
 ## Tech stack
 

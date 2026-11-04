@@ -1,7 +1,7 @@
 // Keeps unit, hero, token and crystal meshes in sync with the GameState after every `apply` (FR-110).
 import { Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, TorusGeometry, Vector3 } from 'three';
 import type { GameEvent, GameState, Hero, Side, Unit } from '../rules/index.ts';
-import { createAsset, crystalMesh, heroRing, tokenMesh } from './assets.ts';
+import { assetEntry, createAsset, crystalMesh, heroRing, material, tokenMesh } from './assets.ts';
 import { shake, tweenTo } from './animate.ts';
 import { SQUARE, toWorld, unitOffset, ZONES } from './coords.ts';
 import type { TableScene } from './scene.ts';
@@ -118,6 +118,7 @@ export class PiecesView {
         place(u.id, `unit.${u.side}.${u.type}`, this.unitTarget(state, u, null), { kind: 'unit', id: u.id, type: u.type }, this.units);
       }
       this.units.get(u.id)!.userData.type = u.type;
+      this.syncMarker(this.units.get(u.id)!, u);
       if (!this.physics) this.units.get(u.id)!.rotation.set(0, yawOf(u.side), 0); // also stands fallen pieces up
     }
     const graveCount: Record<Side, number> = { light: 0, dark: 0 };
@@ -142,6 +143,8 @@ export class PiecesView {
         obj.add(ring);
         obj.scale.setScalar(0.85);
       }
+      // A Hero Unit stands for its hero: the unit mesh with the hero's ring is drawn instead of the figure (003 T039).
+      obj.visible = !h.heroUnitId;
     }
     const wounded = new Set(events.filter((e) => e.type === 'heroWounded').map((e) => (e as { heroId: string }).heroId));
     for (const id of wounded) {
@@ -161,6 +164,30 @@ export class PiecesView {
     this.ts.requestRender();
   }
 
+  /** Auxiliary units get a blue ring, Hero Units their hero's side ring and a gold band (003 FR-036, T039). */
+  private syncMarker(obj: Object3D, u: Unit): void {
+    const want = u.kind === 'main' ? null : u.kind;
+    const current = obj.children.find((c) => c.name === 'kindMarker');
+    if (current && current.userData.marker === want) return;
+    if (current) obj.remove(current);
+    if (!want) return;
+    const color = want === 'auxiliary' ? assetEntry('marker.auxiliary').color ?? '#7fd1ff' : '#ffd54f';
+    const ring = new Mesh(new TorusGeometry(0.34, want === 'hero' ? 0.06 : 0.04, 8, 28), material(color, { metalness: 0.5, roughness: 0.3 }));
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.05;
+    ring.name = 'kindMarker';
+    ring.userData = { kind: 'unit', id: u.id, marker: want };
+    obj.add(ring);
+    if (want === 'hero') {
+      const side = heroRing(u.side);
+      side.userData = { kind: 'unit', id: u.id };
+      side.position.y = 0.12;
+      ring.add(side);
+      side.rotation.x = 0;
+      side.position.set(0, 0, -0.07);
+    }
+  }
+
   private syncCrystals(state: GameState): void {
     this.crystals.clear();
     const pile = (n: number, at: Vector3) => {
@@ -178,9 +205,12 @@ export class PiecesView {
 
   private syncTokens(state: GameState): void {
     this.tokens.clear();
-    const peace = tokenMesh(state.tokens.peaceTreaty === 'peace' ? 'token.peace' : 'token.war');
-    peace.position.copy(ZONES.tokens).setY(0.03);
-    this.tokens.add(peace);
+    if (state.tokens.peaceTreaty !== 'removed') {
+      // The Declaration of War token leaves the table in the Epic Stage (003 FR-006).
+      const peace = tokenMesh(state.tokens.peaceTreaty === 'peace' ? 'token.peace' : 'token.war');
+      peace.position.copy(ZONES.tokens).setY(0.03);
+      this.tokens.add(peace);
+    }
     (['light', 'dark'] as const).forEach((side, s) => {
       for (let i = 0; i < state.tokens.revenge[side]; i++) {
         const r = tokenMesh('token.revenge');

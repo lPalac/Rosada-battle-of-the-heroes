@@ -4,7 +4,10 @@ import unitsJson from '../data/units.json';
 import heroesJson from '../data/heroes.json';
 import healthbarsJson from '../data/healthbars.json';
 import rulesJson from '../data/rules.json';
-import type { RangeType, Side, UnitType } from './model/types.ts';
+import favorsJson from '../data/royal-favors.json';
+import type { FavorId, PowerId, RangeType, Side, UnitType } from './model/types.ts';
+
+export type { FavorId, PowerId };
 
 export interface HeroDefinition {
   id: string;
@@ -17,6 +20,23 @@ export interface HeroDefinition {
   healthBar: string;
   abilities: string[];
   art: string;
+  heroUnitType: UnitType;
+  portrait: string;
+  epicArt: string;
+}
+
+
+export interface FavorDefinition {
+  id: FavorId;
+  order: number;
+  kind: 'once' | 'half' | 'count';
+  target?: number;
+  repeat?: number;
+}
+
+export interface FavorsData {
+  favors: FavorDefinition[];
+  powers: { id: PowerId; threshold: number }[];
 }
 
 export interface HealthBar {
@@ -65,6 +85,17 @@ export interface RulesData {
     failedLead: number;
   };
   abilities: { heroRetreat: { cost: number } };
+  heroUnit: { range: number; farReachRange: number; selfLeadBonus: number; destroyedWounds: number };
+  generation: { base: number };
+  favors: {
+    destinedForGreatness: number;
+    greatIncursionUnits: number;
+    greatIncursionRanks: number;
+    deployTroopsMax: number;
+    decimate: number;
+    offenseAttackers: number;
+    royalsFury: number;
+  };
 }
 
 export interface StaticData {
@@ -73,6 +104,7 @@ export interface StaticData {
   heroes: HeroDefinition[];
   healthbars: HealthBar[];
   rules: RulesData;
+  favors: FavorsData;
 }
 
 export function loadStaticData(): StaticData {
@@ -82,12 +114,14 @@ export function loadStaticData(): StaticData {
     heroes: (heroesJson as unknown as { heroes: HeroDefinition[] }).heroes,
     healthbars: (healthbarsJson as unknown as { bars: HealthBar[] }).bars,
     rules: rulesJson as unknown as RulesData,
+    favors: favorsJson as unknown as FavorsData,
   };
 }
 
 /** The data every rules module reads. Tunables live here, never as literals in code (constitution III). */
 export const DATA: StaticData = loadStaticData();
 export const RULES: RulesData = DATA.rules;
+export const FAVORS: FavorsData = DATA.favors;
 
 export function heroDefinition(id: string): HeroDefinition {
   const def = DATA.heroes.find((h) => h.id === id);

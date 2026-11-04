@@ -59,8 +59,10 @@ export function isDiscoveredCheck(state: UnitView, opt: LeadOption): boolean {
   const after = { units: unitsAfterLead(state, opt) };
   const enemyKing = kingOf(after, otherSide(unit.side));
   if (!enemyKing) return false;
+  // Only a check that the Lead reveals: a unit that did not already give check before (003 Tactical Genius).
+  const checking = (view: UnitView, u: Unit) => attackSquares(view, u).some((p) => eq(p, enemyKing.pos));
   const others = after.units.filter((u) => u.side === unit.side && u.id !== unit.id);
-  return others.some((u) => attackSquares(after, u).some((p) => eq(p, enemyKing.pos)));
+  return others.some((u) => checking(after, u) && !checking(state, u));
 }
 
 /** Castling (rulebook *Castling*): King 2 squares toward a Rook in the royal rank, Rook on the crossed square. */

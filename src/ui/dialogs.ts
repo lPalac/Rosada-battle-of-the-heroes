@@ -2,8 +2,9 @@
 // and the position problems list (FR-103).
 import { t } from '../i18n/strings.ts';
 import {
-  DATA, squareName, type Action, type GameState, type Payment, type PositionProblem,
+  DATA, EPIC_DESTINIES, squareName, type Action, type GameState, type Payment, type PositionProblem,
 } from '../rules/index.ts';
+import { epicArtStyle, heroArtKeys } from './art.ts';
 import { button, el, mount } from './dom.ts';
 
 export class Dialogs {
@@ -36,6 +37,26 @@ export class Dialogs {
         el('div', { class: 'row' },
           button(t('dialog.accept'), () => dispatch({ type: 'answerDraw', accept: true }), { kind: 'primary', testid: 'draw-accept' }),
           button(t('dialog.decline'), () => dispatch({ type: 'answerDraw', accept: false }), { testid: 'draw-decline' })));
+      return true;
+    }
+    if (d.type === 'epicDestiny') {
+      // Three Epic forms; a side never holds one Fanatic and one Dominant hero (003 FR-002).
+      const h = s.heroes.find((x) => x.id === d.heroId)!;
+      const art = heroArtKeys(h).epic;
+      const other = s.heroes.find((x) => x.side === h.side && x.id !== h.id)?.epic?.destiny;
+      this.show(el('h3', {}, t('dialog.destiny', { hero: `${h.id} · ${t(`side.${h.side}`)} ${t(`range.${h.rangeType}`)}` })),
+        el('div', { class: 'muted' }, t('notice.epicStage')),
+        el('div', { class: 'row destiny-cards' }, ...EPIC_DESTINIES.map((destiny) => {
+          const allowed = d.options.includes(destiny);
+          return el('button', {
+            class: `destiny-card ${allowed ? '' : 'disabled'}`, disabled: !allowed, 'data-testid': `destiny-${destiny}`,
+            onclick: () => dispatch({ type: 'decide', decision: { type: 'destiny', destiny } }),
+          },
+          el('div', { class: 'destiny-art', style: epicArtStyle(art, destiny) }),
+          el('strong', {}, t(`destiny.${destiny}`)),
+          el('div', { class: 'muted small' }, t(`destiny.${destiny}.quote`)),
+          !allowed && other ? el('div', { class: 'small warn' }, t('dialog.destinyTaken', { other: t(`destiny.${other}`) })) : null);
+        })));
       return true;
     }
     if (d.type === 'unconsciousTavern') {

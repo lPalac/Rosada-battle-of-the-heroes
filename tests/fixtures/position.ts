@@ -3,7 +3,9 @@
 // `>5` (x = 9), taverns `<0` `>0` `<9` `>9`.
 import { act, newGame } from '../helpers/game.ts';
 import { DATA } from '../../src/rules/data.ts';
-import { apply, type GameState, type HeroId, type Phase, type RangeType, type Side, type UnitType } from '../../src/rules/index.ts';
+import {
+  apply, type EpicDestiny, type FavorId, type GameState, type HeroId, type Phase, type RangeType, type Side, type UnitType,
+} from '../../src/rules/index.ts';
 import { parseSquare, squareName } from '../../src/rules/board.ts';
 
 export interface PositionOptions {
@@ -12,7 +14,7 @@ export interface PositionOptions {
   health?: Partial<Record<HeroId, number>>;
   pools?: Partial<Record<HeroId, number>>;
   common?: Partial<Record<Side, number>>;
-  peaceTreaty?: 'peace' | 'war';
+  peaceTreaty?: 'peace' | 'war' | 'removed';
   revenge?: Partial<Record<Side, number>>;
   wellRemaining?: number;
   active?: HeroId;
@@ -22,6 +24,17 @@ export interface PositionOptions {
   led?: string[];
   /** Advance with endPhase until this phase (default: the first resting phase, usually `move`). */
   phase?: Phase;
+  // 003
+  /** `epic`: Epic health, War token removed, Well depleted; destinies from `epic` (default resolute). */
+  stage?: 'starting' | 'epic';
+  epic?: Partial<Record<HeroId, EpicDestiny>>;
+  /** Completed Royal Favors per side, in track order (repeat `tidesOfDestiny` for several Tides). */
+  royalFavors?: Partial<Record<Side, FavorId[]>>;
+  kingsForces?: Partial<Record<Side, number>>;
+  /** Heroes that are Hero Units, with their types (`['knight']`, `['rook', 'knight']`). */
+  heroUnits?: Partial<Record<HeroId, UnitType[]>>;
+  /** Squares whose units are auxiliary. */
+  auxiliary?: string[];
 }
 
 const TYPES: Record<string, UnitType> = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
@@ -63,11 +76,46 @@ export function position(diagram: string, opts: PositionOptions = {}): GameState
       });
     }
     if (heroPos[h.id]) h.pos = heroPos[h.id]!;
+    if (opts.stage === 'epic') {
+      const def = DATA.heroes.find((d) => d.id === h.definitionId)!;
+      h.maxHealth = def.epicMaxHealth;
+      h.health = def.epicMaxHealth;
+      h.epic = { destiny: opts.epic?.[h.id] ?? 'resolute' };
+    }
     if (opts.health?.[h.id] !== undefined) h.health = opts.health[h.id]!;
     if (opts.pools?.[h.id] !== undefined) h.pool = opts.pools[h.id]!;
     if (opts.movementPenalty?.[h.id] !== undefined) h.status.movementPenaltyNextTurn = opts.movementPenalty[h.id]!;
   }
   for (const u of s.units) if (opts.led?.includes(squareName(u.pos))) u.hasBeenLed = true;
+  for (const u of s.units) if (opts.auxiliary?.includes(squareName(u.pos))) u.kind = 'auxiliary';
+  if (opts.stage === 'epic') {
+    s.stage = 'epic';
+    s.tokens.peaceTreaty = 'removed';
+    s.destiny.well.initialRemaining = 0;
+    s.destiny.well.depleted = true;
+  }
+  for (const side of ['light', 'dark'] as const) {
+    const rec = s.royalFavors[side];
+    for (const id of opts.royalFavors?.[side] ?? []) {
+      const def = DATA.favors.favors.find((f) => f.id === id)!;
+      rec.track.push(id);
+      if (id === 'tidesOfDestiny') {
+        rec.tides += 1;
+        rec.status[id].progress = rec.tides;
+        rec.status[id].done = rec.tides >= (def.repeat ?? 1);
+      } else rec.status[id] = { progress: def.target ?? 1, done: true };
+    }
+    if (opts.kingsForces?.[side] !== undefined) rec.kingsForces = opts.kingsForces[side]!;
+  }
+  for (const [id, types] of Object.entries(opts.heroUnits ?? {})) {
+    const h = s.heroes.find((x) => x.id === id)!;
+    const [type, ...extra] = types!;
+    s.units.push({
+      id: `HU-${h.id}`, side: h.side, type, originalType: type, kind: 'hero', heroId: h.id,
+      ...(extra.length ? { extraTypes: extra } : {}), pos: { ...h.pos }, hasBeenLed: true, promoted: false, enPassantTarget: null,
+    });
+    h.heroUnitId = `HU-${h.id}`;
+  }
   if (opts.common) Object.assign(s.destiny.common, opts.common);
   if (opts.revenge) Object.assign(s.tokens.revenge, opts.revenge);
   if (opts.peaceTreaty) s.tokens.peaceTreaty = opts.peaceTreaty;

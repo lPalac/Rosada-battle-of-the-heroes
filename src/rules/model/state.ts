@@ -1,7 +1,7 @@
 import type { Hero } from './hero.ts';
 import type { PendingDecision } from './actions.ts';
 import type { Unit } from './unit.ts';
-import type { Coord, HeroId, Phase, RangeType, Side, UnitType } from './types.ts';
+import type { Coord, FavorId, HeroId, Phase, RangeType, Side, Stage, UnitType } from './types.ts';
 
 export interface Player {
   id: string;
@@ -29,7 +29,7 @@ export interface SetupChoices {
 }
 
 export interface Modifier {
-  source: 'war' | 'check' | 'inspiredLead';
+  source: 'war' | 'check' | 'inspiredLead' | 'heroUnit';
   value: number;
 }
 
@@ -78,6 +78,9 @@ export interface TurnFlags {
   bothKingsInCheckAtBeginning: boolean;
   /** Pawn that made a 2-square Lead this turn (keeps its en passant target one more turn). */
   doubleStepUnitId: string | null;
+  /** Phases in which the active hero already became or left a Hero Unit this turn (once per phase). */
+  heroUnitChanges: Phase[];
+  kingsForcesUsed: boolean;
 }
 
 export interface LedgerEntry {
@@ -90,13 +93,14 @@ export interface LedgerEntry {
 }
 
 export interface DestinyLedger {
-  well: { initialRemaining: number; depleted: boolean };
+  well: { initialRemaining: number; depleted: boolean; depletedBy: HeroId | null };
   common: { light: number; dark: number };
   entries: LedgerEntry[];
 }
 
 export interface Tokens {
-  peaceTreaty: 'peace' | 'war';
+  /** `removed` from the Epic Stage on: no War bonus. */
+  peaceTreaty: 'peace' | 'war' | 'removed';
   revenge: { light: number; dark: number };
 }
 
@@ -113,6 +117,24 @@ export interface LogEntry {
   data: Record<string, unknown>;
 }
 
+export interface FavorStatus {
+  progress: number;
+  done: boolean;
+}
+
+export interface RoyalFavorRecord {
+  status: Record<FavorId, FavorStatus>;
+  /** Different enemy heroes brought to Bloodied (Vanquish your Foes). */
+  vanquishBloodied: HeroId[];
+  /** Tides of Destiny completions, 0…5. */
+  tides: number;
+  tidesThisTurn: boolean;
+  /** Completion order: one entry per filled slot. Never shrinks. */
+  track: FavorId[];
+  /** Unspent King's Forces tokens. */
+  kingsForces: number;
+}
+
 export interface GameState {
   version: number;
   setup: SetupChoices;
@@ -127,6 +149,10 @@ export interface GameState {
   heroes: Hero[];
   destiny: DestinyLedger;
   tokens: Tokens;
+  stage: Stage;
+  /** The initial 16 ran out; the Epic Stage starts at the next Before Turn. */
+  epicPending: boolean;
+  royalFavors: Record<Side, RoyalFavorRecord>;
   pendingDecision: PendingDecision | null;
   /** Further decisions waiting behind `pendingDecision`, answered in order. */
   decisionQueue: PendingDecision[];

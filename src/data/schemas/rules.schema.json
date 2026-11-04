@@ -1,36 +1,210 @@
 {
   "$id": "rules.schema.json",
   "$defs": {
-    "n": { "type": "integer", "minimum": 0 },
-    "offer": { "type": "object", "required": ["cost", "heal"], "properties": { "cost": { "$ref": "#/$defs/n" }, "heal": { "$ref": "#/$defs/n" } } }
+    "n": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "offer": {
+      "type": "object",
+      "required": [
+        "cost",
+        "heal"
+      ],
+      "properties": {
+        "cost": {
+          "$ref": "#/$defs/n"
+        },
+        "heal": {
+          "$ref": "#/$defs/n"
+        }
+      }
+    }
   },
   "type": "object",
-  "required": ["leadTarget", "die", "modifiers", "ramWounds", "tavern", "maxMovementReduction", "revengeMax", "maxUnitsPerSquare", "banishmentMovementPenalty", "destiny", "abilities"],
+  "required": [
+    "leadTarget",
+    "die",
+    "modifiers",
+    "ramWounds",
+    "tavern",
+    "maxMovementReduction",
+    "revengeMax",
+    "maxUnitsPerSquare",
+    "banishmentMovementPenalty",
+    "destiny",
+    "abilities",
+    "heroUnit",
+    "generation",
+    "favors"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "leadTarget": { "type": "integer", "minimum": 1 },
-    "die": { "const": 20 },
+    "$schema": {
+      "type": "string"
+    },
+    "leadTarget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "die": {
+      "const": 20
+    },
     "modifiers": {
-      "type": "object", "required": ["war", "kingInCheck", "inspiredLeadPerDestiny"],
-      "properties": { "war": { "$ref": "#/$defs/n" }, "kingInCheck": { "$ref": "#/$defs/n" }, "inspiredLeadPerDestiny": { "$ref": "#/$defs/n" } }
+      "type": "object",
+      "required": [
+        "war",
+        "kingInCheck",
+        "inspiredLeadPerDestiny"
+      ],
+      "properties": {
+        "war": {
+          "$ref": "#/$defs/n"
+        },
+        "kingInCheck": {
+          "$ref": "#/$defs/n"
+        },
+        "inspiredLeadPerDestiny": {
+          "$ref": "#/$defs/n"
+        }
+      }
     },
-    "ramWounds": { "$ref": "#/$defs/n" },
+    "ramWounds": {
+      "$ref": "#/$defs/n"
+    },
     "tavern": {
-      "type": "object", "required": ["drink", "meal", "startTurnMovementPenalty"],
-      "properties": { "drink": { "$ref": "#/$defs/offer" }, "meal": { "$ref": "#/$defs/offer" }, "startTurnMovementPenalty": { "$ref": "#/$defs/n" } }
+      "type": "object",
+      "required": [
+        "drink",
+        "meal",
+        "startTurnMovementPenalty"
+      ],
+      "properties": {
+        "drink": {
+          "$ref": "#/$defs/offer"
+        },
+        "meal": {
+          "$ref": "#/$defs/offer"
+        },
+        "startTurnMovementPenalty": {
+          "$ref": "#/$defs/n"
+        }
+      }
     },
-    "maxMovementReduction": { "$ref": "#/$defs/n" },
-    "revengeMax": { "$ref": "#/$defs/n" },
-    "maxUnitsPerSquare": { "type": "integer", "minimum": 1 },
-    "banishmentMovementPenalty": { "$ref": "#/$defs/n" },
+    "maxMovementReduction": {
+      "$ref": "#/$defs/n"
+    },
+    "revengeMax": {
+      "$ref": "#/$defs/n"
+    },
+    "maxUnitsPerSquare": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "banishmentMovementPenalty": {
+      "$ref": "#/$defs/n"
+    },
     "destiny": {
       "type": "object",
-      "required": ["wellInitial", "heroPoolStart", "check", "destroyEnemy", "ownUnitLost", "woundEnemyHero", "failedLead"],
-      "additionalProperties": { "$ref": "#/$defs/n" }
+      "required": [
+        "wellInitial",
+        "heroPoolStart",
+        "check",
+        "destroyEnemy",
+        "ownUnitLost",
+        "woundEnemyHero",
+        "failedLead"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/n"
+      }
     },
     "abilities": {
-      "type": "object", "required": ["heroRetreat"],
-      "properties": { "heroRetreat": { "type": "object", "required": ["cost"], "properties": { "cost": { "$ref": "#/$defs/n" } } } }
+      "type": "object",
+      "required": [
+        "heroRetreat"
+      ],
+      "properties": {
+        "heroRetreat": {
+          "type": "object",
+          "required": [
+            "cost"
+          ],
+          "properties": {
+            "cost": {
+              "$ref": "#/$defs/n"
+            }
+          }
+        }
+      }
+    },
+    "heroUnit": {
+      "type": "object",
+      "required": [
+        "range",
+        "farReachRange",
+        "selfLeadBonus",
+        "destroyedWounds"
+      ],
+      "properties": {
+        "range": {
+          "$ref": "#/$defs/n"
+        },
+        "farReachRange": {
+          "$ref": "#/$defs/n"
+        },
+        "selfLeadBonus": {
+          "$ref": "#/$defs/n"
+        },
+        "destroyedWounds": {
+          "$ref": "#/$defs/n"
+        }
+      }
+    },
+    "generation": {
+      "type": "object",
+      "required": [
+        "base"
+      ],
+      "properties": {
+        "base": {
+          "$ref": "#/$defs/n"
+        }
+      }
+    },
+    "favors": {
+      "type": "object",
+      "required": [
+        "destinedForGreatness",
+        "greatIncursionUnits",
+        "greatIncursionRanks",
+        "deployTroopsMax",
+        "decimate",
+        "offenseAttackers",
+        "royalsFury"
+      ],
+      "properties": {
+        "destinedForGreatness": {
+          "$ref": "#/$defs/n"
+        },
+        "greatIncursionUnits": {
+          "$ref": "#/$defs/n"
+        },
+        "greatIncursionRanks": {
+          "$ref": "#/$defs/n"
+        },
+        "deployTroopsMax": {
+          "$ref": "#/$defs/n"
+        },
+        "decimate": {
+          "$ref": "#/$defs/n"
+        },
+        "offenseAttackers": {
+          "$ref": "#/$defs/n"
+        },
+        "royalsFury": {
+          "$ref": "#/$defs/n"
+        }
+      }
     }
   }
 }

@@ -68,7 +68,7 @@ describe('US5 – Destiny economy', () => {
     const s = board({ a1: 'R', a6: 'n' }, { heroes: { H1: 'b0' }, phase: 'lead', wellRemaining: 2 });
     const r = act(s, { type: 'announceLead', unitId: 'L-R@a1', to: sq('a6') });
     expect(eventsOf(r.events, 'wellDepleted')).toHaveLength(1);
-    expect(r.state.destiny.well).toEqual({ initialRemaining: 0, depleted: true });
+    expect(r.state.destiny.well).toMatchObject({ initialRemaining: 0, depleted: true });
     expect(r.state.destiny.common).toEqual({ light: 2, dark: 1 }); // overflow still taken (FAQ 11)
     expect(r.state.heroes.every((h) => h.maxHealth <= 10)).toBe(true); // still Starting Heroes
     expect(r.state.status).toBe('playing');

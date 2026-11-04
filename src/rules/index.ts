@@ -18,7 +18,10 @@ import {
   createGameState, createSetup, nextPicker, pickHero, picksComplete, setStartFile, setTurnOrder, setupReady, sidePicks,
 } from './setup.ts';
 import { buy, shopOpen } from './taverns.ts';
-import { autoAdvance, endPhase, startFirstTurn } from './turn.ts';
+import { autoAdvance, endPhase, settleFavors, startFirstTurn } from './turn.ts';
+import { canKingsForces, kingsForces } from './create.ts';
+import { chooseDestiny } from './epic.ts';
+import { becomeHeroUnit, canLeaveHeroUnit, heroUnitOptions, leaveHeroUnit } from './hero-unit.ts';
 
 export type ApplyResult = { ok: true; state: GameState; events: GameEvent[] } | { ok: false; error: RuleError };
 
@@ -58,8 +61,13 @@ function decide(ctx: Ctx, answer: DecisionAnswer): void {
   if (d.type === 'promotion') {
     if (answer.type !== 'promotion') fail('BAD_ANSWER', 'Choose a unit type', 'Promotion');
     promote(ctx, d.unitId, answer.to);
+  } else if (d.type === 'epicDestiny') {
+    if (answer.type !== 'destiny') fail('BAD_ANSWER', 'Choose a destiny', 'Epic Heroes');
+    s.pendingDecision = null;
+    chooseDestiny(ctx, d.heroId, answer.destiny);
   } else {
-    if (answer.type !== 'square' || !d.options.some((o) => eq(o, answer.to))) fail('BAD_ANSWER', 'Choose one of the offered squares', 'Decisions');
+    if (answer.type !== 'square') fail('BAD_ANSWER', 'Choose one of the offered squares', 'Decisions');
+    if (!d.options.some((o) => eq(o, answer.to))) fail('BAD_ANSWER', 'Choose one of the offered squares', 'Decisions');
     const h = hero(s, d.heroId);
     placeHero(ctx, h, answer.to, d.type === 'unconsciousTavern' ? 'unconscious' : 'advance');
   }
@@ -106,6 +114,9 @@ function dispatch(ctx: Ctx, action: Action): void {
     case 'buy': return buy(ctx, action.item, action.pay);
     case 'inspiredLead': return inspiredLead(ctx, action.destiny, action.pay);
     case 'heroRetreat': return heroRetreat(ctx, action.tavern, action.pay);
+    case 'becomeHeroUnit': return becomeHeroUnit(ctx, action.types);
+    case 'leaveHeroUnit': return leaveHeroUnit(ctx);
+    case 'kingsForces': return kingsForces(ctx);
     case 'announceLead': return announceLead(ctx, action.unitId, action.to, action.promoteTo);
     case 'useRevenge': return useRevenge(ctx);
     case 'submitRoll': return submitRoll(ctx, action.value);
@@ -122,6 +133,7 @@ export function apply(state: GameState, action: Action): ApplyResult {
   try {
     dispatch(ctx, action);
     if (ctx.s.status === 'playing' && ctx.s.enforcement === 'rules') autoAdvance(ctx);
+    else settleFavors(ctx);
   } catch (e) {
     if (e instanceof RuleFailure) return { ok: false, error: e.error };
     throw e;
@@ -159,12 +171,22 @@ export function legalActions(state: GameState): Action[] {
     out.length = 0;
     if (d.type === 'drawOffer') out.push({ type: 'answerDraw', accept: true }, { type: 'answerDraw', accept: false });
     else if (d.type === 'promotion') for (const to of DATA.units.promotion) out.push({ type: 'decide', decision: { type: 'promotion', to } });
+    else if (d.type === 'epicDestiny') for (const destiny of d.options) out.push({ type: 'decide', decision: { type: 'destiny', destiny } });
     else for (const to of d.options) out.push({ type: 'decide', decision: { type: 'square', to } });
     return out;
   }
   const ctx: Ctx = { s, events: [] };
   const h = activeHero(s);
+  const powers = () => {
+    for (const types of heroUnitOptions(s, h.id)) out.push({ type: 'becomeHeroUnit', types });
+    if (canLeaveHeroUnit(s, h.id)) out.push({ type: 'leaveHeroUnit' });
+    if (canKingsForces(s)) out.push({ type: 'kingsForces' });
+  };
   switch (s.phase) {
+    case 'beginningOfTurn':
+      powers();
+      out.push({ type: 'endPhase' });
+      break;
     case 'move':
       for (const to of legalMoveSquares(s)) out.push({ type: 'moveStep', to });
       if (shopOpen(ctx)) {
@@ -187,6 +209,7 @@ export function legalActions(state: GameState): Action[] {
       break;
     case 'endOfTurn':
       if (canHeroRetreat(ctx)) for (const tavern of taverns(h.side)) out.push({ type: 'heroRetreat', tavern });
+      powers();
       out.push({ type: 'endPhase' });
       break;
     default:
@@ -197,7 +220,7 @@ export function legalActions(state: GameState): Action[] {
 }
 
 export { isInCheck, legalLeadTargets, legalMoveSquares, leadPreview, validatePosition };
-export { DATA, RULES, loadStaticData } from './data.ts';
+export { DATA, RULES, loadStaticData, healthBar as healthBarOf } from './data.ts';
 export type { StaticData } from './data.ts';
 export * from './model/types.ts';
 export type * from './model/actions.ts';
@@ -211,3 +234,10 @@ export { abilitiesBlocked } from './abilities.ts';
 export { awaitingRoll } from './lead.ts';
 export { unitsAt } from "./paths.ts";
 export { isProtected, isCheckmate, threatenedSquares } from './check.ts';
+export { destinyGeneration, isBloodied } from './generation.ts';
+export { hasPower, unlockedPowers } from './royal-favors.ts';
+export { heroUnitOptions, canLeaveHeroUnit, leadRange } from './hero-unit.ts';
+export { canKingsForces } from './create.ts';
+export { destinyOptions } from './epic.ts';
+export { FAVORS } from './data.ts';
+export type { FavorDefinition, FavorsData } from './data.ts';

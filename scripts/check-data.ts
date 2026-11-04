@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Ajv } from 'ajv';
 
 const DIR = 'src/data';
-const FILES = ['board', 'units', 'heroes', 'healthbars', 'rules', 'assets'] as const;
+const FILES = ['board', 'units', 'heroes', 'healthbars', 'rules', 'assets', 'royal-favors'] as const;
 
 function load(name: string): any {
   return JSON.parse(readFileSync(join(DIR, name), 'utf8'));
@@ -34,6 +34,7 @@ export function checkData(): string[] {
     const bar = bars.get(h.healthBar);
     if (!bar) errors.push(`heroes.json ${h.id}: health bar ${h.healthBar} does not exist`);
     else if (h.maxHealth > bar.startingMax) errors.push(`heroes.json ${h.id}: maxHealth above the bar's red area (${bar.startingMax})`);
+    for (const k of ['portrait', 'epicArt']) if (!(h[k] in data.assets)) errors.push(`heroes.json ${h.id}: ${k} key ${h[k]} missing from assets.json`);
     if (!(h.art in data.assets)) errors.push(`heroes.json ${h.id}: art key ${h.art} missing from assets.json`);
   }
   for (const side of ['light', 'dark']) {
@@ -42,6 +43,18 @@ export function checkData(): string[] {
     }
   }
   for (const key of ['die.d20', 'board', 'tavern', 'crystal', 'token.peace', 'token.war', 'token.revenge']) {
+    if (!(key in data.assets)) errors.push(`assets.json: missing ${key}`);
+  }
+  const favors = data['royal-favors'];
+  const ids = new Set<string>();
+  for (const f of favors.favors) {
+    if (ids.has(f.id)) errors.push(`royal-favors.json: duplicate id ${f.id}`);
+    ids.add(f.id);
+    if (f.kind !== 'once' && !f.target) errors.push(`royal-favors.json ${f.id}: kind ${f.kind} needs a target`);
+  }
+  const th: number[] = favors.powers.map((p: any) => p.threshold);
+  if (th.some((t, i) => i > 0 && t <= th[i - 1])) errors.push('royal-favors.json: power thresholds must ascend');
+  for (const key of ['table.top', 'room.floor', 'board.border', 'strip.graveyard', 'sheet.hero', 'track.favors', 'medallion', 'marker.auxiliary']) {
     if (!(key in data.assets)) errors.push(`assets.json: missing ${key}`);
   }
   return errors;

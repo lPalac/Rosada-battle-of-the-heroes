@@ -18,6 +18,13 @@ export function renderHeroes(m: HudModel, playerName: (id: string) => string): H
           el('span', {}, t('hud.pool', { n: h.pool })),
         ),
         h.unconscious ? el('div', { class: 'muted' }, `${t('hud.unconscious')}${h.skipNextTurn ? ` – ${t('hud.skips')}` : ''}`) : null,
+        h.destiny || h.bloodied || h.heroUnit || m.stage === 'epic'
+          ? el('div', { class: 'row muted small' },
+              h.destiny ? el('span', { 'data-testid': `hero-${h.id}-destiny` }, t('hud.epic', { destiny: t(`destiny.${h.destiny}`) })) : null,
+              m.stage === 'epic' ? el('span', { 'data-testid': `hero-${h.id}-generation` }, t('hud.generation', { n: h.generation })) : null,
+              h.bloodied ? el('span', { class: 'bloodied', 'data-testid': `hero-${h.id}-bloodied` }, t('hud.bloodied')) : null,
+              h.heroUnit ? el('span', { 'data-testid': `hero-${h.id}-hero-unit` }, t('hud.heroUnit', { types: h.heroUnit.map((x) => t(`unit.${x}`)).join(' + ') })) : null)
+          : null,
       )),
   );
 }

@@ -1,11 +1,35 @@
 {
   "$schema": "./schemas/heroes.schema.json",
   "heroes": [
-    { "id": "generic-short", "name": "Short range hero", "rangeType": "short",
-      "movement": 5, "range": 1, "maxHealth": 10, "epicMaxHealth": 20,
-      "healthBar": "bar-20", "abilities": [], "art": "hero.short" },
-    { "id": "generic-long", "name": "Long range hero", "rangeType": "long",
-      "movement": 3, "range": 3, "maxHealth": 8, "epicMaxHealth": 16,
-      "healthBar": "bar-16", "abilities": [], "art": "hero.long" }
+    {
+      "id": "generic-short",
+      "name": "Short range hero",
+      "rangeType": "short",
+      "movement": 5,
+      "range": 1,
+      "maxHealth": 10,
+      "epicMaxHealth": 20,
+      "healthBar": "bar-20",
+      "abilities": [],
+      "art": "hero.short",
+      "heroUnitType": "knight",
+      "portrait": "portrait.short",
+      "epicArt": "epic.short"
+    },
+    {
+      "id": "generic-long",
+      "name": "Long range hero",
+      "rangeType": "long",
+      "movement": 3,
+      "range": 3,
+      "maxHealth": 8,
+      "epicMaxHealth": 16,
+      "healthBar": "bar-16",
+      "abilities": [],
+      "art": "hero.long",
+      "heroUnitType": "bishop",
+      "portrait": "portrait.long",
+      "epicArt": "epic.long"
+    }
   ]
 }

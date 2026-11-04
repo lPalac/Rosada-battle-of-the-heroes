@@ -3,7 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/e2e',
   outputDir: 'test-results',
-  timeout: 60_000,
+  timeout: 120_000, // physics tests take ~30 s each in software WebGL with the 003 table; parallel runs need headroom
+  // The 003 table (canvas textures, room) is heavy in software WebGL: more workers time out.
+  workers: 3,
   use: {
     baseURL: 'http://localhost:5174',
     viewport: { width: 1280, height: 800 },

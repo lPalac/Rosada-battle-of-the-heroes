@@ -112,3 +112,29 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .sandbox-editors .row { flex-wrap: nowrap; gap: 4px; }
 .sandbox-editors input { width: 44px; padding: 2px 4px; }
 .sandbox-badge { top: 70px; bottom: auto; }
+
+/* 003: Royal Favor tracker modal and destiny cards */
+.tracker { max-width: min(1100px, 96vw); width: 96vw; max-height: 92vh; overflow-y: auto; }
+.tracker > .row:first-child { justify-content: space-between; align-items: center; position: sticky; top: -10px; background: var(--panel); z-index: 1; }
+.tracker-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tracker-side h3 { margin: 4px 0; }
+.tracker-slots { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin: 6px 0; }
+.tracker-slots .slot { text-align: center; font-size: 11px; padding: 3px 0; border: 1px solid var(--panel-border); border-radius: 4px; opacity: .6; }
+.tracker-slots .slot.filled { background: #a07a10; color: #fff; opacity: 1; }
+.tracker-list, .tracker-powers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tracker-list .favor { padding: 4px 6px; border-radius: 6px; border-left: 4px solid transparent; }
+.tracker-list .favor.done { border-left-color: #4f8a3c; background: rgba(79,138,60,.15); }
+.tracker-list .favor.half { border-left-color: #d4a017; background: rgba(212,160,23,.12); }
+.favor-head { justify-content: space-between; }
+.tracker-powers .locked { opacity: .6; }
+.tracker-powers .unlocked strong { color: #ffd54f; }
+.tracker-next { margin-top: 6px; font-weight: 700; color: #ffd54f; }
+.small { font-size: 12px; }
+.warn { color: #e57373; }
+.bloodied { color: #e57373; font-weight: 700; }
+.destiny-cards { gap: 10px; align-items: stretch; }
+.destiny-card { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 6px; background: rgba(255,255,255,.05); border: 1px solid var(--panel-border); border-radius: 8px; color: inherit; cursor: pointer; text-align: left; }
+.destiny-card:hover:not(:disabled) { outline: 2px solid #ffd54f; }
+.destiny-card.disabled { opacity: .45; cursor: not-allowed; }
+.destiny-art { height: 180px; border-radius: 6px; background-color: #2a1d0e; background-repeat: no-repeat; }
+@media (max-width: 800px) { .tracker-cols { grid-template-columns: 1fr; } }

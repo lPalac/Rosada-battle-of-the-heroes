@@ -53,7 +53,7 @@ describe('US1 – Set up and start a game', () => {
     const s = draft(4);
     expect(reject(s, { type: 'startGame' })).toBe('SETUP_INCOMPLETE');
     const g = finish(s);
-    expect(g.destiny.well).toEqual({ initialRemaining: 16, depleted: false });
+    expect(g.destiny.well).toEqual({ initialRemaining: 16, depleted: false, depletedBy: null });
     expect(g.destiny.common).toEqual({ light: 0, dark: 0 });
     expect(g.heroes.every((h) => h.pool === 3)).toBe(true);
     expect(g.tokens).toEqual({ peaceTreaty: 'peace', revenge: { light: 0, dark: 0 } });

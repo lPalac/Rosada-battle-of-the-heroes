@@ -7,9 +7,11 @@ import type { Hero } from './model/hero.ts';
 import type { GameState, Pick, Player, SetupChoices } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import type { HeroId, RangeType, Side, UnitType } from './model/types.ts';
+import { emptyFavorRecord } from './royal-favors.ts';
 import { freshTurnFlags } from './turn.ts';
 
-export const STATE_VERSION = 1;
+/** 2: 003 fields (stage, Royal Favors, Hero Units). Version 1 saves are migrated on load. */
+export const STATE_VERSION = 2;
 
 const LETTER: Record<UnitType, string> = { king: 'K', queen: 'Q', rook: 'R', bishop: 'B', knight: 'N', pawn: 'P' };
 const FILES = 'abcdefgh';
@@ -34,8 +36,9 @@ function emptyBoardState(setup: SetupChoices): GameState {
   return {
     version: STATE_VERSION, setup, status: 'setup', enforcement: 'rules', turnNumber: 0, activeHeroId: 'H1',
     phase: 'beforeTurn', turn: freshTurnFlags(), units: [], graveyard: [], heroes: [],
-    destiny: { well: { initialRemaining: DATA.rules.destiny.wellInitial, depleted: false }, common: { light: 0, dark: 0 }, entries: [] },
+    destiny: { well: { initialRemaining: DATA.rules.destiny.wellInitial, depleted: false, depletedBy: null }, common: { light: 0, dark: 0 }, entries: [] },
     tokens: { peaceTreaty: 'peace', revenge: { light: 0, dark: 0 } },
+    stage: 'starting', epicPending: false, royalFavors: { light: emptyFavorRecord(), dark: emptyFavorRecord() },
     pendingDecision: null, decisionQueue: [], result: null, sandboxMoved: [], log: [],
   };
 }
@@ -161,7 +164,7 @@ export function createGameState(setup: SetupChoices, data: StaticData = DATA): G
         health: def.maxHealth, healthBarId: def.healthBar, pos: { ...startSquare }, startSquare: { ...startSquare },
         pool: data.rules.destiny.heroPoolStart,
         status: { unconscious: false, skipNextTurn: false, recoverAtBeginningOfTurn: false, movementPenaltyNextTurn: 0 },
-        rammedBy: null, art: def.art,
+        rammedBy: null, art: def.art, epic: null, heroUnitId: null, heroUnitType: def.heroUnitType,
       });
     });
   }

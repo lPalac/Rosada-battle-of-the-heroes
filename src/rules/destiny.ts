@@ -4,6 +4,7 @@ import { healthBar, RULES } from './data.ts';
 import type { Payment } from './model/actions.ts';
 import type { Hero } from './model/hero.ts';
 import type { HeroId, Side } from './model/types.ts';
+import { complete } from './royal-favors.ts';
 import { flipToWar } from './tokens.ts';
 
 export type DestinyTarget = { side: Side; heroId?: HeroId };
@@ -13,11 +14,15 @@ export function gain(ctx: Ctx, target: DestinyTarget, amount: number, reason: st
   if (amount <= 0) return;
   const { s } = ctx;
   const well = s.destiny.well;
+  const wasDepleted = well.depleted;
   if (!well.depleted) {
     const taken = Math.min(amount, well.initialRemaining);
     well.initialRemaining -= taken;
     if (well.initialRemaining === 0) {
+      // The Epic Stage starts at the next Before Turn; the turn continues (003 FR-001).
       well.depleted = true;
+      well.depletedBy = s.activeHeroId;
+      if (s.stage === 'starting') s.epicPending = true;
       emit(ctx, { type: 'wellDepleted' });
     }
   }
@@ -26,6 +31,9 @@ export function gain(ctx: Ctx, target: DestinyTarget, amount: number, reason: st
   const pool = target.heroId ? 'hero' : 'common';
   s.destiny.entries.push({ turn: s.turnNumber, side: target.side, heroId: target.heroId, delta: amount, pool, reason });
   emit(ctx, { type: 'destinyChanged', pool, side: target.side, heroId: target.heroId, delta: amount, reason });
+  // Tides of Destiny: after the initial 16 are gone, a Common Pool gain on the side's own turn (once per turn, ≤ 5).
+  const activeSide = s.heroes.find((h) => h.id === s.activeHeroId)?.side;
+  if (wasDepleted && !target.heroId && target.side === activeSide && s.status === 'playing') complete(ctx, target.side, 'tidesOfDestiny');
   flipToWar(ctx);
 }
 

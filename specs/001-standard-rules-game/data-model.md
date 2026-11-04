@@ -87,7 +87,7 @@ type Phase =
 | `startSquare` | Coord | FR-025 / FR-083 |
 | `pool` | number | Hero Destiny Pool, starts at 3 |
 | `status` | HeroStatus | See below |
-| `rammedBy` | unitId \| null | Recorded for later Hero Unit rule (v1: no effect) |
+| `rammedBy` | `{ unitId, turn }` \| null | 003: the turn is kept for the Hero Unit rule (003 FR-032) |
 
 **HeroStatus**: `{ unconscious: boolean; skipNextTurn: boolean; recoverAtBeginningOfTurn: boolean; movementPenaltyNextTurn: number }`. Movement for a turn = base − penalties, never reduced by more than 2.
 
@@ -153,7 +153,7 @@ Gains (to the Common Pool unless noted): check +2 (once per turn), Destroy in Ba
 
 | Field | Notes |
 | --- | --- |
-| `peaceTreaty` | `'peace' \| 'war'`; flips once to `war` on the first Destiny gain |
+| `peaceTreaty` | `'peace' \| 'war' \| 'removed'`; flips once to `war` on the first Destiny gain; `removed` from the Epic Stage on (003) |
 | `revenge` | `{ light: 0..2, dark: 0..2 }` |
 
 ## PendingDecision (union)

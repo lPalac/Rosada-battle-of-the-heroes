@@ -63,7 +63,7 @@ describe('US4 – Ram and push', () => {
 
   it('US4-AS7 a Rammed hero has no Lead restriction next turn in v1; the Ramming unit is recorded', () => {
     let s = act(board({ a1: 'R', a7: 'r' }, { heroes: { H1: 'b0', H2: 'a3' }, phase: 'lead' }), lead('L-R@a1', 'a5')).state;
-    expect(hero(s, 'H2').rammedBy).toBe('L-R@a1');
+    expect(hero(s, 'H2').rammedBy).toEqual({ unitId: 'L-R@a1', turn: s.turnNumber });
     s = passTurn(s).state;
     expect(s.activeHeroId).toBe('H2');
     // H2 stands on a6 next to its Rook on a7 and may Lead it into Battle with the Rook that Rammed it.

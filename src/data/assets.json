@@ -88,5 +88,47 @@
   "crystal": {
     "placeholder": "crystal",
     "color": "#7fd1ff"
+  },
+  "portrait.short": {
+    "image": "art/heroes/Cavalier.png"
+  },
+  "portrait.long": {
+    "image": "art/heroes/Magus.png"
+  },
+  "epic.short": {
+    "image": "art/heroes/Cavalier - epic heroes.png",
+    "columns": 3
+  },
+  "epic.long": {
+    "image": "art/heroes/Magus - epic heroes.png",
+    "columns": 3
+  },
+  "table.top": {
+    "placeholder": "wood-slab",
+    "color": "#6b4a2b"
+  },
+  "room.floor": {
+    "placeholder": "stone-floor",
+    "color": "#2e2620"
+  },
+  "board.border": {
+    "placeholder": "illustrated-border"
+  },
+  "strip.graveyard": {
+    "placeholder": "graveyard-strip"
+  },
+  "sheet.hero": {
+    "placeholder": "hero-sheet"
+  },
+  "track.favors": {
+    "placeholder": "favor-track"
+  },
+  "medallion": {
+    "placeholder": "medallion",
+    "color": "#d9d2c0"
+  },
+  "marker.auxiliary": {
+    "placeholder": "aux-ring",
+    "color": "#7fd1ff"
   }
 }

@@ -67,7 +67,7 @@ type Action =
   | { type: 'setEnforcement'; mode: 'rules' | 'sandbox' }
   // sandbox only
   | { type: 'sandboxPlace'; target: { unitId?: string; heroId?: string }; to: Coord | 'graveyard' }
-  | { type: 'sandboxSet'; path: 'health' | 'pool' | 'common' | 'revenge' | 'peaceTreaty'; target?: string; value: number | string };
+  | { type: 'sandboxSet'; path: 'health' | 'pool' | 'common' | 'revenge' | 'peaceTreaty'; // 003 adds stage, destiny, favor, kingsForces, heroUnit, well target?: string; value: number | string };
 ```
 
 `Payment = { hero: number; common: number }` splits a cost between the hero pool and the side's Common Pool (FR-072). Without it the hero pool pays first. The UI asks for the split when more than one works, so no `payDestiny` decision is needed.

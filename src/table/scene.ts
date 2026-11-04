@@ -1,7 +1,7 @@
 // Renderer, lights and the render-on-demand loop (research R-14).
 import {
-  ACESFilmicToneMapping, AmbientLight, Color, DirectionalLight, Mesh, MeshStandardMaterial, PCFSoftShadowMap,
-  PerspectiveCamera, PlaneGeometry, Scene, SRGBColorSpace, WebGLRenderer,
+  ACESFilmicToneMapping, AmbientLight, Color, DirectionalLight, PCFSoftShadowMap, PerspectiveCamera, Scene, SRGBColorSpace,
+  WebGLRenderer,
 } from 'three';
 
 export interface TableScene {
@@ -27,7 +27,7 @@ export function createScene(canvas: HTMLCanvasElement): TableScene {
   scene.background = new Color('#1d2127');
   const camera = new PerspectiveCamera(45, 1, 0.1, 200);
 
-  scene.add(new AmbientLight('#ffffff', 0.9));
+  scene.add(new AmbientLight('#fff1dc', 0.75));
   const sun = new DirectionalLight('#fff3e0', 2.0);
   sun.position.set(-6, 14, 8);
   sun.castShadow = true;
@@ -35,11 +35,7 @@ export function createScene(canvas: HTMLCanvasElement): TableScene {
   Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 9, bottom: -9, near: 1, far: 40 });
   scene.add(sun);
 
-  const table = new Mesh(new PlaneGeometry(40, 28), new MeshStandardMaterial({ color: '#5b3a24', roughness: 0.9 }));
-  table.rotation.x = -Math.PI / 2;
-  table.position.y = -0.06;
-  table.receiveShadow = true;
-  scene.add(table);
+  // The wooden table and the room are built by table/room.ts (003).
 
   const frameFns: ((dt: number) => boolean)[] = [];
   let pending = false;
