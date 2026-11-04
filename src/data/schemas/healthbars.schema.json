@@ -1,0 +1,22 @@
+{
+  "$id": "healthbars.schema.json",
+  "type": "object",
+  "required": ["bars"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "bars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "max", "startingMax", "resilientPoints"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "max": { "type": "integer", "minimum": 1 },
+          "startingMax": { "type": "integer", "minimum": 1 },
+          "resilientPoints": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "uniqueItems": true }
+        }
+      }
+    }
+  }
+}

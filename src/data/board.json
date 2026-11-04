@@ -1,0 +1,11 @@
+{
+  "$schema": "./schemas/board.schema.json",
+  "size": 10,
+  "battlefield": { "x": [1, 8], "y": [1, 8] },
+  "kingsCourt": { "light": 0, "dark": 9 },
+  "taverns": [
+    { "at": [0, 0], "owner": "light" }, { "at": [9, 0], "owner": "light" },
+    { "at": [0, 9], "owner": "dark" },  { "at": [9, 9], "owner": "dark" }
+  ],
+  "heroStartSquares": { "light": [[3, 0], [6, 0]], "dark": [[3, 9], [6, 9]] }
+}

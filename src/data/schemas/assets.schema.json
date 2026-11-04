@@ -1,0 +1,95 @@
+{
+  "$id": "assets.schema.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": {
+    "type": "object",
+    "oneOf": [
+      {
+        "required": [
+          "placeholder"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "gltf"
+              ]
+            },
+            {
+              "required": [
+                "image"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "required": [
+          "gltf"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "placeholder"
+              ]
+            },
+            {
+              "required": [
+                "image"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "required": [
+          "image"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "placeholder"
+              ]
+            },
+            {
+              "required": [
+                "gltf"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "properties": {
+      "placeholder": {
+        "type": "string"
+      },
+      "gltf": {
+        "type": "string"
+      },
+      "image": {
+        "type": "string"
+      },
+      "color": {
+        "type": "string",
+        "pattern": "^#[0-9a-fA-F]{6}$"
+      },
+      "scale": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "columns": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "additionalProperties": false
+  }
+}

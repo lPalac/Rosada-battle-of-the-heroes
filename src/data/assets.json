@@ -1,0 +1,134 @@
+{
+  "$schema": "./schemas/assets.schema.json",
+  "unit.light.king": {
+    "placeholder": "king",
+    "color": "#e8e2d0"
+  },
+  "unit.light.queen": {
+    "placeholder": "queen",
+    "color": "#e8e2d0"
+  },
+  "unit.light.rook": {
+    "placeholder": "rook",
+    "color": "#e8e2d0"
+  },
+  "unit.light.bishop": {
+    "placeholder": "bishop",
+    "color": "#e8e2d0"
+  },
+  "unit.light.knight": {
+    "placeholder": "knight",
+    "color": "#e8e2d0"
+  },
+  "unit.light.pawn": {
+    "placeholder": "pawn",
+    "color": "#e8e2d0"
+  },
+  "unit.dark.king": {
+    "placeholder": "king",
+    "color": "#2b2b2b"
+  },
+  "unit.dark.queen": {
+    "placeholder": "queen",
+    "color": "#2b2b2b"
+  },
+  "unit.dark.rook": {
+    "placeholder": "rook",
+    "color": "#2b2b2b"
+  },
+  "unit.dark.bishop": {
+    "placeholder": "bishop",
+    "color": "#2b2b2b"
+  },
+  "unit.dark.knight": {
+    "placeholder": "knight",
+    "color": "#2b2b2b"
+  },
+  "unit.dark.pawn": {
+    "placeholder": "pawn",
+    "color": "#2b2b2b"
+  },
+  "hero.short": {
+    "placeholder": "hero-short"
+  },
+  "hero.long": {
+    "placeholder": "hero-long"
+  },
+  "hero.light": {
+    "placeholder": "hero-ring",
+    "color": "#f2c14e"
+  },
+  "hero.dark": {
+    "placeholder": "hero-ring",
+    "color": "#7b4fd6"
+  },
+  "token.peace": {
+    "placeholder": "token",
+    "color": "#ffffff"
+  },
+  "token.war": {
+    "placeholder": "token",
+    "color": "#b3261e"
+  },
+  "token.revenge": {
+    "placeholder": "token",
+    "color": "#d4a017"
+  },
+  "die.d20": {
+    "placeholder": "d20",
+    "color": "#1f6feb"
+  },
+  "board": {
+    "placeholder": "board"
+  },
+  "tavern": {
+    "placeholder": "tavern",
+    "color": "#8a5a2b"
+  },
+  "crystal": {
+    "placeholder": "crystal",
+    "color": "#7fd1ff"
+  },
+  "portrait.short": {
+    "image": "art/heroes/Cavalier.png"
+  },
+  "portrait.long": {
+    "image": "art/heroes/Magus.png"
+  },
+  "epic.short": {
+    "image": "art/heroes/Cavalier - epic heroes.png",
+    "columns": 3
+  },
+  "epic.long": {
+    "image": "art/heroes/Magus - epic heroes.png",
+    "columns": 3
+  },
+  "table.top": {
+    "placeholder": "wood-slab",
+    "color": "#6b4a2b"
+  },
+  "room.floor": {
+    "placeholder": "stone-floor",
+    "color": "#2e2620"
+  },
+  "board.border": {
+    "placeholder": "illustrated-border"
+  },
+  "strip.graveyard": {
+    "placeholder": "graveyard-strip"
+  },
+  "sheet.hero": {
+    "placeholder": "hero-sheet"
+  },
+  "track.favors": {
+    "placeholder": "favor-track"
+  },
+  "medallion": {
+    "placeholder": "medallion",
+    "color": "#d9d2c0"
+  },
+  "marker.auxiliary": {
+    "placeholder": "aux-ring",
+    "color": "#7fd1ff"
+  }
+}

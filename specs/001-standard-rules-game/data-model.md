@@ -1,5 +1,7 @@
 # Data Model: Standard Rules Game
 
+> **Changed by 002**: up to `maxUnitsPerSquare` (2) friendly units may share a square; in sandbox a piece's `pos` may lie on the table beside the board. See [002 data-model.md](../../002-sandbox-physics/data-model.md).
+
 **Feature**: `001-standard-rules-game` | **Date**: 2026-11-03 | **Spec**: [spec.md](./spec.md) | **Research**: [research.md](./research.md)
 
 All types live in `src/rules/model/` and are plain JSON-serialisable data (FR-121). Coordinates follow research R-05.
@@ -36,9 +38,10 @@ type Phase =
 | `destiny` | DestinyLedger | |
 | `tokens` | Tokens | Peace/War, Revenge |
 | `pendingDecision` | PendingDecision \| null | Blocks all other actions |
+| `decisionQueue` | PendingDecision[] | Decisions waiting behind `pendingDecision` |
+| `sandboxMoved` | unitId[] | Units moved by hand in sandbox; set `hasBeenLed` on resume (FR-104) |
 | `result` | GameResult \| null | Set when `status = 'ended'` |
-| `log` | LogEntry[] | Every action, roll, Destiny change (FR-112) |
-| `rngSeed` | string | Seed for the dice-throw PRNG (R-06) |
+| `log` | LogEntry[] | Every action, roll, Destiny change (FR-112). Roll values are stored here; no seed is kept (FR-037) |
 
 **Validation**: at most one unit per square; units only on the Battlefield; nothing shares the King's square; exactly one King per side while playing. The same checks back FR-103 when leaving sandbox.
 
@@ -49,7 +52,9 @@ type Phase =
 | `mode` | `'draft' \| 'mirror'` | FR-081 |
 | `playerCount` | 2 \| 3 \| 4 | FR-080 |
 | `players` | `{ id, name, side, heroIds[] }[]` | With 3 players the single player on a side holds both heroIds |
-| `picks` | `{ side, rangeType, pickIndex }[4]` | In pick order; drives turn order (FR-082) and starting squares (FR-083) |
+| `picks` | `{ side, rangeType, pickIndex }[4]` | In pick order (Draft: L, D, D, L; Mirror: Light's pick fills hero 1 of both sides, Dark's pick hero 2) (FR-081) |
+| `turnOrder` | `{ light: [pickIndex, pickIndex], dark: [pickIndex, pickIndex] }` | Chosen by each side, Light first: first entry plays turn 1 (Light) / 2 (Dark), second turn 3 / 4 (FR-082) |
+| `startFiles` | `{ [pickIndex]: 'c' \| 'f' }` | Chosen by each side; one hero per Bishop file (FR-083) |
 
 ## Unit
 
@@ -82,7 +87,7 @@ type Phase =
 | `startSquare` | Coord | FR-025 / FR-083 |
 | `pool` | number | Hero Destiny Pool, starts at 3 |
 | `status` | HeroStatus | See below |
-| `rammedBy` | unitId \| null | Recorded for later Hero Unit rule (v1: no effect) |
+| `rammedBy` | `{ unitId, turn }` \| null | 003: the turn is kept for the Hero Unit rule (003 FR-032) |
 
 **HeroStatus**: `{ unconscious: boolean; skipNextTurn: boolean; recoverAtBeginningOfTurn: boolean; movementPenaltyNextTurn: number }`. Movement for a turn = base − penalties, never reduced by more than 2.
 
@@ -101,11 +106,14 @@ skipped ──following turn, Beginning of Turn──▶ active, health = floor(
 | `movementLeft` | Set at `beginningOfTurn` (tavern −1, Banishment −1, cap −2) |
 | `movePath` | Squares moved through this turn |
 | `tavernShopOpen` | Tavern square where buying is allowed now, or null; closes when the hero leaves it (FR-060) |
+| `leftTaverns` | Taverns the hero has left this turn (no buying there again) |
+| `bothKingsInCheckAtBeginning` | For the draw check at End of Turn |
+| `doubleStepUnitId` | Pawn that made a 2-square Lead this turn; keeps its en passant target one more turn |
 | `leadAttempted` / `leadPossible` | Drive FR-031, FR-042 |
 | `kingInCheckAfterLead` | Blocks After Lead / End of Turn abilities and free Meal |
 | `checkBonusClaimed` | 2 D for checking, once per turn |
 | `abilitiesUsed` | Set of general abilities used (`inspiredLead`, `heroRetreat`) |
-| `inspiredLeadBonus` | +2 per D spent, consumed by the next Lead |
+| `inspiredLeadBonus` | +2 per D spent, used by this turn's Lead only; lost if no Lead is made (reset at `beforeTurn`) |
 | `lead` | LeadAttempt \| null |
 
 ## LeadAttempt
@@ -115,7 +123,7 @@ skipped ──following turn, Beginning of Turn──▶ active, health = floor(
 | `unitId`, `from`, `to`, `path` | `path` = interacted squares (Knight: from + to only) |
 | `isBattle` | Enemy unit on `to` |
 | `isCastling`, `isEnPassant` | |
-| `needsRoll` | false for King, Peace side up, or Revenge used |
+| `needsRoll` | false for King, Peace side up, Revenge used, or when the Lead cannot fail (1 + modifiers ≥ 6, spec Q-24) |
 | `usedRevenge` | |
 | `roll` | 1…20 \| null |
 | `modifiers` | `{ source: 'war' \| 'check' \| 'inspiredLead', value }[]` |
@@ -145,12 +153,14 @@ Gains (to the Common Pool unless noted): check +2 (once per turn), Destroy in Ba
 
 | Field | Notes |
 | --- | --- |
-| `peaceTreaty` | `'peace' \| 'war'`; flips once to `war` on the first Destiny gain |
+| `peaceTreaty` | `'peace' \| 'war' \| 'removed'`; flips once to `war` on the first Destiny gain; `removed` from the Epic Stage on (003) |
 | `revenge` | `{ light: 0..2, dark: 0..2 }` |
 
 ## PendingDecision (union)
 
-`promotion { unitId, chooserHeroId }` · `unconsciousTavern { heroId, options: Coord[] }` · `advanceSquare { heroId, options: Coord[] }` · `inspiredLeadAmount { heroId, max }` · `payDestiny { heroId, cost }` · `drawOffer { fromSide }` · `revengeChoice { side }` (use token or roll).
+`promotion { unitId, chooserHeroId }` · `unconsciousTavern { heroId, options: Coord[] }` · `advanceSquare { heroId, options: Coord[] }` · `drawOffer { fromSide }`. Several decisions from one Lead (two heroes Unconscious, then Promotion, then the advance) wait in `GameState.decisionQueue` in that order.
+
+The Inspired Lead amount, the pool split and the Revenge choice are not decisions: they are fields of the action (`inspiredLead.destiny`, `pay`) or an action of their own (`useRevenge` while the roll is awaited).
 
 ## GameResult
 
@@ -158,7 +168,7 @@ Gains (to the Common Pool unless noted): check +2 (once per turn), Destroy in Ba
 
 ## LogEntry
 
-`{ turn, heroId, phase, type, text, data }`. `type` values include `move`, `lead`, `roll`, `battle`, `ram`, `wound`, `heal`, `destiny`, `token`, `phase`, `sandboxToggle`, `result`.
+`{ turn, heroId, phase, type, data }`: one entry per action (`type: 'action'`, the action in `data`) and one per event (`type` = the event type, the event in `data`). Text is made from the string file when shown (`src/game/log.ts`, A-02), so the log stays data.
 
 ---
 

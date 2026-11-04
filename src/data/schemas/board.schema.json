@@ -1,0 +1,23 @@
+{
+  "$id": "board.schema.json",
+  "$defs": { "xy": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "minItems": 2, "maxItems": 2 } },
+  "type": "object",
+  "required": ["size", "battlefield", "kingsCourt", "taverns", "heroStartSquares"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "size": { "const": 10 },
+    "battlefield": { "type": "object", "required": ["x", "y"], "properties": { "x": { "$ref": "#/$defs/xy" }, "y": { "$ref": "#/$defs/xy" } } },
+    "kingsCourt": { "type": "object", "required": ["light", "dark"], "properties": { "light": { "type": "integer" }, "dark": { "type": "integer" } } },
+    "taverns": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": { "type": "object", "required": ["at", "owner"], "properties": { "at": { "$ref": "#/$defs/xy" }, "owner": { "enum": ["light", "dark"] } } }
+    },
+    "heroStartSquares": {
+      "type": "object", "required": ["light", "dark"],
+      "properties": {
+        "light": { "type": "array", "items": { "$ref": "#/$defs/xy" }, "minItems": 2, "maxItems": 2 },
+        "dark": { "type": "array", "items": { "$ref": "#/$defs/xy" }, "minItems": 2, "maxItems": 2 }
+      }
+    }
+  }
+}

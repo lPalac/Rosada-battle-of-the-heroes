@@ -4,7 +4,7 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ## Active feature
 
-`specs/001-standard-rules-game/`: standard rules, generic heroes, 3D table, hot-seat, sandbox mode. Read `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
+`specs/003-epic-stage/` (built): Epic Stage (destiny choice, War +2 ends), Destiny generation, Bloodied, Royal Favors with a tracker, Legendary Powers (Hero Units as units, King's Forces + auxiliary units), and a table look based on the Tabletop Simulator version. Builds on `specs/001-standard-rules-game/` and `specs/002-sandbox-physics/` (both built). Read the 003 `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
 
 ## Tech stack
 
@@ -24,6 +24,10 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ```powershell
 npm run dev        # local game
-npm test           # type checks, lint boundaries, Vitest
-npm run test:e2e   # Playwright
+npm test           # type checks, data schemas, Vitest (incl. the engine-free boundary test)
+npm run test:e2e   # Playwright (own e2e server on port 5174; forceNextRoll works there)
 ```
+
+- No ESLint: typescript-eslint does not support TypeScript 7 yet. `tests/boundaries.test.ts` and `tsconfig.rules.json` guard the engine-free folders (research R-04).
+- Undo, replay and save files use the action log (`src/game/session.ts`); the game keeps no random seed.
+- Test positions: `tests/fixtures/position.ts` (`board({ e1: 'K', ... }, opts)`); the in-game position editor exports this format.

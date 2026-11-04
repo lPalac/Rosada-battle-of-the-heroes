@@ -1,0 +1,7 @@
+{
+  "$schema": "./schemas/healthbars.schema.json",
+  "bars": [
+    { "id": "bar-16", "max": 16, "startingMax": 8,  "resilientPoints": [1, 2, 4, 6, 8, 9, 11, 14] },
+    { "id": "bar-20", "max": 20, "startingMax": 10, "resilientPoints": [1, 2, 4, 6, 8, 10, 11, 13, 15, 18] }
+  ]
+}

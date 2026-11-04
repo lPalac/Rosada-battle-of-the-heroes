@@ -32,16 +32,18 @@ npm run preview
 ## Tests
 
 ```powershell
-npm test             # rules core: type check without DOM, lint boundaries, Vitest
-npm run test:e2e     # Playwright: setup → one turn → sandbox toggle, saves screenshots to test-results/
+npm test             # type checks (rules core without DOM, whole app), data schemas, Vitest incl. boundary test
+npm run test:e2e     # Playwright: setup, one turn, quickstart steps, sandbox, perf; screenshots in test-results/
 npm run check:data   # validate src/data/*.json against their schemas
 ```
 
 `npm test` fails if any file in `src/rules/` or `src/game/` imports Three.js, Rapier or DOM APIs (research R-04).
 
+`npm run test:e2e` starts its own server on port 5174 in `e2e` mode (enables `window.__rosada.forceNextRoll(n)`), so it does not clash with `npm run dev` on 5173. The `gpu` project runs the frame-time check with the machine's GPU; plain headless Chromium renders WebGL in software.
+
 ## Manual check (5 minutes)
 
-1. Start a 4-player Draft game. Pick Short, Long, Long, Short. Check the turn order and that each hero stands behind a Bishop.
+1. Start a 4-player Draft game. Pick Short (Light), Long, Long (Dark), Short (Light). Light chooses its turn order and which hero starts behind which Bishop, then Dark does the same. Check that the turn order shown matches the choices and that each hero stands behind the chosen Bishop.
 2. Turn 1 (Light): move the hero, Lead pawn e2→e4. No Roll button appears, because the Peace side is up.
 3. Play until a capture. The Common Pool shows +2, the token flips to War, and the next Lead shows the Roll button with a +2 modifier.
 4. Ram an enemy hero with a Rook. The hero lands one square past the Rook and loses 3 health, and the log shows the Resilient Destiny gained.

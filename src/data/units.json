@@ -1,0 +1,16 @@
+{
+  "$schema": "./schemas/units.schema.json",
+  "types": {
+    "king":   { "directions": "all8", "maxSteps": 1, "jump": false, "royal": true },
+    "queen":  { "directions": "all8", "maxSteps": 7, "jump": false, "royal": true },
+    "rook":   { "directions": "orthogonal", "maxSteps": 7, "jump": false },
+    "bishop": { "directions": "diagonal", "maxSteps": 7, "jump": false },
+    "knight": { "directions": "knight", "maxSteps": 1, "jump": true },
+    "pawn":   { "special": "pawn" }
+  },
+  "start": {
+    "light": { "rank": 1, "pawnRank": 2, "order": ["rook","knight","bishop","queen","king","bishop","knight","rook"] },
+    "dark":  { "rank": 8, "pawnRank": 7, "order": ["rook","knight","bishop","queen","king","bishop","knight","rook"] }
+  },
+  "promotion": ["queen", "rook", "bishop", "knight"]
+}

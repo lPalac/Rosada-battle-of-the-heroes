@@ -12,14 +12,14 @@ Technical approach:
 - **Rules core:** a pure, engine-free TypeScript rules core (`legalActions` / `apply` over an immutable, JSON-serialisable `GameState`) holds all rules, turns and Destiny.
 - **Content:** heroes, health bars, board, units, tunables and art keys are JSON data.
 - **3D table:** a Three.js table renders the state and sends actions.
-- **Dice:** Rapier simulates the d20 throw and the top face is passed to the rules core as a number.
+- **Dice:** Rapier simulates the d20 throw (plain random impulse, no seed) and the top face is passed to the rules core as a number. Every roll is logged, so undo and replay never need the physics again.
 - **Tests:** Vitest covers every acceptance scenario headless; Playwright drives the real page and takes screenshots.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 7.x on Node.js 24 LTS (build/test) and current desktop browsers (runtime)
 
-**Primary Dependencies**: three 0.187.x, @dimforge/rapier3d-compat 0.21.x, Vite 8.x; dev: Vitest 5.x, @playwright/test 1.64.x, ESLint 10.x, a JSON Schema validator for data files
+**Primary Dependencies**: three 0.187.x, @dimforge/rapier3d-compat 0.21.x, Vite 8.x; dev: Vitest 5.x, @playwright/test 1.64.x, ajv 8 (JSON Schema validator for data files), tsx. ESLint was planned but dropped (no TypeScript 7 support yet, research R-04)
 
 **Storage**: None in P0 (state in memory). P1 save/resume uses browser `localStorage` with the serialised `GameState`
 
@@ -48,9 +48,9 @@ Technical approach:
 | Principle | Check | Status |
 | --- | --- | --- |
 | I. Rulebook is the source of truth | Every rule maps to the rulebook or the spec's *Resolved* / *Clarifications*. The one design reading (Ram landing on a unit) is logged as Q-17, not built silently | ✅ Pass |
-| II. Engine-free rules core | `src/rules/` + `src/game/` compiled with no DOM lib and lint-blocked from `three`, `@dimforge/*`, UI folders (R-04); rolls enter as values (R-06) | ✅ Pass |
+| II. Engine-free rules core | `src/rules/` + `src/game/` compiled with no DOM lib and blocked from `three`, `@dimforge/*`, UI folders by `tests/boundaries.test.ts` (R-04; ESLint dropped, see R-04); rolls enter as values (R-06) | ✅ Pass |
 | III. Data-driven content | Heroes, health bars, board, units, tunables, assets and strings are JSON with schemas ([contracts/data-files.md](./contracts/data-files.md)) | ✅ Pass |
-| IV. Rules tested first | Test per acceptance scenario, failing test first for rule bugs, rolls injected via `submitRoll` (R-13) | ✅ Pass |
+| IV. Rules tested first | Test per acceptance scenario, failing test first for rule bugs, fixed rolls injected via `submitRoll`; random playout tests use a seeded generator inside `tests/` (R-13). No seed in the game itself (FR-037) | ✅ Pass |
 | V. Verifiable without a human | `npm test`, `npm run test:e2e` run headless; Playwright screenshots; test-only hook to force a roll | ✅ Pass |
 | VI. Keep it simple | No UI framework, no backend, one physics use (dice). P2 items exist only as seams (`abilities: []`, `originalType`, `rammedBy`, `well.depleted`) | ✅ Pass |
 
@@ -90,11 +90,11 @@ src/
 │   ├── tokens.ts          # Peace/War, Revenge
 │   ├── abilities.ts       # General abilities: Inspired Lead, Hero Retreat
 │   ├── turn.ts            # Phase machine, Active Hero hand-off, pending decisions
-│   ├── setup.ts           # Draft/Mirror picks, auto turn order + start squares
+│   ├── setup.ts           # Draft/Mirror picks, per-side turn order + start square choice
 │   ├── endgame.ts         # Checkmate in Before Turn, King destroyed, draws
 │   ├── sandbox.ts         # Sandbox actions, validatePosition, resume rules
 │   └── index.ts           # Public API (contracts/rules-api.md)
-├── game/                  # ENGINE-FREE. Session: history, undo, log formatting
+├── game/                  # ENGINE-FREE. Session: action log (with roll values), undo, replay, log formatting
 ├── data/                  # JSON data + schemas (contracts/data-files.md)
 ├── table/                 # Three.js: scene, camera, board, pieces, highlights, picking, animations
 ├── physics/               # Rapier: dice tray, d20 body, throw, top-face detection, re-roll
@@ -113,8 +113,10 @@ tsconfig.rules.json        # src/rules + src/game, lib ES2022 only
 vite.config.ts
 vitest.config.ts
 playwright.config.ts
-eslint.config.js           # no-restricted-imports for engine-free folders
+scripts/check-data.ts      # npm run check:data (ajv + cross-file rules)
 ```
+
+Tests also live in `tests/physics/` (d20 faces and Rapier throws in Node), `tests/helpers/` (test PRNG, game helpers), `tests/game/` (save files, fixture export) and at `tests/` root (`boundaries.test.ts`, `i18n.test.ts`).
 
 **Structure Decision**: Single web project, because there is no backend in this feature. The engine-free folders (`src/rules`, `src/game`) are separated by folder, tsconfig and lint rule rather than separate packages. That is simpler, and it can be split into a workspace package when the Colyseus server arrives.
 
@@ -125,7 +127,7 @@ Follows the spec's phases. Each phase ends with its tests green and a short demo
 | Phase | Scope | Stories | Done when |
 | --- | --- | --- | --- |
 | A | Project scaffold, data files + schemas, board, paths, check/mate, Lead + d20 value input, turn phases, endgame | US2, US3 | All US2/US3 scenario tests pass headless |
-| B | Three.js table with placeholders, picking + highlights, HUD, setup flow (Draft/Mirror, auto turn order), physics d20 with Roll button | US1, US7 | A full chess-with-dice game plays in the browser; Playwright smoke passes |
+| B | Three.js table with placeholders, picking + highlights, HUD, setup flow (Draft/Mirror picks, each side chooses turn order and start squares), physics d20 with Roll button | US1, US7 | A full chess-with-dice game plays in the browser; Playwright smoke passes |
 | C | Hero Move/Range, Ram (incl. Knight, shared squares), health, Unconscious, taverns shop window | US4 | US4 tests pass; manual check steps 4–5 |
 | D | Destiny ledger, Resilient Destiny, Peace/War, Revenge, Inspired Lead, Hero Retreat, payment from pools | US5 | Scripted games match a hand ledger (SC-003 prep) |
 | E | Sandbox on/off, position validation, resume at Before Turn | US6 | US6 tests pass; manual check step 6 |
