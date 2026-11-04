@@ -111,6 +111,13 @@ describe('rules core guarantees (contracts/rules-api.md)', () => {
     expect(unconscious).toBeGreaterThan(0);
   }, 120_000);
 
+  it('6. (002) in rules mode no square holds both sides, too many units, or anything besides the King on its square', () => {
+    for (const g of games) for (const s of g.states) {
+      const codes = stableProblems(s).map((p) => p.code);
+      expect(codes.filter((c) => ['OPPOSING_UNITS_SHARE', 'TOO_MANY_UNITS', 'KING_SHARES'].includes(c))).toEqual([]);
+    }
+  });
+
   it('playouts reach many turns', () => {
     const turns = games.map((g) => g.states[g.states.length - 1].turnNumber);
     expect(Math.max(...turns)).toBeGreaterThan(10);

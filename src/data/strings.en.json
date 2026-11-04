@@ -117,6 +117,9 @@
   "settings.saved": "Game saved in this browser",
 
   "sandbox.help": "Drag or click a piece, then click a square. Click the Graveyard to remove a unit.",
+  "sandbox.physicsHelp": "Drag a piece to pick it up; release to drop it. Pieces can knock each other over.",
+  "sandbox.settling": "Waiting for pieces to come to rest…",
+  "action.undoSandbox": "Undo",
   "sandbox.freeRoll": "Roll d20 (free)",
   "sandbox.freeRollResult": "Free roll: {value}",
   "sandbox.health": "Health",

@@ -15,22 +15,44 @@ function sideName(side: Side): string {
 /** Position checks used when switching sandbox → rules (FR-103). */
 export function validatePosition(state: GameState): PositionProblem[] {
   const problems: PositionProblem[] = [];
-  const seen = new Map<string, string>();
   for (const u of state.units) {
-    const k = `${u.pos.x},${u.pos.y}`;
-    if (seen.has(k)) problems.push({ code: 'TWO_UNITS', message: `Two units on ${squareName(u.pos)}`, where: u.pos });
-    seen.set(k, u.id);
-    if (!isBattlefield(u.pos)) problems.push({ code: 'UNIT_OFF_BATTLEFIELD', message: `${u.id} is not on the Battlefield`, where: u.pos });
+    if (!isBattlefield(u.pos)) {
+      problems.push({ code: 'UNIT_OFF_BATTLEFIELD', message: `${u.id} is not on the Battlefield or in a Graveyard`, where: u.pos });
+    }
     if (u.type === 'pawn' && u.originalType === 'pawn' && !u.promoted && u.pos.y === enemyRoyalRank(u.side)) {
       problems.push({ code: 'UNPROMOTED_PAWN', message: `${u.id} stands unpromoted on the enemy royal rank`, where: u.pos });
+    }
+  }
+  // Squares with several units (002 FR-004, FR-010): friendly sharing up to the maximum is fine; hero figures don't count.
+  const bySquare = new Map<string, GameState['units']>();
+  for (const u of state.units) {
+    const k = `${u.pos.x},${u.pos.y}`;
+    bySquare.set(k, [...(bySquare.get(k) ?? []), u]);
+  }
+  for (const units of bySquare.values()) {
+    const where = units[0].pos;
+    const ids = [...units].sort((a, b) => (a.side === b.side ? a.id.localeCompare(b.id) : a.side === 'light' ? -1 : 1))
+      .map((u) => u.id).join(', ');
+    if (units.some((u) => u.type === 'king')) continue; // reported below as KING_SHARES
+    if (units.some((u) => u.side === 'light') && units.some((u) => u.side === 'dark')) {
+      problems.push({ code: 'OPPOSING_UNITS_SHARE', message: `Light and Dark units share ${squareName(where)} (${ids})`, where });
+    }
+    if (units.length > RULES.maxUnitsPerSquare) {
+      problems.push({ code: 'TOO_MANY_UNITS', message: `${units.length} units on ${squareName(where)} (max ${RULES.maxUnitsPerSquare})`, where });
     }
   }
   for (const side of ['light', 'dark'] as const) {
     const kings = state.units.filter((u) => u.side === side && u.type === 'king');
     if (kings.length !== 1) problems.push({ code: 'KING_COUNT', message: `${sideName(side)} needs exactly one King` });
     for (const k of kings) {
-      const sharing = state.units.some((u) => u.id !== k.id && eq(u.pos, k.pos)) || state.heroes.some((h) => eq(h.pos, k.pos));
-      if (sharing) problems.push({ code: 'KING_SHARES', message: `${sideName(side)} King shares a square`, where: k.pos });
+      // King's Majesty: nothing shares the King's square, units or heroes.
+      const others = [
+        ...state.units.filter((u) => u.id !== k.id && eq(u.pos, k.pos)).map((u) => u.id),
+        ...state.heroes.filter((h) => eq(h.pos, k.pos)).map((h) => h.id),
+      ];
+      if (others.length) {
+        problems.push({ code: 'KING_SHARES', message: `${sideName(side)} King shares ${squareName(k.pos)} (${others.join(', ')})`, where: k.pos });
+      }
     }
     if (state.destiny.common[side] < 0) problems.push({ code: 'NEGATIVE_POOL', message: `${sideName(side)} Common Pool is negative` });
     const r = state.tokens.revenge[side];
@@ -73,6 +95,11 @@ export function setEnforcement(ctx: Ctx, mode: 'rules' | 'sandbox'): void {
   startFirstTurn(ctx);
 }
 
+/** In sandbox a piece may lie on the table beside the board: squares −6…15 (002 research R-05). */
+export function onTable(p: Coord): boolean {
+  return Number.isInteger(p.x) && Number.isInteger(p.y) && p.x >= -6 && p.x <= 15 && p.y >= -6 && p.y <= 15;
+}
+
 function requireSandbox(ctx: Ctx): void {
   if (ctx.s.enforcement !== 'sandbox') fail('NOT_IN_SANDBOX', 'Only in sandbox mode', 'Sandbox');
 }
@@ -81,7 +108,8 @@ export function sandboxPlace(ctx: Ctx, target: { unitId?: string; heroId?: strin
   requireSandbox(ctx);
   const { s } = ctx;
   if (target.heroId) {
-    if (to === 'graveyard' || !inGrid(to)) fail('BAD_SQUARE', 'Heroes stay on the board', 'Sandbox');
+    if (to === 'graveyard') fail('BAD_SQUARE', 'Heroes do not go to the Graveyard', 'Sandbox');
+    if (!onTable(to)) fail('BAD_SQUARE', 'Off the table', 'Sandbox');
     const h = hero(s, target.heroId as HeroId);
     const from = h.pos;
     h.pos = to;
@@ -98,7 +126,7 @@ export function sandboxPlace(ctx: Ctx, target: { unitId?: string; heroId?: strin
     s.units = s.units.filter((u) => u.id !== id);
     s.graveyard.push(onBoard);
   } else {
-    if (!inGrid(to)) fail('BAD_SQUARE', 'Off the board', 'Sandbox');
+    if (!onTable(to)) fail('BAD_SQUARE', 'Off the table', 'Sandbox');
     if (inGrave) {
       s.graveyard = s.graveyard.filter((u) => u.id !== id);
       s.units.push({ ...inGrave, pos: to });

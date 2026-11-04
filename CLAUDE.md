@@ -4,7 +4,7 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ## Active feature
 
-`specs/001-standard-rules-game/`: standard rules, generic heroes, 3D table, hot-seat, sandbox mode. Read `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
+`specs/002-sandbox-physics/`: physics in sandbox (pick up, drop, knock over), squares 25% larger, up to 2 friendly units per square (Battle destroys all; position check rules). Builds on `specs/001-standard-rules-game/` (built). Read the 002 `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
 
 ## Tech stack
 

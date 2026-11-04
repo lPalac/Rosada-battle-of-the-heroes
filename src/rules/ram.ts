@@ -8,12 +8,12 @@ import type { RamOutcome } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import type { Coord } from './model/types.ts';
 import type { LeadOption } from './paths.ts';
-import { unitAt } from './paths.ts';
+import { unitsAt } from './paths.ts';
 
 /** Landing is blocked by a King (King's Majesty) or the edge of the 10×10 grid → starting square. */
 function resolveLanding(ctx: Ctx, h: Hero, landing: Coord): { pos: Coord; sentToStart: boolean } {
-  const u = unitAt(ctx.s, landing);
-  if (!inGrid(landing) || u?.type === 'king') return { pos: h.startSquare, sentToStart: true };
+  const kingThere = unitsAt(ctx.s, landing).some((u) => u.type === 'king');
+  if (!inGrid(landing) || kingThere) return { pos: h.startSquare, sentToStart: true };
   return { pos: landing, sentToStart: false }; // Landing on a non-King unit is allowed (spec Q-17 default).
 }
 

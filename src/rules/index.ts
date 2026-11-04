@@ -209,4 +209,5 @@ export { squareName, parseSquare, regionOf, chebyshev, tavernOwner, taverns, her
 export { nextPicker, picksComplete, setupReady, sidePicks, defaultPlayers } from './setup.ts';
 export { abilitiesBlocked } from './abilities.ts';
 export { awaitingRoll } from './lead.ts';
+export { unitsAt } from "./paths.ts";
 export { isProtected, isCheckmate, threatenedSquares } from './check.ts';

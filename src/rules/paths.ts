@@ -11,8 +11,8 @@ export interface LeadOption {
   from: Coord;
   to: Coord;
   isBattle: boolean;
-  /** Unit destroyed by this Lead (differs from the `to` occupant only for en passant). */
-  battleUnitId: string | null;
+  /** Every enemy unit destroyed by this Lead: all units on `to` (en passant: the passed pawn). Empty: no Battle. */
+  battleUnitIds: string[];
   /** Interacted squares, start excluded (Knight: end only; castling: the King's 2 squares). */
   path: Coord[];
   /** Direction a Rammed hero is pushed: last 1-square step (research R-10). */
@@ -39,8 +39,25 @@ function directions(name: string | undefined): Coord[] {
   }
 }
 
+/** The first unit on a square: use it for "is this square occupied". */
 export function unitAt(state: UnitView, p: Coord): Unit | undefined {
   return state.units.find((u) => eq(u.pos, p));
+}
+
+/** Every unit on a square (up to `maxUnitsPerSquare`, spec 002 FR-003). */
+export function unitsAt(state: UnitView, p: Coord): Unit[] {
+  return state.units.filter((u) => eq(u.pos, p));
+}
+
+export interface PathOptions {
+  /** Seam for later abilities: allow ending on a square held by friendly units. No v1 rule uses it (002 FR-005). */
+  allowFriendlyEnd?: (unit: Unit, square: Coord) => boolean;
+}
+
+/** Who holds a square, seen from a unit: friendly units block, enemy units are Battle targets. */
+function occupancy(state: UnitView, unit: Unit, p: Coord): { friendly: boolean; enemies: string[] } {
+  const here = unitsAt(state, p);
+  return { friendly: here.some((u) => u.side === unit.side), enemies: here.filter((u) => u.side !== unit.side).map((u) => u.id) };
 }
 
 export const forward = (side: Side): number => (side === 'light' ? 1 : -1);
@@ -61,33 +78,34 @@ export function knightPushDir(from: Coord, to: Coord): Coord {
 }
 
 /** Basic Leads for one unit, ignoring check (castling excluded). */
-export function basicLeads(state: UnitView, unit: Unit): LeadOption[] {
+export function basicLeads(state: UnitView, unit: Unit, opts: PathOptions = {}): LeadOption[] {
   const out: LeadOption[] = [];
+  const friendlyEnd = (p: Coord) => !!opts.allowFriendlyEnd?.(unit, p);
   const base = { unitId: unit.id, from: unit.pos, isCastling: false, isEnPassant: false, isDoubleStep: false };
   if (unit.type === 'pawn') {
     const f = forward(unit.side);
     const one = c(unit.pos.x, unit.pos.y + f);
     if (isBattlefield(one) && !unitAt(state, one)) {
-      out.push({ ...base, to: one, isBattle: false, battleUnitId: null, path: [one], pushDir: c(0, f) });
+      out.push({ ...base, to: one, isBattle: false, battleUnitIds: [], path: [one], pushDir: c(0, f) });
       const two = c(unit.pos.x, unit.pos.y + 2 * f);
       if (unit.pos.y === DATA.units.start[unit.side].pawnRank && isBattlefield(two) && !unitAt(state, two)) {
-        out.push({ ...base, to: two, isBattle: false, battleUnitId: null, path: [one, two], pushDir: c(0, f), isDoubleStep: true });
+        out.push({ ...base, to: two, isBattle: false, battleUnitIds: [], path: [one, two], pushDir: c(0, f), isDoubleStep: true });
       }
     }
     for (const dx of [-1, 1]) {
       const diag = c(unit.pos.x + dx, unit.pos.y + f);
       if (!isBattlefield(diag)) continue;
-      const target = unitAt(state, diag);
-      if (target && target.side !== unit.side) {
-        out.push({ ...base, to: diag, isBattle: true, battleUnitId: target.id, path: [diag], pushDir: c(dx, f) });
-      } else if (!target) {
+      const occ = occupancy(state, unit, diag);
+      if (occ.enemies.length && !occ.friendly) {
+        out.push({ ...base, to: diag, isBattle: true, battleUnitIds: occ.enemies, path: [diag], pushDir: c(dx, f) });
+      } else if (!occ.enemies.length && !occ.friendly) {
         // En passant: an enemy pawn beside us that just made a 2-square Lead past `diag`.
         const passer = state.units.find(
           (u) => u.side !== unit.side && u.type === 'pawn' && u.enPassantTarget && eq(u.enPassantTarget, diag) &&
             u.pos.y === unit.pos.y && Math.abs(u.pos.x - unit.pos.x) === 1,
         );
         if (passer) {
-          out.push({ ...base, to: diag, isBattle: true, battleUnitId: passer.id, path: [diag], pushDir: c(dx, f), isEnPassant: true });
+          out.push({ ...base, to: diag, isBattle: true, battleUnitIds: [passer.id], path: [diag], pushDir: c(dx, f), isEnPassant: true });
         }
       }
     }
@@ -99,10 +117,10 @@ export function basicLeads(state: UnitView, unit: Unit): LeadOption[] {
     if (def.jump) {
       const to = add(unit.pos, d);
       if (!isBattlefield(to)) continue;
-      const target = unitAt(state, to);
-      if (target && target.side === unit.side) continue;
+      const occ = occupancy(state, unit, to);
+      if (occ.friendly && !friendlyEnd(to)) continue;
       out.push({
-        ...base, to, isBattle: !!target, battleUnitId: target?.id ?? null, path: [to], pushDir: knightPushDir(unit.pos, to),
+        ...base, to, isBattle: occ.enemies.length > 0, battleUnitIds: occ.enemies, path: [to], pushDir: knightPushDir(unit.pos, to),
       });
       continue;
     }
@@ -111,11 +129,11 @@ export function basicLeads(state: UnitView, unit: Unit): LeadOption[] {
     for (let step = 0; step < maxSteps; step++) {
       p = add(p, d);
       if (!isBattlefield(p)) break;
-      const target = unitAt(state, p);
-      if (target && target.side === unit.side) break;
+      const occ = occupancy(state, unit, p);
+      if (occ.friendly && !friendlyEnd(p)) break;
       path.push(p);
-      out.push({ ...base, to: p, isBattle: !!target, battleUnitId: target?.id ?? null, path: [...path], pushDir: d });
-      if (target) break;
+      out.push({ ...base, to: p, isBattle: occ.enemies.length > 0, battleUnitIds: occ.enemies, path: [...path], pushDir: d });
+      if (occ.friendly || occ.enemies.length) break;
     }
   }
   return out;

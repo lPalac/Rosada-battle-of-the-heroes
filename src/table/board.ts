@@ -4,7 +4,7 @@ import {
 } from 'three';
 import { DATA, regionOf, type Coord } from '../rules/index.ts';
 import { assetEntry, material } from './assets.ts';
-import { toWorld, ZONES } from './coords.ts';
+import { SQUARE, toWorld, ZONES } from './coords.ts';
 
 export interface BoardView {
   group: Group;
@@ -40,7 +40,7 @@ function label(text: string, color = '#f5f5f5'): Sprite {
 export function createBoard(): BoardView {
   const group = new Group();
   const squares: Mesh[] = [];
-  const geo = new BoxGeometry(0.98, 0.1, 0.98);
+  const geo = new BoxGeometry(0.98 * SQUARE, 0.1, 0.98 * SQUARE);
   for (let y = 0; y < DATA.board.size; y++) {
     for (let x = 0; x < DATA.board.size; x++) {
       const coord: Coord = { x, y };
@@ -56,7 +56,7 @@ export function createBoard(): BoardView {
       group.add(m);
       squares.push(m);
       if (region === 'tavern') {
-        const roof = new Mesh(new BoxGeometry(0.5, 0.04, 0.5), material('#5d3a1a'));
+        const roof = new Mesh(new BoxGeometry(0.5 * SQUARE, 0.04, 0.5 * SQUARE), material('#5d3a1a'));
         roof.position.copy(toWorld(coord, 0.02));
         group.add(roof);
       }
@@ -77,17 +77,17 @@ export function createBoard(): BoardView {
   }
   const graveyardZones: Mesh[] = [];
   for (const side of ['light', 'dark'] as const) {
-    const zone = new Mesh(new PlaneGeometry(3, 2.6), new MeshStandardMaterial({ color: '#2c2f33', roughness: 1 }));
+    const zone = new Mesh(new PlaneGeometry(ZONES.graveyardSize.w, ZONES.graveyardSize.d), new MeshStandardMaterial({ color: '#2c2f33', roughness: 1 }));
     zone.rotation.x = -Math.PI / 2;
     zone.position.copy(ZONES.graveyard[side]).setY(-0.04);
     zone.userData = { kind: 'graveyard', side };
     group.add(zone);
     graveyardZones.push(zone);
     const l = label(`Graveyard`, '#bbbbbb');
-    l.position.copy(ZONES.graveyard[side]).add({ x: 0, y: 0.1, z: side === 'light' ? 1.55 : -1.55 } as any);
+    l.position.copy(ZONES.graveyard[side]).add({ x: 0, y: 0.1, z: (side === 'light' ? 1.55 : -1.55) * SQUARE } as any);
     group.add(l);
   }
-  const well = new Mesh(new PlaneGeometry(2.2, 1.6), new MeshStandardMaterial({ color: '#203a4f', roughness: 1 }));
+  const well = new Mesh(new PlaneGeometry(2.2 * SQUARE, 1.6 * SQUARE), new MeshStandardMaterial({ color: '#203a4f', roughness: 1 }));
   well.rotation.x = -Math.PI / 2;
   well.position.copy(ZONES.well).setY(-0.04);
   group.add(well);

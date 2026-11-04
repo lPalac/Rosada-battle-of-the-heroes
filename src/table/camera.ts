@@ -2,6 +2,7 @@
 import { Vector3 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Side } from '../rules/index.ts';
+import { SQUARE } from './coords.ts';
 import type { TableScene } from './scene.ts';
 
 export interface TableCamera {
@@ -10,10 +11,11 @@ export interface TableCamera {
   reset(): void;
 }
 
-const TARGET = new Vector3(0.6, 0, 0);
+const TARGET = new Vector3(0.6 * SQUARE, 0, 0);
 
+/** Default view from the active side, scaled with the board (002 T015). */
 function homePosition(side: Side): Vector3 {
-  return side === 'light' ? new Vector3(0.6, 13.5, 11.5) : new Vector3(0.6, 13.5, -11.5);
+  return new Vector3(0.6 * SQUARE, 13.5 * SQUARE, (side === 'light' ? 11.5 : -11.5) * SQUARE);
 }
 
 export function createCamera(ts: TableScene, canvas: HTMLCanvasElement): TableCamera {
@@ -21,8 +23,8 @@ export function createCamera(ts: TableScene, canvas: HTMLCanvasElement): TableCa
   const controls = new OrbitControls(camera, canvas);
   controls.target.copy(TARGET);
   controls.enableDamping = false;
-  controls.minDistance = 7;
-  controls.maxDistance = 30;
+  controls.minDistance = 7 * SQUARE;
+  controls.maxDistance = 30 * SQUARE;
   controls.maxPolarAngle = Math.PI * 0.45;
   controls.addEventListener('change', () => ts.requestRender());
   let side: Side = 'light';

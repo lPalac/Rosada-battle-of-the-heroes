@@ -81,7 +81,7 @@ describe('US6 – Sandbox mode', () => {
     if (r.ok) return;
     expect(r.error.code).toBe('POSITION_INVALID');
     expect(r.error.problems?.map((p) => p.message)).toEqual(
-      expect.arrayContaining(['Two units on e1', 'Light King shares a square', 'Dark holds 3 Revenge tokens (max 2)']),
+      expect.arrayContaining(['Light King shares e1 (L-N@b1)', 'Dark holds 3 Revenge tokens (max 2)']),
     );
     expect(s.enforcement).toBe('sandbox');
   });
@@ -111,5 +111,60 @@ describe('US6 – Sandbox mode', () => {
     s = toPhase(s, 'lead');
     expect(legalLeadTargets(s, 'L-K@e1').map((t) => name(t.to))).not.toContain('g1');
     expect(s.units.every((u) => u.enPassantTarget === null)).toBe(true);
+  });
+});
+
+describe('002 – pieces on the table beside the board (research R-05)', () => {
+  it('sandboxPlace accepts table squares off the 10×10 grid and rejects anything off the table', () => {
+    let s = act(board({ a2: 'P' }), { type: 'setEnforcement', mode: 'sandbox' }).state;
+    s = act(s, { type: 'sandboxPlace', target: { unitId: 'L-P@a2' }, to: { x: -3, y: 4 } }).state;
+    expect(s.units.find((u) => u.id === 'L-P@a2')?.pos).toEqual({ x: -3, y: 4 });
+    s = act(s, { type: 'sandboxPlace', target: { heroId: 'H2' }, to: { x: 12, y: 9 } }).state;
+    expect(hero(s, 'H2').pos).toEqual({ x: 12, y: 9 });
+    expect(reject(s, { type: 'sandboxPlace', target: { unitId: 'L-P@a2' }, to: { x: 40, y: 0 } })).toBe('BAD_SQUARE');
+    expect(reject(s, { type: 'sandboxPlace', target: { heroId: 'H2' }, to: 'graveyard' })).toBe('BAD_SQUARE');
+  });
+});
+
+describe('002 US3 – resume rules from a physical sandbox position', () => {
+  it('US3-AS2 a unit neither on the Battlefield nor in a Graveyard blocks resuming; a hero off the grid too', () => {
+    let s = act(board({ c1: 'B' }), { type: 'setEnforcement', mode: 'sandbox' }).state;
+    s = run(s, [
+      { type: 'sandboxPlace', target: { unitId: 'L-B@c1' }, to: { x: 14, y: 4 } },
+      { type: 'sandboxPlace', target: { heroId: 'H4' }, to: { x: -3, y: 2 } },
+    ]).state;
+    const r = apply(s, { type: 'setEnforcement', mode: 'rules' });
+    expect(r.ok).toBe(false);
+    const messages = r.ok ? [] : r.error.problems!.map((p) => p.message);
+    expect(messages).toContain('L-B@c1 is not on the Battlefield or in a Graveyard');
+    expect(messages).toContain('H4 is not on the board');
+    // The Outskirts are not the Battlefield either.
+    const t = act(act(board({ c1: 'B' }), { type: 'setEnforcement', mode: 'sandbox' }).state,
+      { type: 'sandboxPlace', target: { unitId: 'L-B@c1' }, to: sq('c0') }).state;
+    expect(apply(t, { type: 'setEnforcement', mode: 'rules' }).ok).toBe(false);
+  });
+
+  it('US3-AS3 a unit dropped into a Graveyard zone goes to the Graveyard; US3-AS4 and back onto a square', () => {
+    let s = act(board({ c1: 'B' }), { type: 'setEnforcement', mode: 'sandbox' }).state;
+    s = act(s, { type: 'sandboxPlace', target: { unitId: 'L-B@c1' }, to: 'graveyard' }).state;
+    expect(s.graveyard.map((u) => u.id)).toEqual(['L-B@c1']);
+    expect(s.units.some((u) => u.id === 'L-B@c1')).toBe(false);
+    s = act(s, { type: 'sandboxPlace', target: { unitId: 'L-B@c1' }, to: sq('d3') }).state;
+    expect(s.units.find((u) => u.id === 'L-B@c1')?.pos).toEqual(sq('d3'));
+    expect(s.graveyard).toEqual([]);
+  });
+
+  it('US3-AS5 once the problems are fixed, play resumes at Before Turn and moved units count as Led', () => {
+    let s = act(board({ c1: 'B', h1: 'R' }, { heroes: { H1: 'e0' } }), { type: 'setEnforcement', mode: 'sandbox' }).state;
+    s = act(s, { type: 'sandboxPlace', target: { unitId: 'L-B@c1' }, to: { x: 14, y: 4 } }).state;
+    expect(apply(s, { type: 'setEnforcement', mode: 'rules' }).ok).toBe(false);
+    s = run(s, [
+      { type: 'sandboxPlace', target: { unitId: 'L-B@c1' }, to: 'graveyard' },
+      { type: 'sandboxPlace', target: { unitId: 'L-R@h1' }, to: sq('h2') },
+      { type: 'sandboxPlace', target: { unitId: 'L-R@h1' }, to: sq('h1') },
+      { type: 'setEnforcement', mode: 'rules' },
+    ]).state;
+    expect(s.phase).toBe('move');
+    expect(s.units.find((u) => u.id === 'L-R@h1')?.hasBeenLed).toBe(true);
   });
 });

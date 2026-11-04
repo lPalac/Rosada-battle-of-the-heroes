@@ -53,6 +53,7 @@ export interface RulesData {
   };
   maxMovementReduction: number;
   revengeMax: number;
+  maxUnitsPerSquare: number;
   banishmentMovementPenalty: number;
   destiny: {
     wellInitial: number;

@@ -5,7 +5,7 @@
     "offer": { "type": "object", "required": ["cost", "heal"], "properties": { "cost": { "$ref": "#/$defs/n" }, "heal": { "$ref": "#/$defs/n" } } }
   },
   "type": "object",
-  "required": ["leadTarget", "die", "modifiers", "ramWounds", "tavern", "maxMovementReduction", "revengeMax", "banishmentMovementPenalty", "destiny", "abilities"],
+  "required": ["leadTarget", "die", "modifiers", "ramWounds", "tavern", "maxMovementReduction", "revengeMax", "maxUnitsPerSquare", "banishmentMovementPenalty", "destiny", "abilities"],
   "properties": {
     "$schema": { "type": "string" },
     "leadTarget": { "type": "integer", "minimum": 1 },
@@ -21,6 +21,7 @@
     },
     "maxMovementReduction": { "$ref": "#/$defs/n" },
     "revengeMax": { "$ref": "#/$defs/n" },
+    "maxUnitsPerSquare": { "type": "integer", "minimum": 1 },
     "banishmentMovementPenalty": { "$ref": "#/$defs/n" },
     "destiny": {
       "type": "object",

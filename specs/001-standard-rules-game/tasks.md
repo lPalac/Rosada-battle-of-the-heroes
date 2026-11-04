@@ -293,7 +293,7 @@ description: "Task list for 001-standard-rules-game"
 - [X] T111 [P] Save and resume in browser `localStorage` using the serialised `GameState` + `version`, with a *Resume game* option on the start screen (FR-200) in src/game/save.ts and src/ui/setup/players.ts
 - [X] T112 [P] Export/import a game state file (JSON download/upload) in src/game/save.ts and src/ui/settings.ts (FR-201)
 - [X] T113 [P] Rule reference panel showing the `RuleError.rule` section text for rejected actions in src/ui/hud/rule-panel.ts (FR-202)
-- [ ] T114 [P] Physics-based free handling of pieces in sandbox (pick up, drop, knock over) using Rapier bodies in src/physics/sandbox.ts (FR-203)
+- [X] T114 [P] (done in feature 002, specs/002-sandbox-physics) Physics-based free handling of pieces in sandbox (pick up, drop, knock over) using Rapier bodies in src/physics/sandbox.ts (FR-203)
 - [X] T115 [P] Board-position editor reusing sandbox placement with save-as-fixture export in src/ui/position-editor.ts (FR-204)
 
 ---
@@ -389,7 +389,7 @@ Task: "T069 [US7] src/physics/world.ts dice tray"
 - **T102**: sandbox pieces move by drag-and-drop or by click → click.
 - **T107**: the frame-time check runs in a `gpu` Playwright project with GPU flags; default headless Chromium uses SwiftShader. Measured on this machine (Intel UHD): median frame 16.7 ms, first load ≈ 2.7 s. Rapier is a separate chunk loaded on the first roll.
 - **T111/T112**: save files hold the starting state + action log (`src/game/save.ts`); the browser slot autosaves after every action.
-- **T114 (open)**: physics-based free handling of pieces in sandbox (pick up, drop, knock over) is not built. Sandbox placement works by drag-and-drop without physics. Optional P1 item.
+- **T114**: built in feature 002 (specs/002-sandbox-physics): units and hero figures are physical in sandbox; pick up, drop and knock over.
 - Open Questions found while building are now resolved: Q-23 (Hero Retreat gives only the free Drink, matches the build) and Q-24 (no roll when a Lead cannot fail: built in T116).
 
 ## Follow-up from resolved questions

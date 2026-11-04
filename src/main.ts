@@ -10,6 +10,7 @@ import {
   type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
 } from './rules/index.ts';
 import { createBoard } from './table/board.ts';
+import { SQUARE, toWorld, ZONES } from './table/coords.ts';
 import { createCamera } from './table/camera.ts';
 import { DiceView } from './table/dice.ts';
 import { HighlightView } from './table/highlights.ts';
@@ -31,6 +32,7 @@ import { renderTavern } from './ui/hud/tavern.ts';
 import { renderLog } from './ui/log.ts';
 import { renderResult } from './ui/result.ts';
 import { renderSettings } from './ui/settings.ts';
+import { SandboxPhysics } from './ui/sandbox-physics.ts';
 import { SetupWizard } from './ui/setup/index.ts';
 import { clearLocal, downloadText, exportFile, loadLocal, readSaveFile, saveLocal } from './ui/storage.ts';
 
@@ -57,6 +59,7 @@ let session: GameSession | null = null;
 let selected: string | null = null;
 let targeting: { kind: 'retreat'; options: Coord[] } | null = null;
 let held: Pick | null = null;
+let carriedMoved = false;
 let rolling = false;
 let settingsOpen = false;
 let modal = false;
@@ -67,6 +70,18 @@ let unsubscribe: (() => void) | null = null;
 
 const state = (): GameState | null => session?.state ?? null;
 const isE2E = import.meta.env.MODE === 'e2e';
+const physics = new SandboxPhysics(ts, pieces, (a) => dispatch(a), state, (on) => (camera.controls.enabled = on));
+
+/** Sandbox physics follows the mode: a world while rules are off, none while they are on (002 FR-020, FR-027). */
+function syncPhysics(s: GameState): void {
+  if (s.status !== 'setup' && s.enforcement === 'sandbox') {
+    physics.ensure(s);
+    physics.syncFromState(s);
+  } else if (physics.ready) {
+    physics.dispose();
+    pieces.sync(s, [], false);
+  }
+}
 
 function showError(e: RuleError): void {
   lastError = e;
@@ -95,11 +110,13 @@ function onChange(s: GameState, events: GameEvent[]): void {
   }
   if (session && s.status !== 'setup') saveLocal(session.initial, session.actions);
   if (s.status !== 'setup') pieces.sync(s, events);
+  syncPhysics(s);
   render();
 }
 
 function startSession(initial: GameState, actions: Action[] = []): void {
   unsubscribe?.();
+  physics.dispose();
   session = new GameSession(initial);
   if (actions.length) session.reset(initial, actions);
   unsubscribe = session.onChange(onChange);
@@ -107,6 +124,7 @@ function startSession(initial: GameState, actions: Action[] = []): void {
   targeting = null;
   held = null;
   if (session.state.status !== 'setup') pieces.sync(session.state, [], false);
+  syncPhysics(session.state);
   render();
 }
 
@@ -236,10 +254,17 @@ async function sandboxOn(): Promise<void> {
   render();
 }
 
-function sandboxOff(): void {
+/** Rules back on: let pieces come to rest, record where they are, stand them up, then check (002 FR-026). */
+async function sandboxOff(): Promise<void> {
   settingsOpen = false;
   held = null;
-  dispatch({ type: 'setEnforcement', mode: 'rules' });
+  if (physics.ready) {
+    toasts.show(t('sandbox.settling'), { ms: 1500 });
+    await physics.settle(3000);
+    physics.dispose();
+    pieces.sync(state()!, [], false);
+  }
+  if (!dispatch({ type: 'setEnforcement', mode: 'rules' })) syncPhysics(state()!);
   render();
 }
 
@@ -300,12 +325,25 @@ function onPick(p: Pick): void {
   }
 }
 
-picker.listen({ onClick: onPick, onDrag: (a, b) => { if (state()?.enforcement === 'sandbox') sandboxDrop(a, b); } },
-  () => state()?.enforcement === 'sandbox');
+picker.listen({
+  onClick: onPick,
+  onDrag: (a, b) => { if (state()?.enforcement === 'sandbox') sandboxDrop(a, b); },
+  carry: {
+    start: (p) => { carriedMoved = false; return physics.startCarry(p); },
+    move: (point) => { carriedMoved = true; physics.moveCarry(point); },
+    end: () => {
+      physics.endCarry();
+      if (carriedMoved) held = null; // a real carry replaces click-to-place; a plain click keeps it working
+    },
+  },
+}, () => state()?.enforcement === 'sandbox' && !modal);
 
 // --- rendering ---
 function helpText(s: GameState): string | null {
-  if (s.enforcement === 'sandbox') return held ? `${t('hud.chooseSquare')} (${'id' in held ? held.id : ''})` : t('sandbox.help');
+  if (s.enforcement === 'sandbox') {
+    if (held) return `${t('hud.chooseSquare')} (${'id' in held ? held.id : ''})`;
+    return physics.ready ? t('sandbox.physicsHelp') : t('sandbox.help');
+  }
   const d = s.pendingDecision;
   if (d && (d.type === 'advanceSquare')) return t('dialog.advance');
   if (d && d.type === 'unconsciousTavern') return t('hud.chooseSquare');
@@ -338,7 +376,7 @@ function render(): void {
   } else if (settingsOpen) {
     mount(overlay, renderSettings(s.enforcement === 'sandbox', {
       sandboxOn: () => void sandboxOn(),
-      sandboxOff,
+      sandboxOff: () => void sandboxOff(),
       save: () => { saveLocal(session!.initial, session!.actions); toasts.show(t('settings.saved')); },
       exportFile: () => exportFile(session!.initial, session!.actions),
       importFile: async (f) => {
@@ -367,7 +405,8 @@ function render(): void {
     renderHeroes(m, playerName),
     renderPools(m),
     s.enforcement === 'sandbox'
-      ? renderSandboxEditors(s, dispatch, () => void roll(), sandboxOff, () => downloadText('position.fixture.ts', toFixture(s), 'text/plain'))
+      ? renderSandboxEditors(s, dispatch, () => void roll(), () => void sandboxOff(), () => downloadText('position.fixture.ts', toFixture(s), 'text/plain'),
+          { canUndo: session!.canUndo(), undo: () => { session!.undo(); } })
       : null,
     el('div', { class: 'actions' },
       renderRulePanel(lastError),
@@ -412,6 +451,47 @@ if (import.meta.env.DEV || isE2E) {
     screenOf: (square: string) => picker.screenOf(parseSquare(square)),
     highlighted: () => hl.current.map((h) => ({ kind: h.kind, square: squareName(h.coord) })),
     frames: () => ts.frames,
+    squareSize: () => SQUARE,
+    selected: () => selected,
+    unitScreenOf: (id: string) => {
+      const obj = pieces.unitObject(id) ?? pieces.heroObject(id);
+      if (!obj) return null;
+      const p = obj.position.clone().setY(0.3).project(ts.camera);
+      const rect = canvas.getBoundingClientRect();
+      return { x: rect.left + ((p.x + 1) / 2) * rect.width, y: rect.top + ((1 - p.y) / 2) * rect.height };
+    },
+    physicsReady: () => physics.ready,
+    pieceWorld: (id: string) => {
+      const obj = pieces.unitObject(id) ?? pieces.heroObject(id);
+      return obj ? { x: obj.position.x, y: obj.position.y, z: obj.position.z } : null;
+    },
+    squareWorld: (square: string) => {
+      const p = toWorld(parseSquare(square));
+      return { x: p.x, z: p.z };
+    },
+    graveyardScreen: (side: 'light' | 'dark') => {
+      const p = ZONES.graveyard[side].clone().setY(0).project(ts.camera);
+      const rect = canvas.getBoundingClientRect();
+      return { x: rect.left + ((p.x + 1) / 2) * rect.width, y: rect.top + ((1 - p.y) / 2) * rect.height };
+    },
+    /** Largest distance between a board piece's mesh and where the state puts it (rules mode: should be ~0). */
+    maxPieceOffset: () => {
+      const s = state();
+      if (!s) return 0;
+      let worst = 0;
+      for (const u of s.units) worst = Math.max(worst, pieces.unitObject(u.id)!.position.distanceTo(pieces.unitTarget(s, u, null)));
+      for (const h of s.heroes) worst = Math.max(worst, pieces.heroObject(h.id)!.position.distanceTo(pieces.heroTarget(s, h)));
+      return worst;
+    },
+    /** Largest tilt of any unit or upright hero, in degrees. */
+    maxPieceTilt: () => {
+      let worst = 0;
+      for (const { obj } of pieces.allPieces()) {
+        const up = obj.up.clone().set(0, 1, 0).applyQuaternion(obj.quaternion);
+        worst = Math.max(worst, (Math.acos(Math.min(1, up.y)) * 180) / Math.PI);
+      }
+      return worst;
+    },
     forceNextRoll: (n: number) => {
       if (!isE2E) throw new Error('forceNextRoll is only available in e2e builds');
       forcedRoll = n;

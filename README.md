@@ -60,4 +60,6 @@ npm run build                     # static site in dist/
 | `src/ui/` | DOM HUD, setup wizard, dialogs, settings, result screen |
 | `tests/` | Vitest (`rules/`, `games/`, `physics/`, `game/`) and Playwright (`e2e/`) |
 
-See `specs/001-standard-rules-game/quickstart.md` for the manual check.
+See `specs/001-standard-rules-game/quickstart.md` and `specs/002-sandbox-physics/quickstart.md` for the manual checks.
+
+Feature 002 adds physics to sandbox mode (pick up, drop and knock over units and hero figures; `src/physics/sandbox.ts`), a 25% larger board, and up to 2 friendly units per square (a Battle there destroys all of them).

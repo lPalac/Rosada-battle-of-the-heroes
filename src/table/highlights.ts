@@ -3,14 +3,14 @@
 import { Group, Mesh, MeshBasicMaterial, PlaneGeometry, RingGeometry } from 'three';
 import type { Highlights } from '../game/hud-model.ts';
 import type { Coord } from '../rules/index.ts';
-import { toWorld } from './coords.ts';
+import { SQUARE, toWorld } from './coords.ts';
 import type { PiecesView } from './pieces.ts';
 
 const COLORS = { move: '#4caf50', lead: '#29b6f6', battle: '#ef5350', decision: '#ffd54f', place: '#ba68c8' };
 
 export class HighlightView {
   readonly group = new Group();
-  private plane = new PlaneGeometry(0.9, 0.9);
+  private plane = new PlaneGeometry(0.9 * SQUARE, 0.9 * SQUARE);
   private ring = new RingGeometry(0.3, 0.38, 32);
   private mats = Object.fromEntries(
     Object.entries(COLORS).map(([k, c]) => [k, new MeshBasicMaterial({ color: c, transparent: true, opacity: 0.55, depthWrite: false })]),

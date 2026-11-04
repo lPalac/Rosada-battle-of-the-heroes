@@ -11,7 +11,7 @@ test('Knight onto its own King → problem listed; fix → resume at Before Turn
   await clickSquare(page, 'g1'); // pick up the Knight
   await clickSquare(page, 'e1'); // drop it on its own King
   await page.getByTestId('resume-rules').click();
-  await expect(page.getByTestId('problems')).toContainText('Light King shares a square');
+  await expect(page.getByTestId('problems')).toContainText('Light King shares e1');
   await page.getByTestId('problems-close').click();
   await expect(page.getByTestId('sandbox-badge')).toBeVisible();
   // Two pieces share e1 now, so move the Knight away by its id rather than by a click that could pick the King.

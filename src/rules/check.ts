@@ -5,7 +5,7 @@ import { DATA } from './data.ts';
 import type { GameState } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import { otherSide, type Coord, type Side } from './model/types.ts';
-import { attackSquares, basicLeads, unitAt, type LeadOption } from './paths.ts';
+import { attackSquares, basicLeads, unitAt, type LeadOption, type PathOptions } from './paths.ts';
 
 type UnitView = Pick<GameState, 'units'>;
 
@@ -38,7 +38,7 @@ export function isProtected(state: UnitView, unit: Unit): boolean {
 /** Units after a Lead succeeds (heroes are not needed for check). */
 export function unitsAfterLead(state: UnitView, opt: LeadOption): Unit[] {
   return state.units
-    .filter((u) => u.id !== opt.battleUnitId)
+    .filter((u) => !opt.battleUnitIds.includes(u.id))
     .map((u) => {
       if (u.id === opt.unitId) return { ...u, pos: opt.to };
       if (opt.rook && u.id === opt.rook.unitId) return { ...u, pos: opt.rook.to };
@@ -83,7 +83,7 @@ export function castlingLeads(state: UnitView, king: Unit): LeadOption[] {
     const to = c(king.pos.x + 2 * dir, rank);
     if (threats.has(key(crossed)) || threats.has(key(to))) continue;
     out.push({
-      unitId: king.id, from: king.pos, to, isBattle: false, battleUnitId: null, path: [crossed, to],
+      unitId: king.id, from: king.pos, to, isBattle: false, battleUnitIds: [], path: [crossed, to],
       pushDir: c(dir, 0), isCastling: true, isEnPassant: false, isDoubleStep: false,
       rook: { unitId: rook.id, to: crossed },
     });
@@ -92,11 +92,11 @@ export function castlingLeads(state: UnitView, king: Unit): LeadOption[] {
 }
 
 /** Leads of one unit that are legal by unit rules (range ignored): never leaving the own King in check. */
-export function legalLeadsForUnit(state: UnitView, unit: Unit): LeadOption[] {
-  const opts = [...basicLeads(state, unit), ...castlingLeads(state, unit)];
+export function legalLeadsForUnit(state: UnitView, unit: Unit, pathOpts: PathOptions = {}): LeadOption[] {
+  const opts = [...basicLeads(state, unit, pathOpts), ...castlingLeads(state, unit)];
   return opts.filter((o) => {
-    const target = o.battleUnitId ? state.units.find((u) => u.id === o.battleUnitId) : undefined;
-    if (target?.type === 'king') return true; // Destroying the enemy King ends the game at once.
+    const destroysKing = state.units.some((u) => o.battleUnitIds.includes(u.id) && u.type === 'king');
+    if (destroysKing) return true; // Destroying the enemy King ends the game at once.
     return !leadLeavesKingInCheck(state, o);
   });
 }

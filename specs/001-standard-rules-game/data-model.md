@@ -1,5 +1,7 @@
 # Data Model: Standard Rules Game
 
+> **Changed by 002**: up to `maxUnitsPerSquare` (2) friendly units may share a square; in sandbox a piece's `pos` may lie on the table beside the board. See [002 data-model.md](../../002-sandbox-physics/data-model.md).
+
 **Feature**: `001-standard-rules-game` | **Date**: 2026-11-03 | **Spec**: [spec.md](./spec.md) | **Research**: [research.md](./research.md)
 
 All types live in `src/rules/model/` and are plain JSON-serialisable data (FR-121). Coordinates follow research R-05.

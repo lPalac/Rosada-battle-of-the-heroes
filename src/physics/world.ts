@@ -10,7 +10,8 @@ export interface TrayGeometry {
   wallHeight: number;
 }
 
-export const TRAY: TrayGeometry = { center: { x: 8.2, z: 1.5 }, size: 3.6, wallHeight: 1.2 };
+// Beside the 002 board (squares are 1.25 world units).
+export const TRAY: TrayGeometry = { center: { x: 10.25, z: 1.9 }, size: 3.6, wallHeight: 1.2 };
 
 let rapierPromise: Promise<Rapier> | null = null;
 

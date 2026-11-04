@@ -14,7 +14,7 @@ function files(dir: string): string[] {
 const src = files('src').map((f) => ({ f, text: readFileSync(f, 'utf8') }));
 const keys = new Set(Object.keys(strings));
 /** Position problem codes come with their own message text (FR-103); they are not shown via error.* keys. */
-const PROBLEM_CODES = ['TWO_UNITS', 'UNIT_OFF_BATTLEFIELD', 'UNPROMOTED_PAWN', 'KING_COUNT', 'KING_SHARES', 'NEGATIVE_POOL',
+const PROBLEM_CODES = ['OPPOSING_UNITS_SHARE', 'TOO_MANY_UNITS', 'UNIT_OFF_BATTLEFIELD', 'UNPROMOTED_PAWN', 'KING_COUNT', 'KING_SHARES', 'NEGATIVE_POOL',
   'REVENGE_COUNT', 'HERO_OFF_BOARD', 'BAD_HEALTH'];
 
 describe('UI strings (A-02)', () => {

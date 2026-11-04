@@ -131,15 +131,14 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
     return;
   }
   const unit = s.units.find((u) => u.id === lead.unitId)!;
-  // Battle / Destroy.
-  let destroyedKing = false;
-  if (opt.battleUnitId) {
-    const victim = s.units.find((u) => u.id === opt.battleUnitId)!;
-    s.units = s.units.filter((u) => u.id !== victim.id);
+  // Battle / Destroy: every enemy unit on the square (002 FR-006).
+  const victims = s.units.filter((u) => opt.battleUnitIds.includes(u.id));
+  s.units = s.units.filter((u) => !opt.battleUnitIds.includes(u.id));
+  for (const victim of victims) {
     s.graveyard.push({ ...victim, enPassantTarget: null });
     emit(ctx, { type: 'unitDestroyed', unitId: victim.id, by: 'battle' });
-    if (victim.type === 'king') destroyedKing = true;
   }
+  const destroyedKing = victims.some((v) => v.type === 'king');
   const from = unit.pos;
   unit.pos = opt.to;
   unit.hasBeenLed = true;
@@ -160,11 +159,11 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
   }
   // Ram wounds, then Destiny for the Battle, then Revenge (research R-08).
   lead.rams = applyRams(ctx, unit, opt);
-  if (opt.battleUnitId) {
-    const victim = s.graveyard[s.graveyard.length - 1];
+  // One Battle: +2 D once to the Leading side, however many units fall; +1 D per unit lost to the other side.
+  if (victims.length) {
     gain(ctx, { side }, DESTINY.destroyEnemy, 'destroyEnemy');
-    gain(ctx, { side: victim.side }, DESTINY.ownUnitLost, 'ownUnitLost');
-    if (victim.type === 'queen') gainRevenge(ctx, victim.side);
+    for (const victim of victims) gain(ctx, { side: victim.side }, DESTINY.ownUnitLost, 'ownUnitLost');
+    for (const victim of victims) if (victim.type === 'queen') gainRevenge(ctx, victim.side);
   }
   const enemy = otherSide(side);
   if (isInCheck(s, enemy)) {

@@ -9,6 +9,7 @@ export function renderSandboxEditors(
   onFreeRoll: () => void,
   onResume: () => void,
   onExportFixture: () => void,
+  history: { canUndo: boolean; undo: () => void } = { canUndo: false, undo: () => {} },
 ): HTMLElement {
   const num = (value: number, testid: string, set: (v: number) => void) =>
     el('input', { type: 'number', value, 'data-testid': testid, onchange: (e) => set(Number((e.target as HTMLInputElement).value)) });
@@ -16,6 +17,7 @@ export function renderSandboxEditors(
     el('div', { class: 'row' },
       button(t('settings.sandboxOff'), onResume, { kind: 'primary', testid: 'resume-rules' }),
       button(t('sandbox.freeRoll'), onFreeRoll, { testid: 'free-roll' }),
+      button(t('action.undoSandbox'), history.undo, { testid: 'sandbox-undo', disabled: !history.canUndo }),
     ),
     ...s.heroes.map((h) =>
       el('div', { class: 'row' },

@@ -3,10 +3,11 @@ import { Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, TorusGeometry, Ve
 import type { GameEvent, GameState, Hero, Side, Unit } from '../rules/index.ts';
 import { createAsset, crystalMesh, heroRing, tokenMesh } from './assets.ts';
 import { shake, tweenTo } from './animate.ts';
-import { toWorld, ZONES } from './coords.ts';
+import { SQUARE, toWorld, unitOffset, ZONES } from './coords.ts';
 import type { TableScene } from './scene.ts';
 
 const UPRIGHT = new Quaternion();
+const yawOf = (side: Side): number => (side === 'dark' ? Math.PI : 0);
 const LYING = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2);
 
 export class PiecesView {
@@ -25,6 +26,26 @@ export class PiecesView {
     this.group.add(this.activeRing);
   }
 
+  /** True while the sandbox physics world moves the pieces (002 US1). */
+  physics = false;
+
+  /** Draw units and hero figures where the physics world has them; Dark units keep facing the Light side. */
+  applyPoses(poses: Map<string, { p: [number, number, number]; q: [number, number, number, number] }>, sides: Map<string, Side>): void {
+    for (const [id, pose] of poses) {
+      const obj = this.units.get(id) ?? this.heroes.get(id);
+      if (!obj) continue;
+      obj.position.set(pose.p[0], pose.p[1], pose.p[2]);
+      obj.quaternion.set(pose.q[0], pose.q[1], pose.q[2], pose.q[3]);
+      if (this.units.has(id)) obj.quaternion.multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yawOf(sides.get(id) ?? 'light')));
+    }
+    this.ts.requestRender();
+  }
+
+  /** Every unit and hero mesh, for tests (offsets and tilt in rules mode). */
+  allPieces(): { id: string; obj: Object3D }[] {
+    return [...this.units, ...this.heroes].map(([id, obj]) => ({ id, obj }));
+  }
+
   unitObject(id: string): Object3D | undefined {
     return this.units.get(id);
   }
@@ -33,24 +54,33 @@ export class PiecesView {
     return this.heroes.get(id);
   }
 
-  private unitTarget(state: GameState, u: Unit, graveIndex: number | null): Vector3 {
-    if (graveIndex === null) return toWorld(u.pos);
+  /** Rest point of a unit: its square (two units on the square's diagonal, in id order) or its Graveyard slot. */
+  unitTarget(state: GameState, u: Unit, graveIndex: number | null): Vector3 {
+    if (graveIndex === null) {
+      const here = state.units.filter((x) => x.pos.x === u.pos.x && x.pos.y === u.pos.y).map((x) => x.id).sort();
+      return toWorld(u.pos).add(unitOffset(here.indexOf(u.id), here.length));
+    }
     const zone = ZONES.graveyard[u.side];
     const col = graveIndex % 5;
     const row = Math.floor(graveIndex / 5);
-    return new Vector3(zone.x - 1.1 + col * 0.55, 0, zone.z + (u.side === 'light' ? -0.8 : 0.8) + row * (u.side === 'light' ? 0.6 : -0.6));
+    const dir = u.side === 'light' ? -1 : 1;
+    return new Vector3(zone.x + (-1.1 + col * 0.55) * SQUARE, 0, zone.z + (0.8 * dir - row * 0.6 * dir) * SQUARE);
   }
 
-  private heroTarget(state: GameState, h: Hero): Vector3 {
+  /** Rest point of a hero figure: centre if alone; with units it stands in a free corner, else in a ring. */
+  heroTarget(state: GameState, h: Hero): Vector3 {
     const base = toWorld(h.pos);
     const sharing = state.heroes.filter((x) => x.pos.x === h.pos.x && x.pos.y === h.pos.y);
-    const unitHere = state.units.some((u) => u.pos.x === h.pos.x && u.pos.y === h.pos.y);
-    if (sharing.length === 1 && !unitHere) return base;
-    // Several heroes on one square (or a hero beside a unit) stand in a ring.
+    const units = state.units.filter((u) => u.pos.x === h.pos.x && u.pos.y === h.pos.y).length;
     const i = sharing.findIndex((x) => x.id === h.id);
-    const n = Math.max(sharing.length, unitHere ? 2 : 1);
-    const angle = (i / n) * Math.PI * 2 + Math.PI / 4;
-    const r = unitHere ? 0.33 : 0.25;
+    if (units > 0) {
+      // Units use the centre or the (−,+)/(+,−) diagonal, so heroes take the other two corners, then the rest.
+      const corners = [[-1, -1], [1, 1], [-1, 1], [1, -1]].map(([x, z]) => new Vector3(x, 0, z).multiplyScalar(0.3 * SQUARE));
+      return base.add(corners[i % corners.length]);
+    }
+    if (sharing.length === 1) return base;
+    const angle = (i / sharing.length) * Math.PI * 2 + Math.PI / 4;
+    const r = 0.25 * SQUARE;
     return base.add(new Vector3(Math.cos(angle) * r, 0, Math.sin(angle) * r));
   }
 
@@ -69,6 +99,7 @@ export class PiecesView {
         map.set(id, obj);
         return obj;
       }
+      if (this.physics) return obj; // in sandbox the physics world owns the poses (002 US1)
       if (animate && obj.position.distanceTo(target) > 0.01) tweenTo(this.ts, obj, target, { rotation });
       else {
         obj.position.copy(target);
@@ -87,11 +118,12 @@ export class PiecesView {
         place(u.id, `unit.${u.side}.${u.type}`, this.unitTarget(state, u, null), { kind: 'unit', id: u.id, type: u.type }, this.units);
       }
       this.units.get(u.id)!.userData.type = u.type;
-      this.units.get(u.id)!.rotation.y = u.side === 'dark' ? Math.PI : 0;
+      if (!this.physics) this.units.get(u.id)!.rotation.set(0, yawOf(u.side), 0); // also stands fallen pieces up
     }
     const graveCount: Record<Side, number> = { light: 0, dark: 0 };
     for (const u of state.graveyard) {
       place(u.id, `unit.${u.side}.${u.type}`, this.unitTarget(state, u, graveCount[u.side]++), { kind: 'graveUnit', id: u.id }, this.units);
+      if (!this.physics) this.units.get(u.id)!.rotation.set(0, yawOf(u.side), 0);
       this.units.get(u.id)!.userData.kind = 'graveUnit';
       this.units.get(u.id)!.traverse((c) => (c.userData = { kind: 'graveUnit', id: u.id }));
     }

@@ -1,5 +1,5 @@
 // Raycast picking of squares, units, heroes and the Graveyard; click and drag (sandbox) gestures.
-import { Object3D, Raycaster, Vector2, Vector3, type Camera } from 'three';
+import { Object3D, Plane, Raycaster, Vector2, Vector3, type Camera } from 'three';
 import type { Coord, Side } from '../rules/index.ts';
 import { fromWorld, toWorld } from './coords.ts';
 
@@ -12,8 +12,14 @@ export type Pick =
 
 export interface PickHandlers {
   onClick(pick: Pick): void;
-  /** Drag from one pick to another (sandbox drag and drop). */
+  /** Drag from one pick to another (sandbox drag and drop without physics). */
   onDrag?(from: Pick, to: Pick): void;
+  /** Carrying a piece with physics (002 US1): return true from start to take the gesture. */
+  carry?: {
+    start(pick: Pick): boolean;
+    move(point: { x: number; z: number }): void;
+    end(): void;
+  };
 }
 
 export class Picker {
@@ -48,18 +54,40 @@ export class Picker {
     return { x: rect.left + ((p.x + 1) / 2) * rect.width, y: rect.top + ((1 - p.y) / 2) * rect.height };
   }
 
-  /** A click is a press and release that barely moves; a longer move is a drag (or a camera orbit). */
+  /** Where the pointer ray meets the table top (y = 0), in world units. */
+  groundAt(clientX: number, clientY: number): { x: number; z: number } | null {
+    const rect = this.canvas.getBoundingClientRect();
+    const ndc = new Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    this.ray.setFromCamera(ndc, this.camera);
+    const hit = this.ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), new Vector3());
+    return hit ? { x: hit.x, z: hit.z } : null;
+  }
+
+  /** A click is a press and release that barely moves; a longer move is a drag, a carry, or a camera orbit. */
   listen(handlers: PickHandlers, dragEnabled: () => boolean): void {
-    let down: { x: number; y: number; pick: Pick | null } | null = null;
+    let down: { x: number; y: number; pick: Pick | null; carrying: boolean } | null = null;
     this.canvas.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
-      down = { x: e.clientX, y: e.clientY, pick: this.pickAt(e.clientX, e.clientY) };
+      const pick = this.pickAt(e.clientX, e.clientY);
+      const isPiece = !!pick && (pick.kind === 'unit' || pick.kind === 'hero' || pick.kind === 'graveUnit');
+      const carrying = isPiece && dragEnabled() && !!handlers.carry?.start(pick!);
+      down = { x: e.clientX, y: e.clientY, pick, carrying };
+    });
+    this.canvas.addEventListener('pointermove', (e) => {
+      if (!down?.carrying) return;
+      const g = this.groundAt(e.clientX, e.clientY);
+      if (g) handlers.carry!.move(g);
     });
     this.canvas.addEventListener('pointerup', (e) => {
       if (!down || e.button !== 0) return;
       const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
       const start = down;
       down = null;
+      if (start.carrying) {
+        handlers.carry!.end();
+        if (moved < 6 && start.pick) handlers.onClick(start.pick); // a click still works as click-to-place
+        return;
+      }
       if (moved < 6) {
         if (start.pick) handlers.onClick(start.pick);
         return;

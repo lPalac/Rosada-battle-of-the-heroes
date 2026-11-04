@@ -1,5 +1,7 @@
 # Contract: Rules Core API
 
+> **Changed by 002**: `LeadOption.battleUnitIds` (a Battle destroys every enemy unit on a square), new position problem codes (`OPPOSING_UNITS_SHARE`, `TOO_MANY_UNITS`; `TWO_UNITS` removed), and `sandboxPlace` accepts table squares beside the board. See [002 rules-api-changes.md](../../002-sandbox-physics/contracts/rules-api-changes.md).
+
 **Feature**: `001-standard-rules-game` | Module: `src/rules/index.ts`
 
 This is the only interface between the rules core and everything else (3D table, HUD, tests, a later online server). The rules core is pure: same input, same output, no I/O, no DOM, no Three.js/Rapier (constitution II).
