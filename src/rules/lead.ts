@@ -38,8 +38,10 @@ export function computeModifiers(state: GameState, unitType: UnitType): { needsR
   if (state.tokens.peaceTreaty === 'war') modifiers.push({ source: 'war', value: RULES.modifiers.war });
   if (isInCheck(state, side)) modifiers.push({ source: 'check', value: RULES.modifiers.kingInCheck });
   if (state.turn.inspiredLeadBonus > 0) modifiers.push({ source: 'inspiredLead', value: state.turn.inspiredLeadBonus });
-  // No roll for King Leads (Determination) or while the Peace side is up (FR-033).
-  const needsRoll = unitType !== 'king' && state.tokens.peaceTreaty === 'war';
+  // No roll for King Leads (Determination), while the Peace side is up, or when even a 1 would reach the
+  // target, so the Lead cannot fail (FR-033, spec Q-24).
+  const lowest = 1 + modifiers.reduce((a, m) => a + m.value, 0);
+  const needsRoll = unitType !== 'king' && state.tokens.peaceTreaty === 'war' && lowest < RULES.leadTarget;
   return { needsRoll, modifiers };
 }
 

@@ -121,7 +121,7 @@ skipped ──following turn, Beginning of Turn──▶ active, health = floor(
 | `unitId`, `from`, `to`, `path` | `path` = interacted squares (Knight: from + to only) |
 | `isBattle` | Enemy unit on `to` |
 | `isCastling`, `isEnPassant` | |
-| `needsRoll` | false for King, Peace side up, or Revenge used |
+| `needsRoll` | false for King, Peace side up, Revenge used, or when the Lead cannot fail (1 + modifiers ≥ 6, spec Q-24) |
 | `usedRevenge` | |
 | `roll` | 1…20 \| null |
 | `modifiers` | `{ source: 'war' \| 'check' \| 'inspiredLead', value }[]` |

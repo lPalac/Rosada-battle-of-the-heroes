@@ -12,8 +12,8 @@ describe('US5 – general abilities and Revenge', () => {
     expect(reject(s, { type: 'inspiredLead', destiny: 1 })).toBe('WRONG_PHASE');
     s = act(s, { type: 'announceLead', unitId: 'L-P@d2', to: sq('d4') }).state;
     expect(s.turn.lead?.modifiers).toContainEqual({ source: 'inspiredLead', value: 6 });
-    // A 1 + War 2 + Inspired 6 = 9 → success.
-    s = act(s, { type: 'submitRoll', value: 1 }).state;
+    // Even a 1 + War 2 + Inspired 6 = 9 succeeds, so no roll is made (spec Q-24).
+    expect(s.turn.lead).toMatchObject({ needsRoll: false, success: true });
     expect(s.units.find((u) => u.id === 'L-P@d2')?.pos).toEqual(sq('d4'));
   });
 

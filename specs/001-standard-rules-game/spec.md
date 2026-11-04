@@ -73,6 +73,11 @@ Rošada only exists as a physical prototype, so every playtest needs the full bo
 - Q: Where does a Rammed hero land when Rammed mid-path? → A: One square past the Led unit's end square, in the direction of the path (the reading in research R-10 is correct).
 - Q: Do games need a random seed? → A: No, unless it is technically needed. Every roll is recorded in the log, which is enough for undo and replay.
 
+### Session 2026-11-03 (after implementation)
+
+- Q: Does a hero who uses Hero Retreat into a friendly tavern also get the free Meal? → A: No, only the free Drink.
+- Q: A Lead made while the own King is in check cannot fail with the v1 modifiers. Intended? → A: Yes. When a Lead has no chance to fail, the player does not roll the die.
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -116,6 +121,7 @@ The active hero moves up to their Movement through adjacent squares, then must L
 6. **Given** a Lead is possible, **Then** the player cannot end the turn without attempting it.
 7. **Given** a Lead would leave the own King in check, **Then** that destination is not offered.
 8. **Given** a King is Led (including castling), **Then** no roll is made.
+9. **Given** the War side is up and the own King is in check (+2 War, +4 check), **When** a Lead is announced, **Then** no roll is made, because even a 1 would total 7: the Lead succeeds at once. The same holds for any Lead whose modifiers reach +5 (for example Inspired Lead).
 
 ---
 
@@ -179,7 +185,7 @@ The game takes Destiny from the Well into the correct pool whenever it is earned
 3. **Given** a hero takes wounds from an enemy, **Then** they gain 1 D into their Hero Pool for each Resilient Destiny point (FR-054) their health reaches or passes on the way down, not counting the point they start on; self/friendly wounds give none. *Example: a Short range hero at 10 takes 3 wounds from a Ram → health 7, passes 8 → gains 1 D. A Long range hero at 8 takes 5 wounds → health 3, passes 6 and 4 → gains 2 D (the rulebook example).*
 4. **Given** the Peace side is up, **When** either side gains Destiny, **Then** the token flips to War and all Leads get +2 from then on.
 5. **Given** a hero uses *Inspired Lead* in *Before Lead* spending X D, **Then** the Lead of that same turn gets +2×X. If no Lead is made that turn, the bonus is lost; it never carries over to a later turn.
-6. **Given** a hero uses *Hero Retreat* (2 D) at *End of Turn*, **Then** they are placed in a friendly tavern and get a free Drink; it is unavailable if their King was in check at the end of their Lead or if no Lead was possible.
+6. **Given** a hero uses *Hero Retreat* (2 D) at *End of Turn*, **Then** they are placed in a friendly tavern and get a free Drink (only the Drink: no free Meal that turn); it is unavailable if their King was in check at the end of their Lead or if no Lead was possible.
 7. **Given** a side's Queen is destroyed, **Then** that side gains a Revenge token, which can be discarded to auto-succeed a Lead instead of rolling. A side can hold at most 2 Revenge tokens; a Queen destroyed while the side already holds 2 gives no extra token.
 8. **Given** Destiny is spent before the Well has ever been depleted, **Then** it is removed from play, not returned to the Well.
 9. **Given** the initial 16 in the Well are used up, **Then** the Well is refilled per the rules and later spending returns to the Well; heroes stay Starting Heroes, the game shows a notice that the Epic Stage comes in a later version, and play continues.
@@ -275,7 +281,7 @@ The game is shown on a 3D table with 3D units, hero figures, d20, Destiny crysta
 - **FR-030**: System MUST follow *Choose unit → Announce square → Roll → Place* and allow one Lead per turn.
 - **FR-031**: System MUST force a Lead attempt when one is possible, and MUST NOT offer a Lead that leaves the own King in check.
 - **FR-032**: Success MUST be d20 + modifiers ≥ 6. Modifiers in v1: War +2, own King in check +4, Inspired Lead +2 per D. The breakdown MUST be shown.
-- **FR-033**: No roll MUST be made for King Leads, while the Peace side is up, or when a Revenge token is discarded.
+- **FR-033**: No roll MUST be made for King Leads, while the Peace side is up, when a Revenge token is discarded, or when the Lead cannot fail (the lowest roll, 1, plus the modifiers already reaches 6). A Lead that cannot fail succeeds at once.
 - **FR-034**: The d20 MUST be rolled with physics: the player presses a **Roll** button, the die is thrown on the 3D table with a random throw, and the face that ends up on top is the result.
 - **FR-036**: A roll MUST be repeated automatically if the die does not come to rest flat on the table (tilted against an object, off the table, or still moving after a time limit).
 - **FR-037**: The rules core MUST receive the roll as an input value, so headless tests can supply fixed rolls. Every roll MUST be recorded in the game log; undo and replay use the logged actions and rolls, so the physics throw needs no seeded random source.
@@ -402,8 +408,6 @@ New questions found during planning or building get added here.
 | # | Question | Who | Blocking? |
 | --- | --- | --- | --- |
 | Q-17 | A Ram pushes a hero onto a square holding a unit (not a King). Is that allowed? The plan assumes yes for any side's unit, since the rulebook only forbids *voluntarily* ending a Move on an enemy unit. | Rules designer | No (default: allowed) |
-| Q-23 | A hero uses *Hero Retreat* into a friendly tavern at End of Turn. Do they also get the free Meal that turn? The build checks the free Meal when End of Turn starts, so a Retreating hero gets only the free Drink. | Rules designer | No (default: Drink only) |
-| Q-24 | Found while building: with the v1 modifiers a Lead made while the own King is in check always succeeds (War +2, check +4, so a roll of 1 totals 7), and only check-ending Leads are legal. So "King in check at the end of the Lead" can only happen when no Lead was possible, and a unit's Ram can never push a hero off the 10×10 grid. Is that intended? Both rules are built and tested directly anyway. | Rules designer | No |
 
 ### Resolved (2026-11-03, Luka)
 
@@ -430,6 +434,8 @@ New questions found during planning or building get added here.
 | Q-20 | Mirror: **Light picks the 1st hero, Dark the 2nd**, both for both sides; turns 1 and 3 Light, 2 and 4 Dark. | FR-081, FR-082 |
 | Q-21 | Ram landing: **one square past the Led unit's end square** in the path direction. | FR-050 |
 | Q-22 | **No game seed**: rolls are logged; undo and replay use the log. | FR-037 |
+| Q-23 | A hero who uses *Hero Retreat* into a friendly tavern at End of Turn gets **only the free Drink**, not the free Meal as well. | FR-073, Story 5 AS6 |
+| Q-24 | Yes, intended: with the v1 modifiers a Lead made while the own King is in check cannot fail (War +2, check +4). **When a Lead cannot fail (1 + modifiers ≥ 6), no roll is made.** So "King in check at the end of the Lead" only happens when no Lead was possible, and a Ram can never push a hero off the 10×10 grid. To be written into the corrections file. | FR-033, Story 2 AS9 |
 
 ## Assumptions
 

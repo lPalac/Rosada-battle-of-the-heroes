@@ -390,4 +390,8 @@ Task: "T069 [US7] src/physics/world.ts dice tray"
 - **T107**: the frame-time check runs in a `gpu` Playwright project with GPU flags; default headless Chromium uses SwiftShader. Measured on this machine (Intel UHD): median frame 16.7 ms, first load ≈ 2.7 s. Rapier is a separate chunk loaded on the first roll.
 - **T111/T112**: save files hold the starting state + action log (`src/game/save.ts`); the browser slot autosaves after every action.
 - **T114 (open)**: physics-based free handling of pieces in sandbox (pick up, drop, knock over) is not built. Sandbox placement works by drag-and-drop without physics. Optional P1 item.
-- New Open Questions from building: spec Q-23 (Hero Retreat and the free Meal), Q-24 (a Lead in check cannot fail with v1 modifiers).
+- Open Questions found while building are now resolved: Q-23 (Hero Retreat gives only the free Drink, matches the build) and Q-24 (no roll when a Lead cannot fail: built in T116).
+
+## Follow-up from resolved questions
+
+- [X] T116 [US2] Write `US2-AS9` in tests/rules/lead.test.ts (War + own King in check → no `rollRequested`, Lead succeeds; also Inspired Lead of 2 D at War, 1 + 2 + 4 = 7) and make it pass in src/rules/lead.ts `computeModifiers`: `needsRoll` is false when 1 + modifiers ≥ `leadTarget` (FR-033, spec Q-24); update tests that roll in that situation (e.g. tests/rules/endgame.test.ts "cannot fail at War", tests/rules/abilities.test.ts US5-AS5)

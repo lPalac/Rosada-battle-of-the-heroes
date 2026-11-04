@@ -63,6 +63,24 @@ describe('US2 – Lead', () => {
     expect(unitOn(r.state, 'f1')?.type).toBe('rook');
   });
 
+  it('US2-AS9 at War with the own King in check a Lead cannot fail: no roll, it succeeds at once', () => {
+    const s = board({ e1: 'K', e8: 'r', a8: 'k', d2: 'P', d1: 'B' }, { heroes: { H1: 'd0' }, phase: 'lead', peaceTreaty: 'war' });
+    expect(leadPreview(s, 'L-B@d1')).toMatchObject({ needsRoll: false });
+    const r = act(s, { type: 'announceLead', unitId: 'L-B@d1', to: sq('e2') }); // blocks the check
+    expect(eventsOf(r.events, 'rollRequested')).toHaveLength(0);
+    expect(unitOn(r.state, 'e2')?.id).toBe('L-B@d1');
+    expect(r.state.turn.lead).toMatchObject({ needsRoll: false, roll: null, success: true });
+  });
+
+  it('US2-AS9 Inspired Lead of 2 D at War (1 + 2 + 4 = 7) also makes the roll unnecessary; 1 D does not', () => {
+    const two = act(board({ d2: 'P' }, { heroes: { H1: 'd1' }, phase: 'beforeLead', peaceTreaty: 'war' }), { type: 'inspiredLead', destiny: 2 }).state;
+    const r = act(two, { type: 'announceLead', unitId: 'L-P@d2', to: sq('d4') });
+    expect(eventsOf(r.events, 'rollRequested')).toHaveLength(0);
+    expect(unitOn(r.state, 'd4')?.id).toBe('L-P@d2');
+    const one = act(board({ d2: 'P' }, { heroes: { H1: 'd1' }, phase: 'beforeLead', peaceTreaty: 'war' }), { type: 'inspiredLead', destiny: 1 }).state;
+    expect(eventsOf(act(one, { type: 'announceLead', unitId: 'L-P@d2', to: sq('d4') }).events, 'rollRequested')).toHaveLength(1);
+  });
+
   it('adds +4 when the own King is in check (FR-032)', () => {
     const s = board({ e1: 'K', e8: 'r', a8: 'k', d2: 'P' }, { heroes: { H1: 'd1' }, phase: 'lead', peaceTreaty: 'war' });
     expect(leadPreview(s, 'L-K@e1')?.modifiers).toContainEqual({ source: 'check', value: 4 });

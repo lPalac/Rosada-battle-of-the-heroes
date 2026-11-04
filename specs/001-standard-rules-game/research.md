@@ -98,6 +98,8 @@ Replays and saved games use the stored values and never re-simulate physics. Hea
 | Castling path | King's 2 squares interact (Banishment applies); Rook does not interact | Rulebook Castling |
 | King's Banishment, friendly heroes | Pushed one square further in the direction the King is Led; onto the King's end square or off the grid → starting square (Majesty) | Rulebook King's powers + spec Q-18 |
 | Inspired Lead bonus | Applies to the Lead of the same turn only; cleared with `TurnFlags` at the next `beforeTurn` | Spec Q-19 |
+| Lead that cannot fail | No roll when 1 + modifiers ≥ lead target (6); the Lead succeeds at once, like a Peace Lead | Spec Q-24 |
+| Hero Retreat and the free Meal | The free Meal is checked when End of Turn starts; a Retreating hero gets only the free Drink | Spec Q-23 |
 | Setup choices (hot-seat) | Draft: L, D, D, L picks. Mirror: Light picks hero 1 for both sides, Dark hero 2 for both. Then Light orders its heroes (turns 1/3) and places them behind the c/f Bishops, then Dark (turns 2/4) | Corrections file *Setup* + spec Q-02, Q-20 |
 | Checkmate eligibility | Standard chess legal moves of units on the Battlefield, range ignored, abilities ignored | Rulebook Checkmate |
 | King may not be Led into a threatened square | Threat computed with units only (heroes don't threaten in v1) | Rulebook Threaten |

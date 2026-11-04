@@ -21,10 +21,10 @@ describe('US3 – Win or draw', () => {
     );
     // Only Leads that end the check are legal, so the King can stay in check only when no Lead is possible.
     expect(legalLeadTargets(s, 'D-N@g8').map((t) => name(t.to))).toEqual(['e7']);
-    s = act(s, { type: 'announceLead', unitId: 'D-N@g8', to: sq('e7') }).state;
-    // A Lead in check gets +2 War +4 check: a 1 still totals 7 and succeeds.
-    s = act(s, { type: 'submitRoll', value: 1 }).state;
-    expect(s.units.find((u) => u.id === 'D-N@g8')?.pos).toEqual(sq('e7'));
+    // A Lead in check gets +2 War +4 check: even a 1 would total 7, so no roll is made (spec Q-24).
+    const r = act(s, { type: 'announceLead', unitId: 'D-N@g8', to: sq('e7') });
+    expect(r.events.some((e) => e.type === 'rollRequested')).toBe(false);
+    expect(r.state.units.find((u) => u.id === 'D-N@g8')?.pos).toEqual(sq('e7'));
   });
 
   it('US3-AS2 King destroyed in Battle ends the game (King still in check after the opponent could not Lead)', () => {
