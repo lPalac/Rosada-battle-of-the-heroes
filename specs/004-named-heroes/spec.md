@@ -87,8 +87,8 @@ Each Starting Hero has its passive ability and its limited-use abilities (shown 
 **Acceptance Scenarios** (one per ability; text from Hero Rules 2_0):
 
 1. **Cavalier – Warhorse**: once per turn, after Lead, the Cavalier may move one square.
-2. **Cavalier – Demoralise** (1 use, After Lead): the Cavalier is marked. An enemy Lead whose unit passes through a square adjacent to the Cavalier and leaves its range fails, and the token is removed. If no Lead failed, the token is removed at the start of the Cavalier's next turn. Royalty is not affected.
-3. **Cavalier – Tight Formation** (1 use, Before Move / After Lead, instead of Lead): Lead a friendly Knight without Battle; it cannot be Destroyed in Battle on the next turn.
+2. **Cavalier – Demoralise** (1 use, Before Move / After Lead): the Cavalier is marked. An enemy Lead whose unit passes through a square adjacent to the Cavalier and leaves its range fails, and the token is removed. If no Lead failed, the token is removed at the start of the Cavalier's next turn. Royalty is not affected.
+3. **Cavalier – Tight Formation** (1 use, Instead of Lead): Lead a friendly Knight without Battle; it cannot be Destroyed in Battle on the next turn.
 4. **Monk – Rejuvenating Stroll**: once per turn, during Move or Lead, heal a friendly hero 1 when passing through its square.
 5. **Monk – Preaching** (2 uses, Before Move / Before Lead / After Lead): mark an adjacent enemy unit (not royalty); it has −4 to be Led on the next turn. Both uses on the same unit mean it cannot be Led on the next turn.
 6. **Monk – Make Peace Not War** (1 use, Beginning of Turn, while War is declared and the own King is not in check): until the Monk's next turn units are not Destroyed, heroes take no wounds, Leads need no roll and a Lead may not give check. If a King is Led into Battle or deals wounds to a hero, the token is removed.
@@ -130,7 +130,7 @@ Many abilities place a mark or token that changes later Leads, or change a unit'
 **Acceptance Scenarios**:
 
 1. **Given** a unit marked "cannot be Led" (Preaching ×2, Poison Water, Mislead, Arcane Shackles, Martyrdom, Knightmare), **Then** it offers no Lead targets while marked, and checkmate (001) treats it as unable to move (Q-43).
-2. **Given** a square token (Bear Trap, Religious Fervor, Portal, Fireball, Temporal Flux, Smuggler's Grotto, Prophecy mark), **Then** it is shown on that square, affects paths and Leads as written, and is removed when its condition happens.
+2. **Given** a square token (Bear Trap, Religious Fervor, Portal, Fireball, Temporal Flux, Smuggler's Grotto), **Then** it is shown on that square, affects paths and Leads as written, and is removed when its condition happens.
 3. **Given** a Modify (Inquisition, Knight a Peasant), **Then** the unit has the new type for paths, threats and generation, and returns to its original type when it ends (Inquisition: at the end of the Inquisitor's next turn; Knight a Peasant: permanent).
 4. **Given** a Push (Terrifying Roar, Misdirection, Bushwack, Misinformation), **Then** the target moves one unoccupied square in the stated direction, or not at all if that square is blocked.
 5. **Given** every mark or token, **Then** the log records when it is placed and removed, and undo and replay restore it (001 guarantee 3a).
@@ -201,7 +201,9 @@ The placeholder pieces, table and tokens are replaced by the Tabletop Simulator 
 - **FR-012**: Limited uses (Starting Heroes) MUST be tracked per hero and shown.
 - **FR-013**: Marks, square tokens, Modify, Push, Create (undead, auxiliary, Legendary Ancient, Shadow Demon) and lead modifiers (auras, penalties, bonuses) MUST be general mechanisms that abilities use, with durations ("next turn", "until the beginning of your next turn", "until the end of your next turn", "until removed", "until the Epic Stage").
 - **FR-014**: "Must not check the King" MUST refuse an effect that would put a King in check, except by discovered check (Symbol Legend).
-- **FR-015**: "During Enemy Lead" abilities (Paragon of Honour, Devious Gambit, Counterintelligence's reaction, Demoralise) MUST be offered to their owner as a pending decision during the enemy's Lead, like 001 decisions.
+- **FR-015**: "During Enemy Lead" abilities (Paragon of Honour, Devious Gambit, Counterintelligence's reaction) MUST be offered to their owner as a pending decision during the enemy's Lead, like 001 decisions. Demoralise is not a reaction: its mark makes the enemy Lead fail automatically (Hero Rules 2_0).
+- **FR-017**: The Basic Rules King's Powers apply to hero abilities: **King's Supremacy** (the King and its square are immune to hero abilities and ignore their effects, e.g. Make Peace Not War and Lead modifiers) and **King's Verdict** (a King's Lead removes every token on the squares it interacts with). The Legendary Ancient also uses King's Banishment and King's Verdict.
+- **FR-018**: The Peace Treaty flips to War when either side uses an ability affecting an enemy unit (Peace Treaty token text), as well as on the first Destiny gain (001).
 - **FR-016**: Every ability use, effect, mark and expiry MUST appear in the log and replay exactly (no seed).
 
 **Table and art**
@@ -244,6 +246,11 @@ The placeholder pieces, table and tokens are replaced by the Tabletop Simulator 
 | Q-44 | Protection vs damage: does a protection (Make Peace Not War, Divine Protector, Arcane Shackles, Crusade) always beat an effect that wounds or Destroys? Default: yes, while the protection lasts. | Rules designer | No |
 | Q-45 | Do Always Active abilities work while the hero is Unconscious? Default: no. | Rules designer | No |
 | Q-46 | Draft notes left in Hero Rules 2_0: "(maybe pic explain)", "(ref pic need)", "(check Bear trap wording)", the comment on Terrifying Roar's wording (Davor), "NOTE: what happens to marks on the unit" (Converge Timelines), Bear Traps vs Make Peace Not War (comment). Default: build the written text; Converge Timelines copies do not copy marks; Make Peace Not War stops Bear Trap wounds. | Rules designer | No |
+| Q-47 | The Legendary Ancient has no unit type in Hero Rules 2_0. Default: created as a Knight-shaped auxiliary unit with a King-like path (one square in any direction); it does not count as a unit type for Destiny Generation, like the Shadow Demon. | Rules designer | No |
+| Q-48 | Undead Legions (Bloodied): "you can instantly make a Lead, without initiating Battle, with one of the created Pawns". Default: an extra move of one created Pawn without a roll, offered as a choice right after the ability. | Rules designer | No |
+| Q-49 | Shadow Demon "unit*": the TTS tokens show Demons of several types (Rook, Knight, Bishop, Pawn). Default: the player chooses a non-royal type; the Demon moves as that type but only into Battle (research R-07 corrected). | Rules designer | No |
+| Q-50 | Preaching "If you spend both uses of this ability": Default: both uses may be spent in the same turn (the ability is not once per turn); the second use on a unit already Preached makes it unable to be Led on the next turn. | Rules designer | No |
+| Q-51 | Hero Rules abilities that heal, move or create without saying "enemy" or "friendly" (Leeching Touch "an adjacent hero", Magic Bombardment "a hero in range" / "an adjacent auxiliary unit"). Default: Leeching Touch and Magic Bombardment's wound option target enemy heroes; Magic Bombardment's Destroy option targets any auxiliary unit. | Rules designer | No |
 
 ## Assumptions
 

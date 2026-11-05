@@ -30,4 +30,6 @@ npm run test:e2e   # Playwright (own e2e server on port 5174; forceNextRoll work
 
 - No ESLint: typescript-eslint does not support TypeScript 7 yet. `tests/boundaries.test.ts` and `tsconfig.rules.json` guard the engine-free folders (research R-04).
 - Undo, replay and save files use the action log (`src/game/session.ts`); the game keeps no random seed.
-- Test positions: `tests/fixtures/position.ts` (`board({ e1: 'K', ... }, opts)`); the in-game position editor exports this format.
+- Test positions: `tests/fixtures/position.ts` (`board({ e1: 'K', ... }, opts)`; 004 options `heroDefs`, `uses`, `effects`, `tags`); the in-game position editor exports this format.
+- Hero abilities: data in `src/data/abilities.json`, effects by id in `src/rules/heroes/<hero>.ts`, engine and hook points in `src/rules/abilities/`. A new ability needs a data entry, an implementation and a `US3-<form>-<ability>` test (`tests/rules/abilities/coverage.test.ts` checks the pairing).
+- TTS art: `npx tsx scripts/import-tts-assets.ts "<TTS folder>"` rebuilds `public/tts/` and merges `assets.json`. The setup offers named heroes; `?generic` in the URL also offers the generic heroes (e2e), `?placeholders` turns off TTS models.

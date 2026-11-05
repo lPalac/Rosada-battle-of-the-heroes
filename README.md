@@ -39,7 +39,7 @@ Decided Nov 3, 2026. This replaces the earlier Unity plan and may change later.
 
 ## Development
 
-Features 001 (standard rules, generic heroes, 3D table, hot-seat, sandbox), 002 (sandbox physics) and 003 (Epic Stage, Royal Favors, Legendary Powers, table visuals) are built. Requires Node.js 24 LTS.
+Features 001 (standard rules, generic heroes, 3D table, hot-seat, sandbox), 002 (sandbox physics), 003 (Epic Stage, Royal Favors, Legendary Powers, table visuals) and 004 (the named heroes Cavalier, Monk, Scout and Magus with their 12 Epic forms and 84 abilities, and the Tabletop Simulator sheets, pieces and table) are built. Requires Node.js 24 LTS.
 
 ```powershell
 npm install
@@ -52,9 +52,10 @@ npm run build                     # static site in dist/
 
 | Folder | What it is |
 | --- | --- |
-| `src/rules/` | Engine-free rules core: `createGame`, `legalActions`, `apply` (no Three.js, Rapier or DOM) |
+| `src/rules/` | Engine-free rules core: `createGame`, `legalActions`, `apply` (no Three.js, Rapier or DOM); `abilities/` is the ability engine and `heroes/` the hero abilities |
 | `src/game/` | Engine-free session: action log, undo, replay, HUD model, log text, save files |
-| `src/data/` | JSON data: board, units, heroes, health bars, tunables, assets, UI strings (+ schemas) |
+| `src/data/` | JSON data: board, units, heroes, abilities, health bars, tunables, assets, UI strings (+ schemas) |
+| `public/tts/` | Tabletop Simulator art and models, made by `scripts/import-tts-assets.ts` |
 | `src/table/` | Three.js table: board, pieces, highlights, picking, camera, dice view |
 | `src/physics/` | Rapier d20: tray, throw, top-face reading |
 | `src/ui/` | DOM HUD, setup wizard, dialogs, settings, result screen |

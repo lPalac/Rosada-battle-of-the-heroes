@@ -103,7 +103,7 @@ Check, checkmate and "no eligible units" use the same filters (Q-43 default).
 
 **Decision**: `Unit.kind` stays `main | auxiliary | hero`, and `Unit.tags` adds `undead`, `legendaryAncient`, `demon`, `spy`, `clone`.
 - The Legendary Ancient gets `health` (5) and takes wounds like a hero; it is Led one square in any direction (King-like path); it may use King's Banishment and King's Verdict; it takes 1 wound per Lead.
-- The Shadow Demon has a King-like path, only Battles, and does not count for generation (003 R-04 excludes tags in `noGeneration`).
+- The Shadow Demon is a chosen non-royal type (the TTS Demon tokens show Rook, Knight, Bishop and Pawn faces; spec Q-49). It moves as that type but only into Battle, and does not count for generation (003 R-04 excludes tags in `noGeneration`).
 - Undead units are auxiliary with the tag, for their art.
 
 **Why**: Reuses 003's auxiliary units and Create; tags keep special rules explicit.
