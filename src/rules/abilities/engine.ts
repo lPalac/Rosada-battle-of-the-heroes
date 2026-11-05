@@ -75,12 +75,12 @@ function impl(id: string): AbilityImpl | undefined {
 /** Why the hero cannot use the ability now (ignoring targets), or null. */
 function blocker(s: GameState, h: Hero, def: AbilityDefinition, timings: Timing[]): string | null {
   if (def.kind !== 'action') return 'ABILITY_WRONG_TIMING';
-  if (!def.timings.some((t) => timings.includes(t))) return 'ABILITY_WRONG_TIMING';
-  if (h.status.unconscious) return 'ABILITY_WRONG_TIMING';
-  if (def.flags.notAsHeroUnit && h.heroUnitId) return 'ABILITY_NOT_AS_HERO_UNIT';
   const left = usesLeft(s, h.id, def.id);
   if (left !== null && left <= 0) return 'ABILITY_NO_USES';
   if (def.oncePerTurn && s.abilityState[h.id]?.usedThisTurn.includes(def.id)) return 'ABILITY_USED_THIS_TURN';
+  if (def.flags.notAsHeroUnit && h.heroUnitId) return 'ABILITY_NOT_AS_HERO_UNIT';
+  if (!def.timings.some((t) => timings.includes(t))) return 'ABILITY_WRONG_TIMING';
+  if (h.status.unconscious) return 'ABILITY_WRONG_TIMING';
   if (available({ s, events: [] }, h) < abilityCost(s, h.id, def.id)) return 'NOT_ENOUGH_DESTINY';
   return null;
 }

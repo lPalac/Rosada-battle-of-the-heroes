@@ -6,7 +6,8 @@ import { activeHero, emit, fail, type Ctx } from './ctx.ts';
 import type { GameState } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import { otherSide, type Coord, type Side, type UnitKind, type UnitType } from './model/types.ts';
-import { attackSquares, unitAt } from './paths.ts';
+import { attackSquares, unitsAt } from './paths.ts';
+import { RULES } from './data.ts';
 import { placementProblem, powerWindowOpen } from './hero-unit.ts';
 
 const LETTER: Record<UnitType, string> = { king: 'K', queen: 'Q', rook: 'R', bishop: 'B', knight: 'N', pawn: 'P' };
@@ -20,9 +21,12 @@ function newId(state: GameState, side: Side, type: UnitType): string {
 }
 
 /** Create a unit: only on an unoccupied square, never where it would give check (FR-035). */
-export function createUnit(ctx: Ctx, opts: { side: Side; type: UnitType; at: Coord; kind?: UnitKind }): Unit {
+export function createUnit(ctx: Ctx, opts: { side: Side; type: UnitType; at: Coord; kind?: UnitKind; shareFriendly?: boolean }): Unit {
   const { s } = ctx;
-  if (unitAt(s, opts.at)) fail('CREATE_OCCUPIED', 'A unit can only be created on an unoccupied square', 'Create');
+  // 004: an ability may create a unit beside friendly units (I'm Not Done With You), within the square limit (002).
+  const here = unitsAt(s, opts.at);
+  const shared = opts.shareFriendly && here.length > 0 && here.length < RULES.maxUnitsPerSquare && here.every((u) => u.side === opts.side && u.type !== 'king');
+  if (here.length && !shared) fail('CREATE_OCCUPIED', 'A unit can only be created on an unoccupied square', 'Create');
   const unit: Unit = {
     id: newId(s, opts.side, opts.type), side: opts.side, type: opts.type, originalType: opts.type, kind: opts.kind ?? 'auxiliary',
     pos: { ...opts.at }, hasBeenLed: false, promoted: false, enPassantTarget: null,

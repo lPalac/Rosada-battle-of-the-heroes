@@ -77,9 +77,9 @@ export function destroyByAbility(ctx: Ctx, user: Hero | null, units: Unit[], sid
 
 /** Create an auxiliary unit with tags (undead, Legendary Ancient, Demon). */
 export function createSpecial(
-  ctx: Ctx, opts: { side: Side; type: UnitType; at: Coord; tags?: UnitTag[]; health?: number; kind?: Unit['kind'] },
+  ctx: Ctx, opts: { side: Side; type: UnitType; at: Coord; tags?: UnitTag[]; health?: number; kind?: Unit['kind']; shareFriendly?: boolean },
 ): Unit {
-  const unit = createUnit(ctx, { side: opts.side, type: opts.type, at: opts.at, kind: opts.kind });
+  const unit = createUnit(ctx, { side: opts.side, type: opts.type, at: opts.at, kind: opts.kind, shareFriendly: opts.shareFriendly });
   if (opts.tags?.length) unit.tags = [...opts.tags];
   if (opts.health !== undefined) unit.health = opts.health;
   return unit;
