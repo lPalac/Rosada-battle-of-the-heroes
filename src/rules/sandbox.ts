@@ -7,6 +7,15 @@ import type { GameState } from './model/state.ts';
 import { EPIC_DESTINIES, type Coord, type EpicDestiny, type FavorId, type HeroId, type Side, type UnitType } from './model/types.ts';
 import { enemyRoyalRank } from './paths.ts';
 import { freshTurnFlags, startFirstTurn } from './turn.ts';
+import type { Hero } from './model/hero.ts';
+
+/** Set a named hero's Epic form and the form's Movement (004 T066). */
+function setForm(h: Hero, formId: string | null): void {
+  const def = heroDefinition(h.definitionId);
+  h.form = formId;
+  const form = Object.values(def.forms ?? {}).find((f) => f.id === formId);
+  h.movement = form?.stats?.movement ?? def.movement;
+}
 
 function sideName(side: Side): string {
   return side === 'light' ? 'Light' : 'Dark';
@@ -195,6 +204,29 @@ export function sandboxSet(
       if (value === '') h.epic = null;
       else if (EPIC_DESTINIES.includes(value as EpicDestiny)) h.epic = { destiny: value as EpicDestiny };
       else fail('BAD_VALUE', 'fanatic, resolute, dominant or empty', 'Sandbox');
+      // 004: a named hero takes the Epic form of the destiny (and its Movement).
+      setForm(h, h.epic ? heroDefinition(h.definitionId).forms?.[h.epic.destiny]?.id ?? null : null);
+      break;
+    }
+    case 'form': {
+      // value: an Epic form id of the hero, or '' for the Starting Hero.
+      const h = hero(s, target as HeroId);
+      const forms = Object.values(heroDefinition(h.definitionId).forms ?? {});
+      if (value !== '' && !forms.some((f) => f.id === value)) fail('BAD_VALUE', 'One of the hero’s Epic forms, or empty', 'Sandbox');
+      setForm(h, value === '' ? null : String(value));
+      break;
+    }
+    case 'uses': {
+      // target "H1:monk.preaching"; value: uses left.
+      const [heroId, abilityId] = (target ?? '').split(':');
+      const h = hero(s, heroId as HeroId);
+      if (!Number.isInteger(num) || num < 0) fail('BAD_VALUE', 'Enter a whole number', 'Sandbox');
+      (s.abilityState[h.id] ??= { uses: {}, usedThisTurn: [] }).uses[abilityId] = num;
+      break;
+    }
+    case 'removeEffect': {
+      if (!s.effects.some((e) => e.id === num)) fail('BAD_VALUE', 'No such effect', 'Sandbox');
+      s.effects = s.effects.filter((e) => e.id !== num);
       break;
     }
     case 'favor': {

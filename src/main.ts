@@ -10,6 +10,7 @@ import {
   type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
 } from './rules/index.ts';
 import { onAssetLoaded } from './table/assets.ts';
+import { EffectsView } from './table/effects.ts';
 import { createBoard } from './table/board.ts';
 import { SQUARE, toWorld, ZONES } from './table/coords.ts';
 import { createCamera } from './table/camera.ts';
@@ -64,11 +65,13 @@ const strip = createStrip();
 const sheets = new SheetsView(() => ts.requestRender());
 onAssetLoaded(() => ts.requestRender());
 const tracks = new TracksView();
-ts.scene.add(strip, sheets.group, tracks.group);
+const effectsView = new EffectsView(() => ts.requestRender());
+ts.scene.add(strip, sheets.group, tracks.group, effectsView.group);
 function syncTable(s: GameState): void {
   if (s.status === 'setup') return;
   sheets.sync(s);
   tracks.sync(s);
+  effectsView.sync(s);
   ts.requestRender();
 }
 const picker = new Picker(ts.camera, canvas, () => [pieces.group, boardView.group]);
@@ -564,6 +567,7 @@ if (import.meta.env.DEV || isE2E) {
       // 004 US6: what each unit shows (TTS model or placeholder), and the TTS table pieces.
       pieceAssets: Object.fromEntries((state()?.units ?? []).map((u) => [u.id, pieces.unitObject(u.id)?.userData.assetKind ?? 'placeholder'])),
       sky: !!room.group.userData.sky,
+      effectTokens: effectsView.list(),
       ttsTable: !!room.tableTop.userData.tts,
       ttsStrip: !!strip.userData.tts,
     }),

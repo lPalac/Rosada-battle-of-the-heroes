@@ -28,5 +28,7 @@ test('US5-AS1…AS5 TTS sheet images with health, pool and uses; US5-AS6 the abi
   await expect(page.getByTestId('ability-cavalier.demoralise')).toContainText('Before Move');
   await page.getByTestId('use-cavalier.demoralise').click();
   await expect.poll(async () => (await hook<{ effects: { kind: string }[] }>(page, 'state')).effects.map((e) => e.kind)).toContain('demoralise');
+  // The mark shows on the table beside the Cavalier.
+  await expect.poll(async () => (await hook<{ effectTokens: { kind: string }[] }>(page, 'tableElements')).effectTokens.map((e) => e.kind)).toContain('demoralise');
   await page.screenshot({ path: 'test-results/sheets-004.png' });
 });
