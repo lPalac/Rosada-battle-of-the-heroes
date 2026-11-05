@@ -12,7 +12,8 @@ export async function clickSquare(page: Page, square: string): Promise<void> {
 
 /** 4-player Draft setup through the UI with the suggested order; returns when the table shows. */
 export async function quickSetup(page: Page): Promise<void> {
-  await page.goto('/');
+  // Generic heroes (`?generic`, spec Q-42) keep the 001–003 flows unchanged.
+  await page.goto('/?generic');
   await page.getByTestId('setup-next').click();
   await page.getByTestId('mode-draft').click();
   for (const r of ['short', 'short', 'long', 'long']) await page.getByTestId(`pick-${r}`).click();

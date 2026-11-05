@@ -1,7 +1,7 @@
 // What the HUD shows, derived from the state only (US7-AS2, US7-AS3). Engine-free, so it is tested headless.
 import {
   awaitingRoll, chebyshev, destinyGeneration, isBloodied, leadRange, legalActions, legalLeadTargets, legalMoveSquares, leadPreview,
-  PHASES, RULES, type Action, type Coord, type EpicDestiny, type GameState, type HeroId, type Modifier, type Phase, type Side,
+  DATA, PHASES, RULES, type Action, type Coord, type EpicDestiny, type GameState, type HeroId, type Modifier, type Phase, type Side,
   type Stage, type UnitType,
 } from '../rules/index.ts';
 import { sheetModel, type AbilityRow } from './sheet-model.ts';
@@ -25,7 +25,7 @@ export interface HeroCard {
   generation: number;
   bloodied: boolean;
   heroUnit: UnitType[] | null;
-  /** 004: named hero or Epic form name, and the ability rows of the sheet. */
+  /** 004: named hero or Epic form name ('' for generic heroes), and the ability rows of the sheet. */
   name: string;
   abilities: AbilityRow[];
 }
@@ -108,7 +108,7 @@ export function hudModel(state: GameState, selectedUnitId: string | null = null)
       heroUnit: heroUnitTypes(state, h.heroUnitId),
       ...(() => {
         const sheet = sheetModel(state, h.id);
-        return { name: sheet.name, abilities: sheet.abilities };
+        return { name: DATA.heroes.find((d) => d.id === h.definitionId)?.selectable ? sheet.name : '', abilities: sheet.abilities };
       })(),
     })),
     well: { remaining: state.destiny.well.initialRemaining, depleted: state.destiny.well.depleted },

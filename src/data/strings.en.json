@@ -545,5 +545,15 @@
   "effect.leadModifier": "Lead modifier",
   "effect.modify": "Modified",
   "effect.token": "Token",
-  "effect.mark": "Mark"
+  "effect.mark": "Mark",
+  "ability.use": "Use",
+  "ability.usesLeft": "{n} of {of} left",
+  "ability.corrected": "The printed sheet shows an older cost; the rules cost applies",
+  "ability.noTarget": "Use",
+  "dialog.reaction": "{hero}: use {ability} ({cost} D)?",
+  "dialog.reactionUse": "Use ({n})",
+  "option.square": "Square",
+  "option.knight": "Knight Lead",
+  "option.wound": "Wound",
+  "option.destroyAux": "Destroy auxiliary"
 }
