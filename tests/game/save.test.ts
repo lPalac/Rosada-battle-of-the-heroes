@@ -1,11 +1,11 @@
 // Save files (FR-200, FR-201) and fixture export (FR-204).
 import { describe, expect, it } from 'vitest';
 import { toFixture } from '../../src/game/fixture.ts';
-import { parseSaveFile, toSaveFile } from '../../src/game/save.ts';
+import { migrateState, parseSaveFile, toSaveFile } from '../../src/game/save.ts';
 import { replay } from '../../src/game/session.ts';
 import { createSetup, type Action } from '../../src/rules/index.ts';
 import { position, sq } from '../fixtures/position.ts';
-import { act } from '../helpers/game.ts';
+import { act, newGame } from '../helpers/game.ts';
 
 const setupActions: Action[] = [
   { type: 'pickHero', side: 'light', rangeType: 'short' }, { type: 'pickHero', side: 'dark', rangeType: 'long' },
@@ -70,5 +70,18 @@ describe('003 – older saves load (T008)', () => {
     const s = replay(save.initial, save.actions);
     expect(s.heroes.every((h) => h.epic === null && h.heroUnitId === null)).toBe(true);
     expect(s.heroes.map((h) => h.heroUnitType)).toEqual(['knight', 'bishop', 'bishop', 'knight']);
+  });
+
+  it('004: a 003 save gets empty effects, ability uses and no Epic forms', () => {
+    const old = JSON.parse(JSON.stringify(newGame())) as Record<string, unknown> & { heroes: Record<string, unknown>[] };
+    delete old.effects;
+    delete old.abilityState;
+    delete old.nextEffectId;
+    for (const h of old.heroes) delete h.form;
+    const m = migrateState(old as never);
+    expect(m.effects).toEqual([]);
+    expect(m.abilityState).toEqual({});
+    expect(m.nextEffectId).toBe(1);
+    expect(m.heroes.every((h) => h.form === null)).toBe(true);
   });
 });

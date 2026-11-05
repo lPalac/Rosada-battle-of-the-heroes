@@ -4,6 +4,7 @@ import {
   PHASES, RULES, type Action, type Coord, type EpicDestiny, type GameState, type HeroId, type Modifier, type Phase, type Side,
   type Stage, type UnitType,
 } from '../rules/index.ts';
+import { sheetModel, type AbilityRow } from './sheet-model.ts';
 
 export interface HeroCard {
   id: HeroId;
@@ -24,6 +25,9 @@ export interface HeroCard {
   generation: number;
   bloodied: boolean;
   heroUnit: UnitType[] | null;
+  /** 004: named hero or Epic form name, and the ability rows of the sheet. */
+  name: string;
+  abilities: AbilityRow[];
 }
 
 export interface LeadPanel {
@@ -102,6 +106,10 @@ export function hudModel(state: GameState, selectedUnitId: string | null = null)
       pool: h.pool, active: h.id === state.activeHeroId, unconscious: h.status.unconscious, skipNextTurn: h.status.skipNextTurn,
       destiny: h.epic?.destiny ?? null, generation: destinyGeneration(state, h.side), bloodied: isBloodied(state, h.id),
       heroUnit: heroUnitTypes(state, h.heroUnitId),
+      ...(() => {
+        const sheet = sheetModel(state, h.id);
+        return { name: sheet.name, abilities: sheet.abilities };
+      })(),
     })),
     well: { remaining: state.destiny.well.initialRemaining, depleted: state.destiny.well.depleted },
     common: { ...state.destiny.common },

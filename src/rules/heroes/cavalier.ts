@@ -166,6 +166,8 @@ export const CAVALIER: HeroModule = {
     },
   },
   passives: {
+    // Winged Stride: the form's Movement 6 is data (heroes.json form stats); no hook needed.
+    'dragonLord.wingedStride': {},
     'deathKnight.auraOfFear': {
       leadModifiers: (s, src, lead) => {
         const dk = src.hero!;
