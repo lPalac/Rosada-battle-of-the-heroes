@@ -6,8 +6,10 @@ import type { GameState } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import { otherSide, type Coord, type Side } from './model/types.ts';
 import { attackSquares, basicLeads, unitAt, type LeadOption, type PathOptions } from './paths.ts';
+import { hookSources } from './abilities/hooks.ts';
 
-type UnitView = Pick<GameState, 'units'>;
+/** Units, plus effects and heroes when known (004: ability effects change which Leads exist). */
+type UnitView = Pick<GameState, 'units'> & Partial<GameState>;
 
 const key = (p: Coord): string => `${p.x},${p.y}`;
 
@@ -15,6 +17,11 @@ export function threatenedSquares(state: UnitView, bySide: Side): Set<string> {
   const out = new Set<string>();
   for (const u of state.units) if (u.side === bySide) for (const p of attackSquares(state, u)) out.add(key(p));
   return out;
+}
+
+/** Units of a side that threaten a square. */
+export function attackersOf(state: UnitView, p: Coord, bySide: Side): Unit[] {
+  return state.units.filter((u) => u.side === bySide && attackSquares(state, u).some((q) => eq(q, p)));
 }
 
 export function isThreatened(state: UnitView, p: Coord, bySide: Side): boolean {
@@ -95,7 +102,11 @@ export function castlingLeads(state: UnitView, king: Unit): LeadOption[] {
 
 /** Leads of one unit that are legal by unit rules (range ignored): never leaving the own King in check. */
 export function legalLeadsForUnit(state: UnitView, unit: Unit, pathOpts: PathOptions = {}): LeadOption[] {
-  const opts = [...basicLeads(state, unit, pathOpts), ...castlingLeads(state, unit)];
+  let opts = [...basicLeads(state, unit, pathOpts), ...castlingLeads(state, unit)];
+  // 004 hooks: marks, protection, portals … (research R-06). Check and checkmate use the same filters (spec Q-43).
+  if (state.effects?.length || state.heroes?.length) {
+    for (const { hooks, src } of hookSources(state, 'filterLeads')) opts = hooks.filterLeads(state as GameState, src, unit, opts);
+  }
   return opts.filter((o) => {
     const destroysKing = state.units.some((u) => o.battleUnitIds.includes(u.id) && u.type === 'king');
     if (destroysKing) return true; // Destroying the enemy King ends the game at once.

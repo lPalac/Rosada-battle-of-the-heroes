@@ -38,4 +38,6 @@ export interface Hero {
   /** From heroes.json: Short range → knight, Long range → bishop. */
   heroUnitType: UnitType;
   art: string;
+  /** 004: Epic form id (`deathKnight` …) once the destiny is chosen; null for Starting Heroes and generic heroes. */
+  form?: string | null;
 }

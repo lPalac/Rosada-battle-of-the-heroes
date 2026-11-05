@@ -8,63 +8,26 @@
   },
   "additionalProperties": {
     "type": "object",
-    "oneOf": [
+    "anyOf": [
       {
         "required": [
           "placeholder"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "gltf"
-              ]
-            },
-            {
-              "required": [
-                "image"
-              ]
-            }
-          ]
-        }
+        ]
       },
       {
         "required": [
           "gltf"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "placeholder"
-              ]
-            },
-            {
-              "required": [
-                "image"
-              ]
-            }
-          ]
-        }
+        ]
       },
       {
         "required": [
           "image"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "placeholder"
-              ]
-            },
-            {
-              "required": [
-                "gltf"
-              ]
-            }
-          ]
-        }
+        ]
+      },
+      {
+        "required": [
+          "mesh"
+        ]
       }
     ],
     "properties": {
@@ -75,6 +38,18 @@
         "type": "string"
       },
       "image": {
+        "type": "string"
+      },
+      "mesh": {
+        "type": "string"
+      },
+      "texture": {
+        "type": "string"
+      },
+      "normal": {
+        "type": "string"
+      },
+      "collider": {
         "type": "string"
       },
       "color": {

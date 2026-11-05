@@ -2,6 +2,7 @@
 // (FR-001…FR-006, research R-01, R-02).
 import { emit, fail, hero, type Ctx } from './ctx.ts';
 import { heroDefinition } from './data.ts';
+import { onEpicStage } from './abilities/effects.ts';
 import type { PendingDecision } from './model/actions.ts';
 import type { GameState } from './model/state.ts';
 import { EPIC_DESTINIES, type EpicDestiny, type HeroId } from './model/types.ts';
@@ -40,7 +41,14 @@ export function maybeStartEpic(ctx: Ctx): void {
 export function chooseDestiny(ctx: Ctx, heroId: HeroId, destiny: EpicDestiny): void {
   const { s } = ctx;
   if (!destinyOptions(s, heroId).includes(destiny)) fail('BAD_DESTINY', 'That destiny is not allowed', 'Epic Heroes');
-  hero(s, heroId).epic = { destiny };
+  const h = hero(s, heroId);
+  h.epic = { destiny };
+  // 004: a named hero becomes its Epic form (Cavalier + Fanatic → Death Knight); form stats apply (Dragon Lord).
+  const form = heroDefinition(h.definitionId).forms?.[destiny];
+  if (form) {
+    h.form = form.id;
+    if (form.stats?.movement) h.movement = form.stats.movement;
+  }
   emit(ctx, { type: 'destinyChosen', heroId, destiny });
   const next = s.decisionQueue[0];
   if (next?.type === 'epicDestiny') next.options = destinyOptions(s, next.heroId);
@@ -81,4 +89,5 @@ function applyEpicStage(ctx: Ctx): void {
   s.stage = 'epic';
   s.epicPending = false;
   emit(ctx, { type: 'epicStageStarted' });
+  onEpicStage(ctx);
 }

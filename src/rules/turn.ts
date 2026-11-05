@@ -16,6 +16,8 @@ import { maybeStartEpic } from './epic.ts';
 import { destinyGeneration } from './generation.ts';
 import { canLeaveHeroUnit, heroUnitOptions } from './hero-unit.ts';
 import { checkEndOfTurn, checkState, flushFavors } from './royal-favors.ts';
+import { onTurnEnd, onTurnStart } from './abilities/effects.ts';
+import { hasAbilityOffer } from './abilities/engine.ts';
 
 export function freshTurnFlags(): TurnFlags {
   return {
@@ -43,6 +45,7 @@ function onEnter(ctx: Ctx, phase: Phase): void {
     case 'beforeTurn':
       s.turn = freshTurnFlags();
       emit(ctx, { type: 'turnStarted', heroId: h.id, turnNumber: s.turnNumber });
+      onTurnStart(ctx); // 004: "until the beginning of your next turn" effects end, turn-start hooks
       for (const side of ['light', 'dark'] as const) s.royalFavors[side].tidesThisTurn = false;
       if (!checkmateCheck(ctx)) maybeStartEpic(ctx);
       break;
@@ -56,7 +59,7 @@ function onEnter(ctx: Ctx, phase: Phase): void {
       }
       const penalty = h.status.movementPenaltyNextTurn + (isTavern(h.pos) ? RULES.tavern.startTurnMovementPenalty : 0);
       h.status.movementPenaltyNextTurn = 0;
-      s.turn.movementLeft = movementForTurn(h, penalty);
+      s.turn.movementLeft = movementForTurn(h, penalty, s);
       onHeroEntersSquare(ctx, h);
       s.turn.bothKingsInCheckAtBeginning = bothKingsInCheck(ctx);
       break;
@@ -89,6 +92,8 @@ function onEnter(ctx: Ctx, phase: Phase): void {
 /** Pass the Active Hero token to the next hero in turn order (FR-011). */
 function handOff(ctx: Ctx): void {
   const { s } = ctx;
+  onTurnEnd(ctx); // 004: end-of-turn ability effects, then "end of turn" expiries
+  if (s.status !== 'playing') return;
   const keep = s.turn.doubleStepUnitId;
   for (const u of s.units) if (u.id !== keep) u.enPassantTarget = null;
   const next = (activeHero(s).turnOrder % 4) + 1;
@@ -103,8 +108,12 @@ export function hasPowerChoice(s: GameState): boolean {
   return heroUnitOptions(s, h.id).length > 0 || canLeaveHeroUnit(s, h.id) || canKingsForces(s);
 }
 
-/** Whether the current phase can be passed without a player choice. */
+/** Whether the current phase can be passed without a player choice; a usable ability makes it rest (004 R-03). */
 function isAutomatic(ctx: Ctx): boolean {
+  return isAutomaticBase(ctx) && !hasAbilityOffer(ctx.s);
+}
+
+function isAutomaticBase(ctx: Ctx): boolean {
   const { s } = ctx;
   switch (s.phase) {
     case 'beforeTurn':

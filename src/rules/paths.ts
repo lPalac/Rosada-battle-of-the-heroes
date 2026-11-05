@@ -6,6 +6,12 @@ import type { GameState } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import type { Coord, Side } from './model/types.ts';
 
+/** Units whose path is one square in any direction (004: Legendary Ancient, Shadow Demon; research R-07). */
+const kinglike = (u: Unit): boolean => !!u.tags?.some((t) => t === 'legendaryAncient' || t === 'demon');
+const KINGLIKE_DEF: { directions: string; maxSteps: number; jump?: boolean } = { directions: 'all8', maxSteps: 1 };
+/** A Spy pawn (Infiltrate) is Led in the opposite direction (004). */
+export const pawnForward = (u: Unit): number => (u.tags?.includes('spy') ? -forward(u.side) : forward(u.side));
+
 export interface LeadOption {
   unitId: string;
   from: Coord;
@@ -82,13 +88,13 @@ export function basicLeads(state: UnitView, unit: Unit, opts: PathOptions = {}):
   const out: LeadOption[] = [];
   const friendlyEnd = (p: Coord) => !!opts.allowFriendlyEnd?.(unit, p);
   const base = { unitId: unit.id, from: unit.pos, isCastling: false, isEnPassant: false, isDoubleStep: false };
-  if (unit.type === 'pawn') {
-    const f = forward(unit.side);
+  if (unit.type === 'pawn' && !kinglike(unit)) {
+    const f = pawnForward(unit);
     const one = c(unit.pos.x, unit.pos.y + f);
     if (isBattlefield(one) && !unitAt(state, one)) {
       out.push({ ...base, to: one, isBattle: false, battleUnitIds: [], path: [one], pushDir: c(0, f) });
       const two = c(unit.pos.x, unit.pos.y + 2 * f);
-      if (unit.pos.y === DATA.units.start[unit.side].pawnRank && isBattlefield(two) && !unitAt(state, two)) {
+      if (unit.pos.y === DATA.units.start[unit.side].pawnRank && !unit.tags?.includes('spy') && isBattlefield(two) && !unitAt(state, two)) {
         out.push({ ...base, to: two, isBattle: false, battleUnitIds: [], path: [one, two], pushDir: c(0, f), isDoubleStep: true });
       }
     }
@@ -113,7 +119,7 @@ export function basicLeads(state: UnitView, unit: Unit, opts: PathOptions = {}):
   }
   // Several path types (Final Form): the union, first type wins when two reach the same square (003 FR-034).
   for (const type of pathTypes(unit)) {
-    const def = DATA.units.types[type];
+    const def = kinglike(unit) ? KINGLIKE_DEF : DATA.units.types[type];
     const maxSteps = def.maxSteps ?? 1;
     const add1 = (o: LeadOption) => {
       if (!out.some((x) => eq(x.to, o.to))) out.push(o);
@@ -147,13 +153,14 @@ export function basicLeads(state: UnitView, unit: Unit, opts: PathOptions = {}):
 
 /** The unit's path types: its type plus any extra types (pawn and castling rules only apply to the primary type). */
 export function pathTypes(unit: Unit): Unit['type'][] {
+  if (kinglike(unit)) return [unit.type];
   return [unit.type, ...(unit.extraTypes ?? []).filter((t) => t !== unit.type && t !== 'pawn')];
 }
 
 /** Squares a unit threatens (rulebook *Threaten*): includes the first friendly unit on a line (protection). */
 export function attackSquares(state: UnitView, unit: Unit): Coord[] {
-  if (unit.type === 'pawn') {
-    const f = forward(unit.side);
+  if (unit.type === 'pawn' && !kinglike(unit)) {
+    const f = pawnForward(unit);
     return [c(unit.pos.x - 1, unit.pos.y + f), c(unit.pos.x + 1, unit.pos.y + f)].filter(isBattlefield);
   }
   const out: Coord[] = [];
@@ -161,7 +168,7 @@ export function attackSquares(state: UnitView, unit: Unit): Coord[] {
     if (!out.some((x) => eq(x, p))) out.push(p);
   };
   for (const type of pathTypes(unit)) {
-    const def = DATA.units.types[type];
+    const def = kinglike(unit) ? KINGLIKE_DEF : DATA.units.types[type];
     const maxSteps = def.maxSteps ?? 1;
     for (const d of directions(def.directions)) {
       if (def.jump) {

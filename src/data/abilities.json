@@ -1,0 +1,2106 @@
+{
+  "$schema": "./schemas/abilities.schema.json",
+  "abilities": [
+    {
+      "id": "general.inspiredLead",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "perDestiny": 2
+      },
+      "icons": [
+        "lead",
+        "destiny"
+      ],
+      "name": "ability.general.inspiredLead.name",
+      "text": "ability.general.inspiredLead.text"
+    },
+    {
+      "id": "general.heroRetreat",
+      "kind": "action",
+      "timings": [
+        "endOfTurn"
+      ],
+      "cost": {
+        "normal": 2,
+        "bloodied": 2
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "movement",
+        "heal"
+      ],
+      "name": "ability.general.heroRetreat.name",
+      "text": "ability.general.heroRetreat.text"
+    },
+    {
+      "id": "cavalier.warhorse",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "squares": 1
+      },
+      "icons": [
+        "movement"
+      ],
+      "name": "ability.cavalier.warhorse.name",
+      "text": "ability.cavalier.warhorse.text"
+    },
+    {
+      "id": "cavalier.demoralise",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": null,
+      "uses": 1,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "lead",
+        "cannot",
+        "adjacent"
+      ],
+      "name": "ability.cavalier.demoralise.name",
+      "text": "ability.cavalier.demoralise.text"
+    },
+    {
+      "id": "cavalier.tightFormation",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": null,
+      "uses": 1,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "lead",
+        "cannotBeDestroyedInBattle"
+      ],
+      "name": "ability.cavalier.tightFormation.name",
+      "text": "ability.cavalier.tightFormation.text"
+    },
+    {
+      "id": "deathKnight.auraOfFear",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "penalty": [
+          -2,
+          -3
+        ]
+      },
+      "icons": [
+        "lead",
+        "adjacent"
+      ],
+      "name": "ability.deathKnight.auraOfFear.name",
+      "text": "ability.deathKnight.auraOfFear.text"
+    },
+    {
+      "id": "deathKnight.seekRevenge",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "bonus": 2
+      },
+      "icons": [
+        "lead",
+        "destroy"
+      ],
+      "name": "ability.deathKnight.seekRevenge.name",
+      "text": "ability.deathKnight.seekRevenge.text"
+    },
+    {
+      "id": "deathKnight.paleSteed",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 0,
+        "bloodied": 0
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notAsHeroUnit": true
+      },
+      "values": {
+        "squares": 1
+      },
+      "icons": [
+        "movement"
+      ],
+      "name": "ability.deathKnight.paleSteed.name",
+      "text": "ability.deathKnight.paleSteed.text"
+    },
+    {
+      "id": "deathKnight.imNotDoneWithYou",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "destroyInBattle",
+        "heal"
+      ],
+      "name": "ability.deathKnight.imNotDoneWithYou.name",
+      "text": "ability.deathKnight.imNotDoneWithYou.text"
+    },
+    {
+      "id": "deathKnight.dutyBeyondTheGrave",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 9
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.deathKnight.dutyBeyondTheGrave.name",
+      "text": "ability.deathKnight.dutyBeyondTheGrave.text"
+    },
+    {
+      "id": "deathKnight.legendaryAncient",
+      "kind": "action",
+      "timings": [
+        "beginningOfTurn"
+      ],
+      "cost": {
+        "normal": 8,
+        "bloodied": 12
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {
+        "health": 5,
+        "woundsPerLead": 1
+      },
+      "icons": [
+        "heal",
+        "wound"
+      ],
+      "name": "ability.deathKnight.legendaryAncient.name",
+      "text": "ability.deathKnight.legendaryAncient.text"
+    },
+    {
+      "id": "dragonLord.wingedStride",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "movement": 6
+      },
+      "icons": [
+        "movement"
+      ],
+      "name": "ability.dragonLord.wingedStride.name",
+      "text": "ability.dragonLord.wingedStride.text"
+    },
+    {
+      "id": "dragonLord.dragonMount",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 0,
+        "bloodied": 0
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notAsHeroUnit": true
+      },
+      "values": {
+        "squares": 1
+      },
+      "icons": [
+        "movement"
+      ],
+      "name": "ability.dragonLord.dragonMount.name",
+      "text": "ability.dragonLord.dragonMount.text"
+    },
+    {
+      "id": "dragonLord.breathOfFieryDestruction",
+      "kind": "action",
+      "timings": [
+        "duringMove",
+        "duringLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 4
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "squareWounds": 2,
+        "pathWounds": 3
+      },
+      "icons": [
+        "wound",
+        "destroy"
+      ],
+      "name": "ability.dragonLord.breathOfFieryDestruction.name",
+      "text": "ability.dragonLord.breathOfFieryDestruction.text",
+      "options": [
+        "square",
+        "knight"
+      ],
+      "sheet": {
+        "printedCost": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "id": "dragonLord.draconicDescent",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "lead"
+      ],
+      "name": "ability.dragonLord.draconicDescent.name",
+      "text": "ability.dragonLord.draconicDescent.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "dragonLord.terrifyingRoar",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notAsHeroUnit": true,
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "movement",
+        "push"
+      ],
+      "name": "ability.dragonLord.terrifyingRoar.name",
+      "text": "ability.dragonLord.terrifyingRoar.text",
+      "sheet": {
+        "printedCost": [
+          5,
+          8
+        ]
+      }
+    },
+    {
+      "id": "dragonLord.greatWyrmOffering",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 9,
+        "bloodied": 11
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "destroy",
+        "heal"
+      ],
+      "name": "ability.dragonLord.greatWyrmOffering.name",
+      "text": "ability.dragonLord.greatWyrmOffering.text",
+      "sheet": {
+        "printedCost": [
+          9,
+          13
+        ]
+      }
+    },
+    {
+      "id": "holyPaladin.auraOfRadiance",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "bonus": 1
+      },
+      "icons": [
+        "lead",
+        "adjacent"
+      ],
+      "name": "ability.holyPaladin.auraOfRadiance.name",
+      "text": "ability.holyPaladin.auraOfRadiance.text"
+    },
+    {
+      "id": "holyPaladin.magnificentStallion",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 0,
+        "bloodied": 0
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notAsHeroUnit": true
+      },
+      "values": {
+        "squares": 1
+      },
+      "icons": [
+        "movement"
+      ],
+      "name": "ability.holyPaladin.magnificentStallion.name",
+      "text": "ability.holyPaladin.magnificentStallion.text"
+    },
+    {
+      "id": "holyPaladin.divineProtector",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 2,
+        "bloodied": 3
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "hero",
+        "wound",
+        "push"
+      ],
+      "name": "ability.holyPaladin.divineProtector.name",
+      "text": "ability.holyPaladin.divineProtector.text"
+    },
+    {
+      "id": "holyPaladin.paragonOfHonor",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 1,
+        "bloodied": 2
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "swapCost": 2
+      },
+      "icons": [
+        "cannotBeDestroyedInBattle"
+      ],
+      "name": "ability.holyPaladin.paragonOfHonor.name",
+      "text": "ability.holyPaladin.paragonOfHonor.text"
+    },
+    {
+      "id": "holyPaladin.crusade",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "lead",
+        "cannotBeDestroyedInBattle"
+      ],
+      "name": "ability.holyPaladin.crusade.name",
+      "text": "ability.holyPaladin.crusade.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "holyPaladin.knightAPeasant",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "adjacent"
+      ],
+      "name": "ability.holyPaladin.knightAPeasant.name",
+      "text": "ability.holyPaladin.knightAPeasant.text",
+      "sheet": {
+        "printedCost": [
+          5,
+          8
+        ]
+      }
+    },
+    {
+      "id": "holyPaladin.holyWrath",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 9,
+        "bloodied": 11
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "wounds": 4
+      },
+      "icons": [
+        "wound",
+        "destroy"
+      ],
+      "name": "ability.holyPaladin.holyWrath.name",
+      "text": "ability.holyPaladin.holyWrath.text",
+      "sheet": {
+        "printedCost": [
+          9,
+          13
+        ]
+      }
+    },
+    {
+      "id": "monk.rejuvenatingStroll",
+      "kind": "action",
+      "timings": [
+        "duringMove",
+        "duringLead"
+      ],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "heal": 1
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.monk.rejuvenatingStroll.name",
+      "text": "ability.monk.rejuvenatingStroll.text"
+    },
+    {
+      "id": "monk.preaching",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "beforeLead",
+        "afterLead"
+      ],
+      "cost": null,
+      "uses": 2,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "penalty": -4
+      },
+      "icons": [
+        "lead",
+        "adjacent"
+      ],
+      "name": "ability.monk.preaching.name",
+      "text": "ability.monk.preaching.text"
+    },
+    {
+      "id": "monk.makePeaceNotWar",
+      "kind": "action",
+      "timings": [
+        "beginningOfTurn"
+      ],
+      "cost": null,
+      "uses": 1,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "cannotBeDestroyed",
+        "noRoll"
+      ],
+      "name": "ability.monk.makePeaceNotWar.name",
+      "text": "ability.monk.makePeaceNotWar.text"
+    },
+    {
+      "id": "cultist.righteousMight",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "bonusPerPawn": 1
+      },
+      "icons": [
+        "lead",
+        "battle"
+      ],
+      "name": "ability.cultist.righteousMight.name",
+      "text": "ability.cultist.righteousMight.text"
+    },
+    {
+      "id": "cultist.spiritualHealing",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 1,
+        "bloodied": 2
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "heal": 1,
+        "perAux": 1
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.cultist.spiritualHealing.name",
+      "text": "ability.cultist.spiritualHealing.text"
+    },
+    {
+      "id": "cultist.religiousFervor",
+      "kind": "action",
+      "timings": [
+        "beforeLead",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {
+        "wounds": 3
+      },
+      "icons": [
+        "adjacent",
+        "heal"
+      ],
+      "name": "ability.cultist.religiousFervor.name",
+      "text": "ability.cultist.religiousFervor.text"
+    },
+    {
+      "id": "cultist.knightmare",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "cannotLead"
+      ],
+      "name": "ability.cultist.knightmare.name",
+      "text": "ability.cultist.knightmare.text"
+    },
+    {
+      "id": "cultist.sacrifice",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": 3,
+        "radius": 2
+      },
+      "icons": [
+        "destroy",
+        "wound"
+      ],
+      "name": "ability.cultist.sacrifice.name",
+      "text": "ability.cultist.sacrifice.text"
+    },
+    {
+      "id": "cultist.falseSalvation",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 8
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "destroy",
+        "heal"
+      ],
+      "name": "ability.cultist.falseSalvation.name",
+      "text": "ability.cultist.falseSalvation.text"
+    },
+    {
+      "id": "cultist.dreamOfIllFate",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": {
+        "normal": 2,
+        "bloodied": 4
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "wounds": 4
+      },
+      "icons": [
+        "wound"
+      ],
+      "name": "ability.cultist.dreamOfIllFate.name",
+      "text": "ability.cultist.dreamOfIllFate.text"
+    },
+    {
+      "id": "saint.saintlyInspiration",
+      "kind": "action",
+      "timings": [
+        "duringMove",
+        "duringLead"
+      ],
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "heal": 2
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.saint.saintlyInspiration.name",
+      "text": "ability.saint.saintlyInspiration.text"
+    },
+    {
+      "id": "saint.sacredRite",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 4
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "heal": 4
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.saint.sacredRite.name",
+      "text": "ability.saint.sacredRite.text",
+      "sheet": {
+        "printedCost": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "id": "saint.pilgrimage",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 4
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "lead"
+      ],
+      "name": "ability.saint.pilgrimage.name",
+      "text": "ability.saint.pilgrimage.text",
+      "sheet": {
+        "printedCost": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "id": "saint.martyrdom",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 8,
+        "bloodied": 10
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notAsHeroUnit": true,
+        "notRoyalty": true
+      },
+      "values": {
+        "woundsPerUnit": 2,
+        "movement": 1
+      },
+      "icons": [
+        "cannotLead",
+        "wound"
+      ],
+      "name": "ability.saint.martyrdom.name",
+      "text": "ability.saint.martyrdom.text",
+      "sheet": {
+        "printedCost": [
+          8,
+          12
+        ]
+      }
+    },
+    {
+      "id": "saint.wingsOfDestiny",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 8,
+        "bloodied": 10
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true,
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.saint.wingsOfDestiny.name",
+      "text": "ability.saint.wingsOfDestiny.text",
+      "sheet": {
+        "printedCost": [
+          8,
+          12
+        ]
+      }
+    },
+    {
+      "id": "supremeInquisitor.zealotMob",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "wounds": 2
+      },
+      "icons": [
+        "wound",
+        "adjacent"
+      ],
+      "name": "ability.supremeInquisitor.zealotMob.name",
+      "text": "ability.supremeInquisitor.zealotMob.text"
+    },
+    {
+      "id": "supremeInquisitor.unexpectedVisit",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 2,
+        "bloodied": 3
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notAsHeroUnit": true
+      },
+      "values": {
+        "squares": 3
+      },
+      "icons": [
+        "movement"
+      ],
+      "name": "ability.supremeInquisitor.unexpectedVisit.name",
+      "text": "ability.supremeInquisitor.unexpectedVisit.text"
+    },
+    {
+      "id": "supremeInquisitor.inquisition",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true,
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "adjacent"
+      ],
+      "name": "ability.supremeInquisitor.inquisition.name",
+      "text": "ability.supremeInquisitor.inquisition.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "supremeInquisitor.sanctimonious",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "max": 2
+      },
+      "icons": [
+        "cannotBattle"
+      ],
+      "name": "ability.supremeInquisitor.sanctimonious.name",
+      "text": "ability.supremeInquisitor.sanctimonious.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "supremeInquisitor.blindFaith",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "lead",
+        "battle"
+      ],
+      "name": "ability.supremeInquisitor.blindFaith.name",
+      "text": "ability.supremeInquisitor.blindFaith.text",
+      "sheet": {
+        "printedCost": [
+          5,
+          8
+        ]
+      }
+    },
+    {
+      "id": "supremeInquisitor.dogmaticIndoctrination",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 9,
+        "bloodied": 11
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "destroy",
+        "heal"
+      ],
+      "name": "ability.supremeInquisitor.dogmaticIndoctrination.name",
+      "text": "ability.supremeInquisitor.dogmaticIndoctrination.text",
+      "sheet": {
+        "printedCost": [
+          9,
+          13
+        ]
+      }
+    },
+    {
+      "id": "scout.elusive",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "ramReduction": 2
+      },
+      "icons": [
+        "wound"
+      ],
+      "name": "ability.scout.elusive.name",
+      "text": "ability.scout.elusive.text"
+    },
+    {
+      "id": "scout.bearTraps",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": null,
+      "uses": 1,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "penalty": -3,
+        "wounds": 4
+      },
+      "icons": [
+        "lead",
+        "wound"
+      ],
+      "name": "ability.scout.bearTraps.name",
+      "text": "ability.scout.bearTraps.text"
+    },
+    {
+      "id": "scout.poisonWater",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "beforeLead"
+      ],
+      "cost": null,
+      "uses": 1,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "penalty": -3
+      },
+      "icons": [
+        "cannotLead"
+      ],
+      "name": "ability.scout.poisonWater.name",
+      "text": "ability.scout.poisonWater.text"
+    },
+    {
+      "id": "scoundrel.elusiveSabotage",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {
+        "ramReduction": 2,
+        "penalty": -3
+      },
+      "icons": [
+        "lead",
+        "wound"
+      ],
+      "name": "ability.scoundrel.elusiveSabotage.name",
+      "text": "ability.scoundrel.elusiveSabotage.text"
+    },
+    {
+      "id": "scoundrel.bushwack",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": [
+          2,
+          3
+        ],
+        "extra": 1
+      },
+      "icons": [
+        "wound",
+        "push"
+      ],
+      "name": "ability.scoundrel.bushwack.name",
+      "text": "ability.scoundrel.bushwack.text"
+    },
+    {
+      "id": "scoundrel.massConfusion",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "range"
+      ],
+      "name": "ability.scoundrel.massConfusion.name",
+      "text": "ability.scoundrel.massConfusion.text"
+    },
+    {
+      "id": "scoundrel.misdirection",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "push",
+        "adjacent"
+      ],
+      "name": "ability.scoundrel.misdirection.name",
+      "text": "ability.scoundrel.misdirection.text"
+    },
+    {
+      "id": "scoundrel.deviousGambit",
+      "kind": "reaction",
+      "timings": [
+        "duringEnemyLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 8
+      },
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "destroy"
+      ],
+      "name": "ability.scoundrel.deviousGambit.name",
+      "text": "ability.scoundrel.deviousGambit.text"
+    },
+    {
+      "id": "scoundrel.highTreason",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 9
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "destroy"
+      ],
+      "name": "ability.scoundrel.highTreason.name",
+      "text": "ability.scoundrel.highTreason.text"
+    },
+    {
+      "id": "spyMaster.evasive",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "ramReduction": 2
+      },
+      "icons": [
+        "wound",
+        "movement"
+      ],
+      "name": "ability.spyMaster.evasive.name",
+      "text": "ability.spyMaster.evasive.text"
+    },
+    {
+      "id": "spyMaster.smugglersGrotto",
+      "kind": "action",
+      "timings": [
+        "beginningOfEpicStage"
+      ],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "drink": 1,
+        "meal": 3
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.spyMaster.smugglersGrotto.name",
+      "text": "ability.spyMaster.smugglersGrotto.text"
+    },
+    {
+      "id": "spyMaster.misinformation",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "push",
+        "range"
+      ],
+      "name": "ability.spyMaster.misinformation.name",
+      "text": "ability.spyMaster.misinformation.text"
+    },
+    {
+      "id": "spyMaster.infiltrate",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "range"
+      ],
+      "name": "ability.spyMaster.infiltrate.name",
+      "text": "ability.spyMaster.infiltrate.text"
+    },
+    {
+      "id": "spyMaster.mislead",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "cannotLead",
+        "range"
+      ],
+      "name": "ability.spyMaster.mislead.name",
+      "text": "ability.spyMaster.mislead.text"
+    },
+    {
+      "id": "spyMaster.counterintelligence",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "cannotBattle",
+        "range"
+      ],
+      "name": "ability.spyMaster.counterintelligence.name",
+      "text": "ability.spyMaster.counterintelligence.text"
+    },
+    {
+      "id": "royalAssassin.patientPreparation",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "ramReduction": 2,
+        "bonus": 2
+      },
+      "icons": [
+        "lead",
+        "wound"
+      ],
+      "name": "ability.royalAssassin.patientPreparation.name",
+      "text": "ability.royalAssassin.patientPreparation.text"
+    },
+    {
+      "id": "royalAssassin.killOrder",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "destroy",
+        "range"
+      ],
+      "name": "ability.royalAssassin.killOrder.name",
+      "text": "ability.royalAssassin.killOrder.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "royalAssassin.assassinateTheUnworthy",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 5,
+        "bloodied": 6
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "destroy"
+      ],
+      "name": "ability.royalAssassin.assassinateTheUnworthy.name",
+      "text": "ability.royalAssassin.assassinateTheUnworthy.text",
+      "sheet": {
+        "printedCost": [
+          5,
+          8
+        ]
+      }
+    },
+    {
+      "id": "royalAssassin.reapTheWeary",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 8
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "wound"
+      ],
+      "name": "ability.royalAssassin.reapTheWeary.name",
+      "text": "ability.royalAssassin.reapTheWeary.text",
+      "sheet": {
+        "printedCost": [
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "id": "royalAssassin.redCarpet",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 8,
+        "bloodied": 10
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "battle",
+        "destroy"
+      ],
+      "name": "ability.royalAssassin.redCarpet.name",
+      "text": "ability.royalAssassin.redCarpet.text",
+      "sheet": {
+        "printedCost": [
+          8,
+          12
+        ]
+      }
+    },
+    {
+      "id": "royalAssassin.regicide",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 8,
+        "bloodied": 10
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "destroy"
+      ],
+      "name": "ability.royalAssassin.regicide.name",
+      "text": "ability.royalAssassin.regicide.text",
+      "sheet": {
+        "printedCost": [
+          8,
+          12
+        ]
+      }
+    },
+    {
+      "id": "magus.futureSight",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": 1,
+        "bonus": 2
+      },
+      "icons": [
+        "wound",
+        "lead"
+      ],
+      "name": "ability.magus.futureSight.name",
+      "text": "ability.magus.futureSight.text"
+    },
+    {
+      "id": "magus.flamingBolt",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": null,
+      "uses": 2,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": 2
+      },
+      "icons": [
+        "wound",
+        "range"
+      ],
+      "name": "ability.magus.flamingBolt.name",
+      "text": "ability.magus.flamingBolt.text"
+    },
+    {
+      "id": "magus.soulsClash",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": null,
+      "uses": 1,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "heal": 3,
+        "distance": 3
+      },
+      "icons": [
+        "destroy",
+        "heal"
+      ],
+      "name": "ability.magus.soulsClash.name",
+      "text": "ability.magus.soulsClash.text"
+    },
+    {
+      "id": "necromancer.graveSacrifice",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "per": 5
+      },
+      "icons": [
+        "destiny"
+      ],
+      "name": "ability.necromancer.graveSacrifice.name",
+      "text": "ability.necromancer.graveSacrifice.text",
+      "sheet": {
+        "printedCost": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "necromancer.soulSyphon",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "heal": 2
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.necromancer.soulSyphon.name",
+      "text": "ability.necromancer.soulSyphon.text"
+    },
+    {
+      "id": "necromancer.bloodRitual",
+      "kind": "action",
+      "timings": [
+        "beforeLead"
+      ],
+      "cost": {
+        "normal": 0,
+        "bloodied": 0
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": 2,
+        "bonus": [
+          3,
+          4
+        ]
+      },
+      "icons": [
+        "wound",
+        "lead"
+      ],
+      "name": "ability.necromancer.bloodRitual.name",
+      "text": "ability.necromancer.bloodRitual.text"
+    },
+    {
+      "id": "necromancer.leechingTouch",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": [
+          2,
+          4
+        ],
+        "heal": 3,
+        "auxHeal": 2
+      },
+      "icons": [
+        "wound",
+        "heal"
+      ],
+      "name": "ability.necromancer.leechingTouch.name",
+      "text": "ability.necromancer.leechingTouch.text",
+      "options": [
+        "wound",
+        "destroyAux"
+      ],
+      "sheet": {
+        "printedCost": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "id": "necromancer.awakenTheDeathless",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 8
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {
+        "selfWounds": [
+          3,
+          2
+        ]
+      },
+      "icons": [
+        "heal",
+        "wound"
+      ],
+      "name": "ability.necromancer.awakenTheDeathless.name",
+      "text": "ability.necromancer.awakenTheDeathless.text",
+      "sheet": {
+        "printedCost": [
+          5,
+          7
+        ]
+      }
+    },
+    {
+      "id": "necromancer.undeadLegions",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 10,
+        "bloodied": 15
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {
+        "baseWounds": 1
+      },
+      "icons": [
+        "heal",
+        "wound"
+      ],
+      "name": "ability.necromancer.undeadLegions.name",
+      "text": "ability.necromancer.undeadLegions.text",
+      "sheet": {
+        "printedCost": [
+          10,
+          16
+        ]
+      }
+    },
+    {
+      "id": "grandArcanist.magicBombardment",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 4
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": 2
+      },
+      "icons": [
+        "wound",
+        "destroy"
+      ],
+      "name": "ability.grandArcanist.magicBombardment.name",
+      "text": "ability.grandArcanist.magicBombardment.text",
+      "options": [
+        "wound",
+        "destroyAux"
+      ],
+      "sheet": {
+        "printedCost": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "id": "grandArcanist.arcaneShackles",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "notRoyalty": true
+      },
+      "values": {},
+      "icons": [
+        "cannotLead",
+        "cannotBeDestroyedInBattle"
+      ],
+      "name": "ability.grandArcanist.arcaneShackles.name",
+      "text": "ability.grandArcanist.arcaneShackles.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "grandArcanist.conjurePortal",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 8
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "linked",
+        "range"
+      ],
+      "name": "ability.grandArcanist.conjurePortal.name",
+      "text": "ability.grandArcanist.conjurePortal.text",
+      "sheet": {
+        "printedCost": [
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "id": "grandArcanist.summonShadowDemon",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 8,
+        "bloodied": 10
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "heal",
+        "battle"
+      ],
+      "name": "ability.grandArcanist.summonShadowDemon.name",
+      "text": "ability.grandArcanist.summonShadowDemon.text",
+      "sheet": {
+        "printedCost": [
+          7,
+          10
+        ]
+      }
+    },
+    {
+      "id": "grandArcanist.fireball",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 13,
+        "bloodied": 16
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "wounds": 5
+      },
+      "icons": [
+        "wound",
+        "destroy",
+        "range"
+      ],
+      "name": "ability.grandArcanist.fireball.name",
+      "text": "ability.grandArcanist.fireball.text",
+      "sheet": {
+        "printedCost": [
+          13,
+          17
+        ]
+      }
+    },
+    {
+      "id": "chronomonger.noTimeToLose",
+      "kind": "passive",
+      "timings": [],
+      "cost": null,
+      "uses": null,
+      "oncePerTurn": false,
+      "flags": {},
+      "values": {
+        "health": 1
+      },
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.chronomonger.noTimeToLose.name",
+      "text": "ability.chronomonger.noTimeToLose.text"
+    },
+    {
+      "id": "chronomonger.certaintyAndDeath",
+      "kind": "action",
+      "timings": [
+        "insteadOfLead"
+      ],
+      "cost": {
+        "normal": 2,
+        "bloodied": 3
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "noRoll",
+        "destroy"
+      ],
+      "name": "ability.chronomonger.certaintyAndDeath.name",
+      "text": "ability.chronomonger.certaintyAndDeath.text"
+    },
+    {
+      "id": "chronomonger.rapidMarch",
+      "kind": "action",
+      "timings": [
+        "duringLead"
+      ],
+      "cost": {
+        "normal": 3,
+        "bloodied": 4
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {
+        "squares": 3
+      },
+      "icons": [
+        "lead"
+      ],
+      "name": "ability.chronomonger.rapidMarch.name",
+      "text": "ability.chronomonger.rapidMarch.text",
+      "sheet": {
+        "printedCost": [
+          3,
+          5
+        ]
+      }
+    },
+    {
+      "id": "chronomonger.timeyWimeyShift",
+      "kind": "action",
+      "timings": [
+        "beforeTurn"
+      ],
+      "cost": {
+        "normal": 4,
+        "bloodied": 5
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {},
+      "values": {},
+      "icons": [
+        "hero"
+      ],
+      "name": "ability.chronomonger.timeyWimeyShift.name",
+      "text": "ability.chronomonger.timeyWimeyShift.text",
+      "sheet": {
+        "printedCost": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "chronomonger.convergeTimelines",
+      "kind": "action",
+      "timings": [
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 6,
+        "bloodied": 8
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.chronomonger.convergeTimelines.name",
+      "text": "ability.chronomonger.convergeTimelines.text",
+      "sheet": {
+        "printedCost": [
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "id": "chronomonger.temporalFlux",
+      "kind": "action",
+      "timings": [
+        "beforeMove",
+        "afterLead"
+      ],
+      "cost": {
+        "normal": 9,
+        "bloodied": 11
+      },
+      "uses": null,
+      "oncePerTurn": true,
+      "flags": {
+        "mustNotCheck": true
+      },
+      "values": {},
+      "icons": [
+        "heal"
+      ],
+      "name": "ability.chronomonger.temporalFlux.name",
+      "text": "ability.chronomonger.temporalFlux.text",
+      "sheet": {
+        "printedCost": [
+          9,
+          13
+        ]
+      }
+    }
+  ]
+}

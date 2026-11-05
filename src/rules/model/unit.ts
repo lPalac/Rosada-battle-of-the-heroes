@@ -20,4 +20,12 @@ export interface Unit {
   promoted: boolean;
   /** Set for one turn after a 2-square pawn Lead from its starting square: the square it passed. */
   enPassantTarget: Coord | null;
+  /** 004: special units (research R-07). */
+  tags?: UnitTag[];
+  /** Legendary Ancient only: takes wounds like a hero. */
+  health?: number;
+  /** Set while the unit is Modified (Inquisition, Knight a Peasant, Infiltrate): the type before the Modify. */
+  modifiedFrom?: UnitType | null;
 }
+
+export type UnitTag = 'undead' | 'legendaryAncient' | 'demon' | 'spy' | 'clone';

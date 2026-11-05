@@ -26,7 +26,9 @@
           "art",
           "heroUnitType",
           "portrait",
-          "epicArt"
+          "epicArt",
+          "selectable",
+          "sheet"
         ],
         "additionalProperties": false,
         "properties": {
@@ -88,6 +90,149 @@
           },
           "epicArt": {
             "type": "string"
+          },
+          "selectable": {
+            "type": "boolean"
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "forms": {
+            "type": "object",
+            "required": [
+              "fanatic",
+              "resolute",
+              "dominant"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "fanatic": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "portrait",
+                  "sheet",
+                  "abilities"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "portrait": {
+                    "type": "string"
+                  },
+                  "sheet": {
+                    "type": "string"
+                  },
+                  "abilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "stats": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "movement": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10
+                      }
+                    }
+                  }
+                }
+              },
+              "resolute": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "portrait",
+                  "sheet",
+                  "abilities"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "portrait": {
+                    "type": "string"
+                  },
+                  "sheet": {
+                    "type": "string"
+                  },
+                  "abilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "stats": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "movement": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10
+                      }
+                    }
+                  }
+                }
+              },
+              "dominant": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "portrait",
+                  "sheet",
+                  "abilities"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "portrait": {
+                    "type": "string"
+                  },
+                  "sheet": {
+                    "type": "string"
+                  },
+                  "abilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "stats": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "movement": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

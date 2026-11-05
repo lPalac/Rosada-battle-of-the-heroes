@@ -12,6 +12,8 @@ export interface Player {
 export interface Pick {
   side: Side;
   rangeType: RangeType;
+  /** 004: the named hero picked (`cavalier` …); absent for range-type picks (generic heroes). */
+  heroDefinitionId?: string;
   /** Index into `picks`: identifies the hero slot until hero ids exist. */
   pickIndex: number;
 }
@@ -29,8 +31,46 @@ export interface SetupChoices {
 }
 
 export interface Modifier {
-  source: 'war' | 'check' | 'inspiredLead' | 'heroUnit';
+  /** `war`, `check`, `inspiredLead`, `heroUnit`, or an ability id (004 research R-05). */
+  source: string;
   value: number;
+}
+
+/** 004 research R-04: marks, square tokens, Modify, auras and other ability effects. */
+export interface Effect {
+  id: number;
+  kind: string;
+  source: { abilityId: string; heroId: HeroId };
+  target: EffectTarget;
+  expires: Expiry;
+  data: Record<string, unknown>;
+}
+
+export type EffectTarget =
+  | { unitId: string }
+  | { heroId: HeroId }
+  | { square: Coord }
+  | { area: Coord[] }
+  | { side: Side }
+  | { unitType: UnitType; side: Side }
+  | { none: true };
+
+/**
+ * `turnStart` + heroId: gone when that hero's next turn begins. `turnEnd` + turn: gone at the end of that turn number.
+ * `turnEnd` + heroId + count: gone at the end of that hero's `count`-th turn from now. `epicStage`: gone when it starts.
+ * `removed`: only by its own condition.
+ */
+export interface Expiry {
+  at: 'turnStart' | 'turnEnd' | 'epicStage' | 'removed';
+  heroId?: HeroId;
+  turn?: number;
+  count?: number;
+}
+
+export interface AbilityHeroState {
+  /** Uses left for limited abilities. */
+  uses: Record<string, number>;
+  usedThisTurn: string[];
 }
 
 export interface RamOutcome {
@@ -58,6 +98,16 @@ export interface LeadAttempt {
   success: boolean | null;
   rams: RamOutcome[];
   promoteTo: UnitType | null;
+  /** 004: the option as announced (ability Leads change paths). */
+  option?: import('../paths.ts').LeadOption;
+  /** 004: the ability that made this Lead (Instead of Lead), if any. */
+  ability?: string;
+  /** 004: no Ram on this Lead (Pilgrimage). */
+  noRam?: boolean;
+  /** 004: reaction answers collected before the Battle (Paragon of Honor, Devious Gambit, Counterintelligence). */
+  reactions?: { abilityId: string; heroId: HeroId; key: string; use: boolean; targets?: unknown[] }[];
+  /** Units destroyed by this Lead (for After Lead abilities). */
+  destroyed?: { unitId: string; type: UnitType; side: Side; pos: Coord }[];
 }
 
 export interface TurnFlags {
@@ -160,4 +210,8 @@ export interface GameState {
   /** Unit ids moved by hand in sandbox; count as Led when rules resume (FR-104). */
   sandboxMoved: string[];
   log: LogEntry[];
+  /** 004: ability effects, ability uses, stable effect ids. */
+  effects: Effect[];
+  abilityState: Partial<Record<HeroId, AbilityHeroState>>;
+  nextEffectId: number;
 }

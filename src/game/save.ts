@@ -43,10 +43,15 @@ export function migrateState(state: GameState): GameState {
   s.destiny.well.depletedBy ??= null;
   s.turn.heroUnitChanges ??= [];
   s.turn.kingsForcesUsed ??= false;
+  // 004: ability effects and uses.
+  s.effects ??= [];
+  s.abilityState ??= {};
+  s.nextEffectId ??= 1;
   for (const h of s.heroes) {
     const def = DATA.heroes.find((d) => d.id === h.definitionId);
     h.epic ??= null;
     h.heroUnitId ??= null;
+    h.form ??= null;
     h.heroUnitType ??= def?.heroUnitType ?? (h.rangeType === 'short' ? 'knight' : 'bishop');
     if (typeof h.rammedBy === 'string') h.rammedBy = { unitId: h.rammedBy, turn: -1 };
   }

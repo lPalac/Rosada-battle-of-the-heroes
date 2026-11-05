@@ -4,7 +4,7 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ## Active feature
 
-`specs/003-epic-stage/` (built): Epic Stage (destiny choice, War +2 ends), Destiny generation, Bloodied, Royal Favors with a tracker, Legendary Powers (Hero Units as units, King's Forces + auxiliary units), and a table look based on the Tabletop Simulator version. Builds on `specs/001-standard-rules-game/` and `specs/002-sandbox-physics/` (both built). Read the 003 `spec.md`, `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
+`specs/004-named-heroes/`: the four named heroes from `Hero Rules 2_0.docx` (Cavalier, Monk, Scout, Magus) with starting abilities and three Epic forms each, an ability engine (timings, Bloodied costs, uses, marks, tokens, Modify, Push, reactions), TTS hero sheets, and the Tabletop Simulator assets (meshes, table, boards, tokens) imported into `public/tts/`. Builds on 001, 002 and 003 (all built). Read the 004 `spec.md` (Clarifications, Open Questions Q-39…Q-46), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
 
 ## Tech stack
 
@@ -18,7 +18,7 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 - Heroes, units, health bars, board, tunables and art keys are JSON in `src/data/`.
 - Every spec acceptance scenario has a Vitest test named `US<n>-AS<m>`. Fix a rule bug with a failing test first.
 - Rolls come from the physics die and enter the rules core as `submitRoll(value)`; tests pass fixed values.
-- Rules source: `Basic Rules 2_5.docx` plus the tracked changes in `Basic Rules 2_5 - corrections.docx`. Don't invent rules: log unclear cases in the spec's Open Questions.
+- Rules source: `Basic Rules 2_5.docx` plus the tracked changes in `Basic Rules 2_5 - corrections.docx`; hero abilities from `Hero Rules 2_0.docx`. Don't invent rules: log unclear cases in the spec's Open Questions.
 
 ## Commands
 

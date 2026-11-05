@@ -9,7 +9,7 @@ export interface Payment {
 
 export type Action =
   // setup
-  | { type: 'pickHero'; side: Side; rangeType: RangeType }
+  | { type: 'pickHero'; side: Side; rangeType?: RangeType; heroDefinitionId?: string }
   | { type: 'setTurnOrder'; side: Side; first: number }
   | { type: 'setStartFile'; pickIndex: number; file: 'c' | 'f' }
   | { type: 'startGame' }
@@ -21,6 +21,8 @@ export type Action =
   // general abilities
   | { type: 'inspiredLead'; destiny: number; pay?: Payment }
   | { type: 'heroRetreat'; tavern: Coord; pay?: Payment }
+  // 004 hero abilities
+  | { type: 'useAbility'; abilityId: string; targets?: AbilityTarget[]; option?: string; pay?: Payment }
   // Legendary Powers (Beginning of Turn; End of Turn with Swift Change)
   | { type: 'becomeHeroUnit'; types: UnitType[] }
   | { type: 'leaveHeroUnit' }
@@ -46,19 +48,29 @@ export type Action =
 
 export type SandboxPath =
   | 'health' | 'pool' | 'common' | 'revenge' | 'peaceTreaty'
-  | 'stage' | 'destiny' | 'favor' | 'kingsForces' | 'heroUnit' | 'well';
+  | 'stage' | 'destiny' | 'favor' | 'kingsForces' | 'heroUnit' | 'well'
+  | 'form' | 'uses' | 'removeEffect';
+
+/** 004: what an ability points at. */
+export type AbilityTarget = { square: Coord } | { unitId: string } | { heroId: HeroId } | { unitType: UnitType };
 
 export type PendingDecision =
   | { type: 'promotion'; unitId: string; chooserHeroId: HeroId }
   | { type: 'unconsciousTavern'; heroId: HeroId; options: Coord[] }
   | { type: 'advanceSquare'; heroId: HeroId; options: Coord[] }
   | { type: 'drawOffer'; fromSide: Side }
-  | { type: 'epicDestiny'; heroId: HeroId; options: EpicDestiny[] };
+  | { type: 'epicDestiny'; heroId: HeroId; options: EpicDestiny[] }
+  /** 004: a "During Enemy Lead" ability may be used now by its owner (research R-03). */
+  | { type: 'reaction'; heroId: HeroId; abilityId: string; key: string; at: 'battle'; cost: number; options: AbilityTarget[][] }
+  /** 004: a choice inside an ability (Converge Timelines: which copy stays; No Time to Lose; Evasive). */
+  | { type: 'abilityChoice'; heroId: HeroId; abilityId: string; choices: string[] };
 
 export type DecisionAnswer =
   | { type: 'promotion'; to: UnitType }
   | { type: 'square'; to: Coord }
-  | { type: 'destiny'; destiny: EpicDestiny };
+  | { type: 'destiny'; destiny: EpicDestiny }
+  | { type: 'reaction'; use: boolean; targets?: AbilityTarget[]; pay?: Payment }
+  | { type: 'abilityChoice'; choice: string };
 
 export type GameEvent =
   | { type: 'phaseChanged'; heroId: HeroId; phase: Phase }
@@ -70,7 +82,7 @@ export type GameEvent =
   | { type: 'leadAnnounced'; unitId: string; from: Coord; to: Coord; needsRoll: boolean }
   | { type: 'leadFailed'; unitId: string }
   | { type: 'unitLed'; unitId: string; from: Coord; to: Coord; path: Coord[] }
-  | { type: 'unitDestroyed'; unitId: string; by: 'battle'; leftPlay?: boolean }
+  | { type: 'unitDestroyed'; unitId: string; by: 'battle' | 'ability'; leftPlay?: boolean }
   | { type: 'heroRammed'; heroId: HeroId; byUnitId: string; landing: Coord; sentToStart: boolean }
   | { type: 'heroPushed'; heroId: HeroId; byUnitId: string; landing: Coord; sentToStart: boolean }
   | { type: 'heroWounded'; heroId: HeroId; amount: number; health: number }
@@ -89,7 +101,11 @@ export type GameEvent =
   | { type: 'tokenChanged'; token: 'peaceTreaty' | 'revenge'; side?: Side; value: string | number }
   | { type: 'promoted'; unitId: string; to: UnitType }
   | { type: 'check'; side: Side }
-  | { type: 'abilityUsed'; heroId: HeroId; ability: 'inspiredLead' | 'heroRetreat'; destiny: number }
+  | { type: 'abilityUsed'; heroId: HeroId; ability: string; destiny: number; targets?: AbilityTarget[]; option?: string }
+  | { type: 'effectAdded'; effect: import('./state.ts').Effect }
+  | { type: 'effectRemoved'; id: number; kind: string; reason: string }
+  | { type: 'unitModified'; unitId: string; from: UnitType; to: UnitType }
+  | { type: 'unitPushed'; unitId: string; from: Coord; to: Coord }
   | { type: 'bought'; heroId: HeroId; item: 'drink' | 'meal' }
   | { type: 'drawOffered'; fromSide: Side }
   | { type: 'drawDeclined'; bySide: Side }
