@@ -1,7 +1,7 @@
 // The Graveyard / Destiny Well strip beside the board (003 US7-AS1, `strip.graveyard`): one illustrated card under the
 // Graveyard zones and the Well, like the Tabletop Simulator table.
 import { Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
-import { assetEntry } from './assets.ts';
+import { assetEntry, loadImageTexture } from './assets.ts';
 import { canvasTexture, parchment, rng } from './canvas.ts';
 import { SQUARE, ZONES } from './coords.ts';
 
@@ -54,5 +54,13 @@ export function createStrip(): Mesh {
   strip.position.set(ZONES.well.x, -0.095, ZONES.well.z);
   strip.receiveShadow = true;
   strip.userData = { kind: 'strip' };
+  // 004 US6-AS3: the TTS Graveyard / Destiny Well board (landscape art, turned to run along the strip).
+  loadImageTexture('tts.graveyard', (img) => {
+    img.center.set(0.5, 0.5);
+    img.rotation = Math.PI / 2;
+    (strip.material as MeshStandardMaterial).map = img;
+    (strip.material as MeshStandardMaterial).needsUpdate = true;
+    strip.userData.tts = true;
+  });
   return strip;
 }

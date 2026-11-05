@@ -141,6 +141,45 @@ function jobs(): ImageJob[] {
   return out;
 }
 
+/**
+ * Which V direction the mesh's UVs use: sample the Light texture at every UV with and without flipping; the brighter
+ * result is right (Light pieces are white). The TTS meshes do not all use the same convention.
+ */
+async function uvFlipY(objFile: string, textureFile: string): Promise<boolean> {
+  const lines = readFileSync(objFile, 'utf8').split(/\r?\n/);
+  const nums = (l: string, n: number) => l.trim().split(/\s+/).slice(1, 1 + n).map(Number);
+  const vs = lines.filter((l) => l.startsWith('v ')).map((l) => nums(l, 3));
+  const uvs = lines.filter((l) => l.startsWith('vt ')).map((l) => nums(l, 2));
+  const { data, info } = await sharp(textureFile).resize(256, 256).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const sample = (u: number, v: number) => {
+    const x = Math.min(info.width - 1, Math.max(0, Math.floor((u - Math.floor(u)) * info.width)));
+    const y = Math.min(info.height - 1, Math.max(0, Math.floor((v - Math.floor(v)) * info.height)));
+    const i = (y * info.width + x) * info.channels;
+    return (data[i] + data[i + 1] + data[i + 2]) / 3;
+  };
+  // Weighted by triangle area, sampled at each face's UV centre.
+  let flipped = 0;
+  let straight = 0;
+  for (const l of lines) {
+    if (!l.startsWith('f ')) continue;
+    const idx = l.trim().split(/\s+/).slice(1).map((p) => p.split('/').map(Number));
+    for (let k = 1; k + 1 < idx.length; k++) {
+      const tri = [idx[0], idx[k], idx[k + 1]];
+      const [a, b, c] = tri.map((q) => vs[q[0] - 1]);
+      const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+      const e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      const area = Math.hypot(e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]) / 2;
+      const t = tri.map((q) => uvs[q[1] - 1]);
+      if (t.some((x) => !x)) continue;
+      const u = (t[0][0] + t[1][0] + t[2][0]) / 3;
+      const v = (t[0][1] + t[1][1] + t[2][1]) / 3;
+      flipped += area * sample(u, 1 - v); // three's default flipY: image row 0 is v = 1
+      straight += area * sample(u, v);
+    }
+  }
+  return flipped >= straight;
+}
+
 async function brightness(file: string): Promise<number> {
   const { channels } = await sharp(file).stats();
   return (channels[0].mean + channels[1].mean + channels[2].mean) / 3;
@@ -227,6 +266,7 @@ async function main(): Promise<void> {
       await writeImage(at(f), join(OUT, out), 'texture');
       entries[`unit.${side}.${t}`] = {
         mesh: `tts/mesh/${t}.obj`, texture: `tts/${out}`, normal: `tts/texture/${t}-normal.webp`, collider: `tts/mesh/${t}-collider.obj`,
+        flipY: await uvFlipY(join(OUT, `mesh/${t}.obj`), at(light)),
       };
     }
     delete entries[`tts.${t}.normal`];

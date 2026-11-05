@@ -9,6 +9,7 @@ import {
   createGame, createSetup, RULES, parseSquare, squareName, taverns,
   type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
 } from './rules/index.ts';
+import { onAssetLoaded } from './table/assets.ts';
 import { createBoard } from './table/board.ts';
 import { SQUARE, toWorld, ZONES } from './table/coords.ts';
 import { createCamera } from './table/camera.ts';
@@ -61,6 +62,7 @@ ts.scene.add(boardView.group, pieces.group, hl.group, dice.group);
 const room = createRoom(ts.scene);
 const strip = createStrip();
 const sheets = new SheetsView(() => ts.requestRender());
+onAssetLoaded(() => ts.requestRender());
 const tracks = new TracksView();
 ts.scene.add(strip, sheets.group, tracks.group);
 function syncTable(s: GameState): void {
@@ -559,6 +561,11 @@ if (import.meta.env.DEV || isE2E) {
       tracks: tracks.trackList(),
       medallions: tracks.medallionList(),
       assets: assetsJson,
+      // 004 US6: what each unit shows (TTS model or placeholder), and the TTS table pieces.
+      pieceAssets: Object.fromEntries((state()?.units ?? []).map((u) => [u.id, pieces.unitObject(u.id)?.userData.assetKind ?? 'placeholder'])),
+      sky: !!room.group.userData.sky,
+      ttsTable: !!room.tableTop.userData.tts,
+      ttsStrip: !!strip.userData.tts,
     }),
     sheetScreen: (heroId: string) => {
       const mesh = sheets.meshOf(heroId);
