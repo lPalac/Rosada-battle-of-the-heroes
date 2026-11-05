@@ -208,8 +208,18 @@ export function createAsset(key: string): Object3D {
       .then((model) => {
         // Picking reads userData on the hit mesh: give the model the holder's data (piece id, kind).
         const data = { ...holder.userData };
-        model.traverse((c) => (c.userData = { ...data }));
-        holder.remove(placeholder);
+        model.traverse((c) => {
+          c.userData = { ...data };
+          c.raycast = () => {}; // picking keeps using the placeholder shape (002 picking and drag unchanged)
+        });
+        // The placeholder stays as an invisible pick proxy: same footprint for clicks as before 004.
+        placeholder.traverse((c) => {
+          const m = (c as Mesh).material as MeshStandardMaterial | undefined;
+          if (m) {
+            (c as Mesh).material = proxyMaterial;
+            c.castShadow = false;
+          }
+        });
         holder.add(model);
         holder.userData = { ...data, assetKind: 'tts' };
         assetLoaded();
@@ -235,6 +245,8 @@ export function createAsset(key: string): Object3D {
 export { material };
 
 const TTS_HEIGHT_FACTOR = 1.6;
+/** Invisible material for pick proxies: raycasts still hit it, nothing is drawn. */
+const proxyMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite: false });
 let assetLoaded: () => void = () => {};
 /** Called when a model finishes loading, so the on-demand renderer draws a frame (004). */
 export function onAssetLoaded(fn: () => void): void {
