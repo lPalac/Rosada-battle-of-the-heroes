@@ -71,7 +71,8 @@ export function destroyByAbility(ctx: Ctx, user: Hero | null, units: Unit[], sid
     gain(ctx, { side: by }, DESTINY.destroyEnemy, 'destroyEnemy');
     for (const u of enemies) gain(ctx, { side: u.side }, DESTINY.ownUnitLost, 'ownUnitLost');
   }
-  for (const u of enemies) if (u.type === 'queen') gainRevenge(ctx, u.side);
+  // "When your Queen gets Destroyed, your side gains a Revenge token" (any cause).
+  for (const u of done) if (u.type === 'queen') gainRevenge(ctx, u.side);
   return done;
 }
 

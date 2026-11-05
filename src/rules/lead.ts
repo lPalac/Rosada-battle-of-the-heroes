@@ -120,6 +120,7 @@ export function startLead(
   };
   s.turn.lead = lead;
   s.turn.leadAttempted = true;
+  s.turn.leadPossible = true; // an ability Lead counts as a possible Lead (004)
   s.turn.inspiredLeadBonus = 0; // The bonus is used by this Lead (spec Q-19).
   emit(ctx, { type: 'leadAnnounced', unitId: unit.id, from: unit.pos, to: opt.to, needsRoll });
   if (unit.type !== 'king') {

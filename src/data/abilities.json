@@ -603,7 +603,7 @@
       ],
       "cost": null,
       "uses": 2,
-      "oncePerTurn": true,
+      "oncePerTurn": false,
       "flags": {
         "notRoyalty": true
       },

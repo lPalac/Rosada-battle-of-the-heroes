@@ -60,6 +60,11 @@ export function canPushHero(s: GameState, h: Hero): boolean {
   return !hookSources(s, 'pushBlocked').some(({ hooks, src }) => hooks.pushBlocked(s, src, h));
 }
 
+/** Add an effect for an ability outside a use (passive hooks, decisions). */
+export function markBy(ctx: Ctx, abilityId: string, heroId: HeroId, kind: string, target: Effect['target'], expires: Expiry, data: Record<string, unknown> = {}): Effect {
+  return addEffect(ctx, { kind, source: { abilityId, heroId }, target, expires, data });
+}
+
 export function mark(ctx: Ctx, c0: AbilityCall, kind: string, target: Effect['target'], expires: Expiry, data: Record<string, unknown> = {}): Effect {
   return addEffect(ctx, { kind, source: { abilityId: c0.def.id, heroId: c0.h.id }, target, expires, data });
 }

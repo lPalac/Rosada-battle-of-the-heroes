@@ -217,7 +217,7 @@ export function legalActions(state: GameState): Action[] {
       if (shopOpen(ctx)) {
         for (const item of ['drink', 'meal'] as const) if (available(ctx, h) >= RULES.tavern[item].cost) out.push({ type: 'buy', item });
       }
-      if (!isForbiddenEndSquare(s, h.side, h.pos)) out.push({ type: 'endPhase' });
+      if (!isForbiddenEndSquare(s, h.side, h.pos, h)) out.push({ type: 'endPhase' });
       break;
     case 'beforeLead':
       if (canInspiredLead(ctx)) for (let x = 1; x <= available(ctx, h); x++) out.push({ type: 'inspiredLead', destiny: x });

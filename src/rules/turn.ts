@@ -1,7 +1,6 @@
 // Phase machine, Active Hero hand-off, automatic steps (FR-010, FR-011, research R-08).
 // Phases with nothing for the player to do are passed automatically, so the game rests only where a choice exists.
 import { canHeroRetreat, canInspiredLead, abilitiesBlocked } from './abilities.ts';
-import { isTavern } from './board.ts';
 import { activeHero, emit, fail, hero, type Ctx } from './ctx.ts';
 import { RULES } from './data.ts';
 import { bothKingsInCheck, checkmateCheck, endGame } from './endgame.ts';
@@ -9,7 +8,7 @@ import { isForbiddenEndSquare, movementForTurn } from './heroes.ts';
 import { awaitingRoll, leadOptionsForActiveHero, noEligibleUnits } from './lead.ts';
 import type { GameState, TurnFlags } from './model/state.ts';
 import type { HeroId, Phase } from './model/types.ts';
-import { freeMeal, onHeroEntersSquare } from './taverns.ts';
+import { freeMeal, isTavernFor, onHeroEntersSquare } from './taverns.ts';
 import { canKingsForces } from './create.ts';
 import { gain } from './destiny.ts';
 import { maybeStartEpic } from './epic.ts';
@@ -57,7 +56,7 @@ function onEnter(ctx: Ctx, phase: Phase): void {
         h.status.recoverAtBeginningOfTurn = false;
         emit(ctx, { type: 'heroRecovered', heroId: h.id });
       }
-      const penalty = h.status.movementPenaltyNextTurn + (isTavern(h.pos) ? RULES.tavern.startTurnMovementPenalty : 0);
+      const penalty = h.status.movementPenaltyNextTurn + (isTavernFor(s, h, h.pos) ? RULES.tavern.startTurnMovementPenalty : 0);
       h.status.movementPenaltyNextTurn = 0;
       s.turn.movementLeft = movementForTurn(h, penalty, s);
       onHeroEntersSquare(ctx, h);
@@ -133,7 +132,7 @@ function isAutomaticBase(ctx: Ctx): boolean {
     case 'beforeLead':
       return !canInspiredLead(ctx);
     case 'lead':
-      return !s.turn.leadPossible || (s.turn.leadAttempted && !awaitingRoll(s));
+      return !awaitingRoll(s) && (!s.turn.leadPossible || s.turn.leadAttempted);
     case 'endOfTurn':
       return !canHeroRetreat(ctx) && !hasPowerChoice(s);
   }
@@ -176,7 +175,7 @@ export function autoAdvance(ctx: Ctx): void {
 export function endPhase(ctx: Ctx): void {
   const { s } = ctx;
   const h = activeHero(s);
-  if (s.phase === 'move' && isForbiddenEndSquare(s, h.side, h.pos)) {
+  if (s.phase === 'move' && isForbiddenEndSquare(s, h.side, h.pos, h)) {
     fail('MOVE_ENDS_ON_UNIT', 'A Move may not end on an enemy unit or a King', 'Move');
   }
   if (s.phase === 'lead') {

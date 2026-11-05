@@ -79,6 +79,7 @@ export function applyRams(ctx: Ctx, unit: Unit, opt: LeadOption): RamOutcome[] {
     if (!eq(h.pos, opt.to)) heroEntered(ctx, h);
     if (o.friendly) continue;
     wound(ctx, h, o.wounds, { enemySide: unit.side }, 'ram');
+    for (const { hooks, src } of hookSources(s, 'onRammed')) hooks.onRammed(ctx, src, h);
   }
   return outcomes;
 }

@@ -94,6 +94,8 @@ export interface Hooks {
     options(v: View, src: HookSrc, opt: LeadOption): import('../model/actions.ts').AbilityTarget[][];
     apply(ctx: Ctx, src: HookSrc, targets: import('../model/actions.ts').AbilityTarget[], opt: LeadOption): LeadOption;
   };
+  /** The hero was just Rammed (Evasive). */
+  onRammed?(ctx: Ctx, src: HookSrc, hero: Hero): void;
   /** Ram on this hero by this unit is skipped (Elusive: units in the hero's square). */
   noRam?(v: View, src: HookSrc, hero: Hero, unit: Unit, from: Coord): boolean;
 }
