@@ -12,11 +12,11 @@ import { createUnit } from '../create.ts';
 import { cleanTargets } from './effects.ts';
 import { hookSources } from './hooks.ts';
 
-/** Units whose path is one square in any direction (Legendary Ancient, Shadow Demon). */
-export const KINGLIKE_TAGS: readonly UnitTag[] = ['legendaryAncient', 'demon'];
+/** Units whose path is one square in any direction (the Legendary Ancient). */
+export const KINGLIKE_TAGS: readonly UnitTag[] = ['legendaryAncient'];
 export const isKinglike = (u: Pick<Unit, 'tags'>): boolean => !!u.tags?.some((t) => KINGLIKE_TAGS.includes(t));
 /** Units that do not count for Destiny Generation (research R-07; the Legendary Ancient too, spec Q-47). */
-export const noGeneration = (u: Pick<Unit, 'tags'>): boolean => isKinglike(u);
+export const noGeneration = (u: Pick<Unit, 'tags'>): boolean => isKinglike(u) || !!u.tags?.includes('demon');
 
 export function canDestroy(ctx: Ctx, unit: Unit, by: 'battle' | 'ability'): boolean {
   if (by === 'ability' && unit.type === 'king') return false; // King's Supremacy

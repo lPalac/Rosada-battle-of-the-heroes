@@ -96,9 +96,15 @@ function handOff(ctx: Ctx): void {
   if (s.status !== 'playing') return;
   const keep = s.turn.doubleStepUnitId;
   for (const u of s.units) if (u.id !== keep) u.enPassantTarget = null;
+  // By turn order, not by id: Timey-Wimey Shift swaps turn orders (004).
   const next = (activeHero(s).turnOrder % 4) + 1;
-  s.activeHeroId = `H${next}` as HeroId;
+  s.activeHeroId = (s.heroes.find((x) => x.turnOrder === next)?.id ?? `H${next}`) as HeroId;
   s.turnNumber += 1;
+  setPhase(ctx, 'beforeTurn');
+}
+
+/** The Active Hero token was passed inside Before Turn (Timey-Wimey Shift): the new active hero's turn begins. */
+export function restartTurn(ctx: Ctx): void {
   setPhase(ctx, 'beforeTurn');
 }
 

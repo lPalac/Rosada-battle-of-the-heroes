@@ -6,8 +6,8 @@ import type { GameState } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
 import type { Coord, Side } from './model/types.ts';
 
-/** Units whose path is one square in any direction (004: Legendary Ancient, Shadow Demon; research R-07). */
-const kinglike = (u: Unit): boolean => !!u.tags?.some((t) => t === 'legendaryAncient' || t === 'demon');
+/** Units whose path is one square in any direction (004: the Legendary Ancient; research R-07). */
+const kinglike = (u: Unit): boolean => !!u.tags?.includes('legendaryAncient');
 const KINGLIKE_DEF: { directions: string; maxSteps: number; jump?: boolean } = { directions: 'all8', maxSteps: 1 };
 /** A Spy pawn (Infiltrate) is Led in the opposite direction (004). */
 export const pawnForward = (u: Unit): number => (u.tags?.includes('spy') ? -forward(u.side) : forward(u.side));
