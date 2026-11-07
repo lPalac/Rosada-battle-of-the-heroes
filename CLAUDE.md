@@ -4,7 +4,9 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ## Active feature
 
-`specs/004-named-heroes/`: the four named heroes from `Hero Rules 2_0.docx` (Cavalier, Monk, Scout, Magus) with starting abilities and three Epic forms each, an ability engine (timings, Bloodied costs, uses, marks, tokens, Modify, Push, reactions), TTS hero sheets, and the Tabletop Simulator assets (meshes, table, boards, tokens) imported into `public/tts/`. Builds on 001, 002 and 003 (all built). Read the 004 `spec.md` (Clarifications, Open Questions Q-39…Q-46), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
+`specs/005-online-multiplayer/` (planned, not built): online rooms for 2–4 players (anonymous, join by code or link, seats per side and hero), a game server that runs the same rules core and replicates the action log, server-owned d20 rolls shown on the client physics die, reconnect with seat tokens, and hosting on a Hostinger KVM VPS (nginx, Let's Encrypt, systemd). Read the 005 `spec.md` (Open Questions Q-52…Q-59), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it. `src/online/` is engine-free like `src/rules` and `src/game`; Colyseus stays in `server/` and `src/net/`.
+
+Last built feature: `specs/004-named-heroes/`: the four named heroes from `Hero Rules 2_0.docx` (Cavalier, Monk, Scout, Magus) with starting abilities and three Epic forms each, an ability engine (timings, Bloodied costs, uses, marks, tokens, Modify, Push, reactions), TTS hero sheets, and the Tabletop Simulator assets (meshes, table, boards, tokens) imported into `public/tts/`. Builds on 001, 002 and 003 (all built). Read the 004 `spec.md` (Clarifications, Open Questions Q-39…Q-46), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
 
 ## Tech stack
 
