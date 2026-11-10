@@ -52,7 +52,7 @@
 
 - [X] T021 [US3] Tests `US3-AS1`, `US3-AS2`, `US3-AS5` in tests/online/room-roll.test.ts: `roll` only from the active seat while `awaitingRoll`, value from `deps.randomInt(1, 21)`, `forceNextRoll` used once, applied as `submitRoll` by the sender's seat; a client `submitRoll` is refused
 - [X] T022 [US3] `RoomCore.roll` and `forceNextRoll` in src/online/room-core.ts
-- [ ] T023 [P] [US3] Uniformity test `US3-AS3` in tests/online/roll-uniform.test.ts (analysis C1, constitution IV): 200,000 rolls through `RoomCore.roll` with a **seeded** source passed in through `RoomDeps` (deterministic, no flake), chi-square with 19 degrees of freedom below the p = 0.001 critical value (43.82); plus a small test that `server/deps.ts` rolls with `crypto.randomInt`
+- [X] T023 [P] [US3] Uniformity test `US3-AS3` in tests/online/roll-uniform.test.ts (analysis C1, constitution IV): 200,000 rolls through `RoomCore.roll` with a **seeded** source passed in through `RoomDeps` (deterministic, no flake), chi-square with 19 degrees of freedom below the p = 0.001 critical value (43.82); plus a small test that `server/deps.ts` rolls with `crypto.randomInt`
 - [X] T024 [P] [US3] `faceSymmetry(from, to)` in src/physics/d20.ts (a rotation of the icosahedron mapping face `from` to face `to`, body frame) and `throwDieTo(dw, target, random?)` in src/physics/roll.ts (research R-05); test in tests/physics/throw-to.test.ts: for all 20 × 20 face pairs, `topFace(q_end · R).value === target`, and `throwDieTo` ends on the target for several targets
 
 ## Phase 6: Server (serves US1–US4)
@@ -104,21 +104,21 @@
 
 - [X] T053 [P] Update README.md (online play, server, deployment), CLAUDE.md (active feature built, commands `dev:server`, `build:server`), and quickstart.md if commands changed
 - [ ] T054 Run `npm test`, `npm run build` and `npm run test:e2e`; all 001–004 tests stay green (FR-080)
-- [ ] T055 Mark the spec Status as Built and record any new Open Questions found while building
+- [X] T055 Mark the spec Status as Built and record any new Open Questions found while building
 
 ## Phase 12: Analysis fixes (2026-11-10, decided by Luka)
 
-- [ ] T056 [US3] H1: tests that `forceNextRoll` is refused (and the next roll stays random) when the server is not in test mode: RoomCore level in tests/online/room-roll.test.ts (a `testMode` flag on the server context) and over the wire in tests/server/rooms.test.ts with a server started without `testMode`
-- [ ] T057 [US5] H2: Playwright test with no game server reachable: Play online shows "server not available" and a hot-seat game still starts and plays (US5-AS2, FR-073); tests/e2e/online-offline.spec.ts with a page route that blocks /ws and /api
-- [ ] T058 [US2] Undo rule, tests first: tests/game/session-undo.test.ts (hot-seat) and tests/online/room-undo.test.ts (online): undo step by step across phase changes within the turn, stop at reveal events, enforcement changes and the Active Hero hand-off; online also stops at another seat's or the server's action; update 001 tests that assumed phase barriers
-- [ ] T059 [US2] Undo rule, code: `isBarrier` in src/game/session.ts (reveal events, `enforcementChanged`, `turnStarted` / hand-off; not `phaseChanged`); `canUndoBy` in src/online/room-core.ts walks back the seat's own actions in the current turn; the `undone` broadcast names who undid what and the client log shows it
-- [ ] T060 [US5] H3: nginx log format without client addresses in scripts/vps-setup.sh (and contracts/deployment.md); the game server never logs addresses; per-IP limits in server/limits.ts drop expired entries (test)
+- [X] T056 [US3] H1: tests that `forceNextRoll` is refused (and the next roll stays random) when the server is not in test mode: RoomCore level in tests/online/room-roll.test.ts (a `testMode` flag on the server context) and over the wire in tests/server/rooms.test.ts with a server started without `testMode`
+- [X] T057 [US5] H2: Playwright test with no game server reachable: Play online shows "server not available" and a hot-seat game still starts and plays (US5-AS2, FR-073); tests/e2e/online-offline.spec.ts with a page route that blocks /ws and /api
+- [X] T058 [US2] Undo rule, tests first: tests/game/session-undo.test.ts (hot-seat) and tests/online/room-undo.test.ts (online): undo step by step across phase changes within the turn, stop at reveal events, enforcement changes and the Active Hero hand-off; online also stops at another seat's or the server's action; update 001 tests that assumed phase barriers
+- [X] T059 [US2] Undo rule, code: `isBarrier` in src/game/session.ts (reveal events, `enforcementChanged`, `turnStarted` / hand-off; not `phaseChanged`); `canUndoBy` in src/online/room-core.ts walks back the seat's own actions in the current turn; the `undone` broadcast names who undid what and the client log shows it
+- [X] T060 [US5] H3: nginx log format without client addresses in scripts/vps-setup.sh (and contracts/deployment.md); the game server never logs addresses; per-IP limits in server/limits.ts drop expired entries (test)
 
 ## Phase 13: Test deployment on Render (2026-11-10)
 
-- [ ] T061 [US5] FR-074: server/static.ts serves `dist/` from the game server (index fallback, long cache for hashed `assets/`, no-cache for `index.html`, no path escapes) on the same port as `/ws` and `/api/health`; test in tests/server/static.test.ts
-- [ ] T062 [P] [US5] render.yaml (Blueprint): free web service, Node 24, build `npm ci && npm run build`, start `node dist-server/index.js`, health check `/api/health`, auto-deploy from `005-online-multiplayer`, `ROSADA_ROOMS_DIR=/tmp/rosada-rooms`, `HOST=0.0.0.0`, no `ROSADA_TEST`
-- [ ] T063 [P] [US5] docs/deploy-render.md: sign up, connect the repository, create from the Blueprint, the URL, the free-plan limits (sleep after 15 idle minutes, up to a minute to wake, rooms lost on restart or redeploy)
+- [X] T061 [US5] FR-074: server/static.ts serves `dist/` from the game server (index fallback, long cache for hashed `assets/`, no-cache for `index.html`, no path escapes) on the same port as `/ws` and `/api/health`; test in tests/server/static.test.ts
+- [X] T062 [P] [US5] render.yaml (Blueprint): free web service, Node 24, build `npm ci && npm run build`, start `node dist-server/index.js`, health check `/api/health`, auto-deploy from `005-online-multiplayer`, `ROSADA_ROOMS_DIR=/tmp/rosada-rooms`, `HOST=0.0.0.0`, no `ROSADA_TEST`
+- [X] T063 [P] [US5] docs/deploy-render.md: sign up, connect the repository, create from the Blueprint, the URL, the free-plan limits (sleep after 15 idle minutes, up to a minute to wake, rooms lost on restart or redeploy)
 - [ ] T064 [US5] Deploy: push the branch, create the Render service from render.yaml (Luka approves the GitHub connection and any terms), run `scripts/smoke.ts <url>` and record the URL in quickstart.md
 
 ---
