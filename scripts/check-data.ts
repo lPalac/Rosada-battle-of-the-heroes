@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Ajv } from 'ajv';
 
 const DIR = 'src/data';
-const FILES = ['board', 'units', 'heroes', 'healthbars', 'rules', 'assets', 'royal-favors', 'abilities'] as const;
+const FILES = ['board', 'units', 'heroes', 'healthbars', 'rules', 'assets', 'royal-favors', 'abilities', 'online'] as const;
 
 function load(name: string): any {
   return JSON.parse(readFileSync(join(DIR, name), 'utf8'));

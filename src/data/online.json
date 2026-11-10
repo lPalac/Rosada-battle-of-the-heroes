@@ -1,0 +1,13 @@
+{
+  "codeLength": 7,
+  "codeAlphabet": "23456789ABCDEFGHJKMNPQRSTUVWXYZ",
+  "nameMax": 20,
+  "intentMaxBytes": 4096,
+  "maxPayloadBytes": 262144,
+  "messagesPerSecond": 20,
+  "strikesBeforeDisconnect": 3,
+  "createsPerIpPerHour": 5,
+  "maxRooms": 300,
+  "reconnectionSeconds": 60,
+  "lifetimeHours": { "playing": 168, "other": 24 }
+}

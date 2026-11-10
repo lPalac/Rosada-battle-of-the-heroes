@@ -8,15 +8,22 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build": "tsc -p tsconfig.json --noEmit && vite build && vite build --ssr server/index.ts --outDir dist-server",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:rules": "tsc -p tsconfig.rules.json --noEmit",
     "check:data": "tsx scripts/check-data.ts",
     "test": "npm run typecheck:rules && npm run typecheck && npm run check:data && vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dev:server": "tsx watch server/index.ts",
+    "build:server": "vite build --ssr server/index.ts --outDir dist-server",
+    "start:server": "node dist-server/index.js"
   },
   "dependencies": {
+    "@colyseus/core": "0.18.27",
+    "@colyseus/schema": "5.0.45",
+    "@colyseus/sdk": "0.18.9",
+    "@colyseus/ws-transport": "0.18.4",
     "@dimforge/rapier3d-compat": "0.21.0",
     "three": "0.187.0"
   },

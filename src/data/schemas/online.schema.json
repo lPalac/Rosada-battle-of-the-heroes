@@ -1,0 +1,25 @@
+{
+  "$id": "online.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["codeLength", "codeAlphabet", "nameMax", "intentMaxBytes", "maxPayloadBytes", "messagesPerSecond",
+    "strikesBeforeDisconnect", "createsPerIpPerHour", "maxRooms", "reconnectionSeconds", "lifetimeHours"],
+  "properties": {
+    "codeLength": { "type": "integer", "minimum": 7 },
+    "codeAlphabet": { "type": "string", "pattern": "^[A-Z0-9]{20,}$" },
+    "nameMax": { "type": "integer", "minimum": 1 },
+    "intentMaxBytes": { "type": "integer", "minimum": 256 },
+    "maxPayloadBytes": { "type": "integer", "minimum": 4096 },
+    "messagesPerSecond": { "type": "integer", "minimum": 1 },
+    "strikesBeforeDisconnect": { "type": "integer", "minimum": 1 },
+    "createsPerIpPerHour": { "type": "integer", "minimum": 1 },
+    "maxRooms": { "type": "integer", "minimum": 1 },
+    "reconnectionSeconds": { "type": "integer", "minimum": 0 },
+    "lifetimeHours": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["playing", "other"],
+      "properties": { "playing": { "type": "number", "minimum": 1 }, "other": { "type": "number", "minimum": 1 } }
+    }
+  }
+}

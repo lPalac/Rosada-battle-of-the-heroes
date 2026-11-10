@@ -4,5 +4,5 @@
     "lib": ["ES2022"],
     "types": []
   },
-  "include": ["src/rules/**/*.ts", "src/game/**/*.ts"]
+  "include": ["src/rules/**/*.ts", "src/game/**/*.ts", "src/online/**/*.ts"]
 }

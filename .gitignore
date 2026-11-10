@@ -163,3 +163,7 @@ dist/
 test-results/
 playwright-report/
 .vite/
+
+# 005: server bundle and local room files
+dist-server/
+.rooms/
