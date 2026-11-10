@@ -152,7 +152,16 @@ export class OnlineController {
     session.onSeatToken((tk) => write(seatKey(conn.code), { seat: tk.seat, token: tk.token, name: cleanName(this.lobbyName.value) ?? name } satisfies StoredSeat));
     session.onRoom(() => this.host.render());
     conn.onStatus((s) => {
+      if (this.conn !== conn) return; // an older connection
       this.status = s;
+      // Closed without the player leaving, or a reconnect that does not come back (the server restarted, e.g. a
+      // deploy, so the old reconnection token is gone): rejoin with the seat token (FR-044).
+      if (s === 'closed') void this.rejoin(conn.code);
+      if (s === 'reconnecting') {
+        setTimeout(() => {
+          if (this.conn === conn && this.status === 'reconnecting') void this.rejoin(conn.code, 0);
+        }, 4000);
+      }
       this.host.render();
     });
     await session.ready();
@@ -161,6 +170,32 @@ export class OnlineController {
     this.status = 'connected';
     if (location.hash !== `#/room/${conn.code}`) history.replaceState(null, '', `#/room/${conn.code}`);
     this.host.attach(session);
+  }
+
+  /** Try to get back into the same room for about a minute (the server restarts in a few seconds on a deploy). */
+  private rejoining = false;
+
+  private async rejoin(code: string, firstDelay = 2000): Promise<void> {
+    if (this.rejoining) return;
+    this.rejoining = true;
+    try {
+      const stored = read<StoredSeat>(seatKey(code));
+      const old = this.conn;
+      for (let attempt = 0; attempt < 30 && this.screen === 'room' && this.conn === old; attempt++) {
+        await new Promise((r) => setTimeout(r, attempt === 0 ? firstDelay : 2000));
+        if (this.screen !== 'room' || this.conn !== old) return;
+        try {
+          const conn = await this.server.join(code, { ...this.version, ...(stored ? { seatToken: stored.token } : {}) });
+          await this.enter(conn, stored?.name ?? this.draft.name);
+          void old?.leave().catch(() => {}); // stop the old connection's own retries
+          return;
+        } catch (e) {
+          if (e instanceof JoinError && e.reason !== 'SERVER_UNAVAILABLE') return this.fail(e);
+        }
+      }
+    } finally {
+      this.rejoining = false;
+    }
   }
 
   async leave(): Promise<void> {

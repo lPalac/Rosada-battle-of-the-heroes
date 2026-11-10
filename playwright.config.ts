@@ -20,10 +20,21 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--enable-gpu', '--use-angle=d3d11', '--ignore-gpu-blocklist'] } },
     },
   ],
-  webServer: {
-    command: 'npx vite --mode e2e --port 5174 --strictPort',
-    port: 5174,
-    reuseExistingServer: false,
-    timeout: 60_000,
-  },
+  webServer: [
+    {
+      command: 'npx vite --mode e2e --port 5174 --strictPort',
+      port: 5174,
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    // 005: the game server in test mode (forceNextRoll, no rate limits) for the online specs; the e2e Vite server
+    // proxies /ws and /api to it (vite.config.ts).
+    {
+      command: 'npx tsx server/index.ts',
+      port: 2568,
+      env: { PORT: '2568', ROSADA_TEST: '1', ROSADA_ROOMS_DIR: 'test-results/rooms' },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+  ],
 });

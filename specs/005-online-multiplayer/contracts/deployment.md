@@ -32,7 +32,8 @@
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `PORT` | `2567` | Listen port, bound to `127.0.0.1` |
+| `PORT` | `2567` | Listen port |
+| `HOST` | `127.0.0.1` | Listen address (nginx is the only way in) |
 | `ROSADA_ROOMS_DIR` | `/var/lib/rosada/rooms` | Room files |
 | `ROSADA_TEST` | unset | `1` enables `forceNextRoll` (e2e only; never in production) |
 | `NODE_ENV` | `production` | |
@@ -71,8 +72,9 @@ server {
   location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }
   location / { try_files $uri /index.html; }
 
-  location /ws {
-    proxy_pass http://127.0.0.1:2567;
+  # Matchmaking (HTTP) and room sockets both live under /ws/; the prefix is stripped.
+  location /ws/ {
+    proxy_pass http://127.0.0.1:2567/;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -93,7 +95,7 @@ Large TTS assets under `public/tts/` are served by nginx with gzip on for JSON/J
 | `npm run build` | Type checks, `vite build` → `dist/`, `vite build --ssr server/index.ts` → `dist-server/` |
 | `npm run dev:server` | `tsx watch server/index.ts` on port 2567 (Vite dev proxies `/ws` and `/api`) |
 | `scripts/vps-setup.sh` | One-time, run on the VPS as root: users, packages, ufw, folders, systemd unit, nginx site, certbot |
-| `scripts/deploy.ps1 -VpsHost <host> [-User luka]` | From Windows: test, build, pack, `scp`, unpack into a new release, `npm ci --omit=dev`, switch `current`, restart, then `GET /api/health` |
+| `scripts/deploy.ps1 -VpsHost <host> [-User luka]` | From Windows: test, build, pack, `scp`, unpack into a new release, `npm install --omit=dev`, switch `current`, restart, then `GET /api/health`. Step-by-step guide: [docs/deploy-hostinger.md](../../../docs/deploy-hostinger.md) |
 | `scripts/rollback.ps1 -VpsHost <host>` | Point `current` at the previous release and restart |
 | `scripts/smoke.ts <url>` | Deployment smoke test (research R-12) |
 

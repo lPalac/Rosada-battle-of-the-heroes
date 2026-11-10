@@ -735,5 +735,9 @@ if (import.meta.env.DEV || isE2E) {
 // 005: a room link (`#/room/<code>`) joins that room, with the stored seat token if this browser has one (US4-AS1).
 const linkedRoom = roomCodeFromHash(location.hash);
 if (linkedRoom) void online.join(linkedRoom);
+window.addEventListener('hashchange', () => {
+  const code = roomCodeFromHash(location.hash);
+  if (code && online.conn?.code !== code) void online.join(code);
+});
 
 render();

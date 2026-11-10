@@ -34,13 +34,13 @@ npm run test:e2e     # + online specs: Playwright starts the game server in test
 
 ## Deploy to Hostinger (first time)
 
-Details: [contracts/deployment.md](./contracts/deployment.md).
+Step-by-step guide with everything Luka must buy, click and provide: [docs/deploy-hostinger.md](../../docs/deploy-hostinger.md). Details: [contracts/deployment.md](./contracts/deployment.md).
 
 1. Buy a **KVM 1** VPS, choose the **Ubuntu 24.04** template and add your SSH public key in hPanel.
 2. Point the domain's `A` record to the VPS IP (hPanel DNS or your registrar). Wait until `nslookup <domain>` shows the IP.
 3. Copy `scripts/vps-setup.sh` to the VPS and run it as root with the domain and an email for Let's Encrypt:
    ```bash
-   sudo bash vps-setup.sh --domain <domain> --email <email>
+   sudo bash vps-setup.sh --domain <domain> --email <email> --user <your ssh user>
    ```
 4. From Windows:
    ```powershell

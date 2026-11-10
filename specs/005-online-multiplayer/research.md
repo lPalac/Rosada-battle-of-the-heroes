@@ -97,7 +97,8 @@ Every client simulates its own throw, so the tumbling may differ between screens
 ## R-06 Transport and room framework: Colyseus, messages only
 
 **Decision**:
-- Use **Colyseus 0.17.x** (the `colyseus` server package with its WebSocket transport, and the matching 0.17 client SDK in the browser). Pin exact versions at install. All Colyseus packages MUST be on the same minor version ([Colyseus FAQ](https://docs.colyseus.io/faq)).
+- Use **Colyseus 0.18.x**, pinned exactly: `@colyseus/core` and `@colyseus/ws-transport` on the server, with `@colyseus/schema` as their required peer (not used for state), and `@colyseus/sdk` in the browser. All Colyseus packages MUST be on the same minor version ([Colyseus FAQ](https://docs.colyseus.io/faq)).
+- *Updated 2026-11-10 at implementation*: Colyseus had moved on to 0.18. The `colyseus` meta-package also pulls in monitor, playground, auth and redis, so only the core packages are installed. A smoke test confirmed custom `roomId`, `joinById`, messages-only rooms, join errors, a router endpoint (`/api/health`) and the client's `pathname` (`/ws`).
 - Use Colyseus only for rooms, joining by id, the socket transport and client reconnection. Use **no Schema state**: all game data goes in typed messages (contracts/protocol.md).
 - The room code is the Colyseus `roomId`, so `joinById(code)` works directly.
 
@@ -108,7 +109,7 @@ Every client simulates its own throw, so the tumbling may differ between screens
 - All room logic lives in a pure `RoomCore` (`src/online/`). The Colyseus room is a thin adapter of about 150 lines. Swapping Colyseus for plain `ws` later would touch only `server/` and `src/net/`.
 
 **Alternatives considered**:
-- **Plain `ws`** (one small dependency): it would mean writing our own room registry, ping/timeout and client reconnection. It is the fallback if Colyseus 0.17 does not install or run cleanly with TypeScript 7 / Node 24. In that case, swap the adapters and record the change in Complexity Tracking.
+- **Plain `ws`** (one small dependency): it would mean writing our own room registry, ping/timeout and client reconnection. It is the fallback if Colyseus 0.18 does not install or run cleanly with TypeScript 7 / Node 24. In that case, swap the adapters and record the change in Complexity Tracking.
 - **Socket.IO**: a heavier protocol, and no reason to prefer it over the named choice.
 
 ## R-07 Deployment layout on the VPS

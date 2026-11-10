@@ -1,6 +1,6 @@
 # Contract: Client ↔ Server Protocol
 
-**Feature**: `005-online-multiplayer` | Transport: Colyseus 0.17 room `rosada` over WSS at `/ws` (research R-06), messages only, no Schema state. Types live in `src/online/protocol.ts`, and each message has a runtime guard there.
+**Feature**: `005-online-multiplayer` | Transport: Colyseus 0.18 room `rosada` over WSS under `/ws/` (nginx and the Vite dev proxy strip the prefix) (research R-06), messages only, no Schema state. Types live in `src/online/protocol.ts`, and each message has a runtime guard there.
 
 ## HTTP
 

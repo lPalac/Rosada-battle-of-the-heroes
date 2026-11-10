@@ -83,7 +83,7 @@ export interface LobbyHandlers {
 }
 
 /** One seat line: side, hero slots, name (as text), you / away / free, and its button. */
-function seatRow(room: RoomView, s: SeatView, h: LobbyHandlers, name: string): HTMLElement {
+function seatRow(room: RoomView, s: SeatView, h: LobbyHandlers): HTMLElement {
   const mine = room.you === s.id;
   const creatorAway = !room.seats.find((x) => x.id === room.creatorSeat)?.connected;
   const mayRelease = !!room.you && !mine && s.taken && !s.connected && (room.you === room.creatorSeat || creatorAway);
@@ -92,7 +92,8 @@ function seatRow(room: RoomView, s: SeatView, h: LobbyHandlers, name: string): H
     el('span', { class: s.side }, `${t(`side.${s.side}`)} · ${slotLabel(s)}`),
     el('strong', { 'data-testid': `seat-name-${s.id}` }, s.name ?? '—'),
     status ? el('span', { class: 'muted', 'data-testid': `seat-status-${s.id}` }, status) : null,
-    !s.taken && !mine ? button(t('online.take'), () => h.take(s.id), { testid: `take-${s.id}`, disabled: !name.trim() && !room.you }) : null,
+    // The name is checked on click (a toast asks for it), so typing needs no re-render.
+    !s.taken && !mine ? button(t('online.take'), () => h.take(s.id), { testid: `take-${s.id}` }) : null,
     mayRelease ? button(t('online.release'), () => h.release(s.id), { testid: `release-${s.id}` }) : null,
   );
 }
@@ -107,7 +108,7 @@ export function renderLobby(room: RoomView, name: { value: string }, h: LobbyHan
     room.you ? null : el('label', { class: 'row' }, el('span', {}, t('online.name')),
       el('input', { value: name.value, maxlength: 20, 'data-testid': 'online-name', oninput: (e) => (name.value = (e.target as HTMLInputElement).value) })),
     el('h3', {}, room.you ? t('online.seatList') : t('online.chooseSeat')),
-    ...room.seats.map((s) => seatRow(room, s, h, name.value)),
+    ...room.seats.map((s) => seatRow(room, s, h)),
     el('div', { class: 'muted' }, t('online.autoSetup')),
     room.status === 'lobby'
       ? isCreator

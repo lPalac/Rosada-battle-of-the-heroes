@@ -11,8 +11,8 @@ Decided Nov 3, 2026. This replaces the earlier Unity plan and may change later.
 | Language | TypeScript, runs in the browser |
 | 3D table and rendering | Three.js |
 | Physics (pick up, throw, dice, stacking) | Rapier (WebAssembly, deterministic) |
-| Multiplayer | Hot-seat/local first (no server); online rooms later with Colyseus (Node.js) |
-| Hosting | Static website + Node.js server (can run on Azure) |
+| Multiplayer | Hot-seat/local, and online rooms for 2–4 players with Colyseus (Node.js), feature 005 |
+| Hosting | Static website + Node.js game server on a Hostinger KVM VPS (nginx, Let's Encrypt, systemd) |
 
 **Keep a later engine switch cheap:** game rules, hero abilities and turn logic live in plain TypeScript modules that don't import Three.js, Rapier or Colyseus. Components (heroes, cards, tokens, board) are defined as data (JSON). The sandbox core (table, physics, decks, dice, hand zones, save/load) stays separate from the Rošada game module.
 
@@ -45,15 +45,21 @@ Features 001 (standard rules, generic heroes, 3D table, hot-seat, sandbox), 002 
 npm install
 npx playwright install chromium   # once, for browser tests
 npm run dev                       # the game on http://localhost:5173
-npm test                          # type checks, data schemas, rules tests (Vitest)
-npm run test:e2e                  # browser tests (Playwright, own server on port 5174)
-npm run build                     # static site in dist/
+npm run dev:server                # the online game server on :2567 (Vite proxies /ws and /api to it)
+npm test                          # type checks, data schemas, rules, online core and server tests (Vitest)
+npm run test:e2e                  # browser tests (Playwright, own servers on ports 5174 and 2568)
+npm run build                     # static site in dist/ and the game server in dist-server/
 ```
+
+Feature 005 adds online play: **Play online** creates a room with a 7-character code and a link; friends join, take seats (side and hero), and each plays only their own heroes. The game server runs the same rules core, checks every action and rolls the d20; every browser shows the physics die landing on the server's value. A reload or a dropped connection brings the player back to their seat, and rooms survive a server restart. Hosting on Hostinger: [docs/deploy-hostinger.md](docs/deploy-hostinger.md). Spec, plan and contracts: `specs/005-online-multiplayer/`.
 
 | Folder | What it is |
 | --- | --- |
 | `src/rules/` | Engine-free rules core: `createGame`, `legalActions`, `apply` (no Three.js, Rapier or DOM); `abilities/` is the ability engine and `heroes/` the hero abilities |
 | `src/game/` | Engine-free session: action log, undo, replay, HUD model, log text, save files |
+| `src/online/` | Engine-free online rooms (005): `RoomCore`, seats, who may act, automatic setup, protocol, state check |
+| `src/net/` | Browser connection to the game server and the online session |
+| `server/` | Node.js game server: Colyseus room adapter, room files, limits, `/api/health` |
 | `src/data/` | JSON data: board, units, heroes, abilities, health bars, tunables, assets, UI strings (+ schemas) |
 | `public/tts/` | Tabletop Simulator art and models, made by `scripts/import-tts-assets.ts` |
 | `src/table/` | Three.js table: board, pieces, highlights, picking, camera, dice view |

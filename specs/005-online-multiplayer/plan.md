@@ -13,7 +13,7 @@ Play the existing game online with 2–4 friends in anonymous rooms, hosted on o
 - **Online setup**: players pick their own heroes. The server then sets turn order and starting squares automatically (R-04, Q-52).
 - **Dice** (R-05): the server draws every d20 value with `crypto.randomInt`. Each client plays a normal physics throw, re-labelled with an icosahedral symmetry rotation, so the die lands on the server's value.
 - **Reconnect** (R-09): 128-bit seat tokens (stored hashed). Room files on disk are written after every action and restored on server start.
-- **Transport** (R-06): Colyseus 0.17, rooms and messages only (no Schema state). The Colyseus room is a thin adapter over `RoomCore`.
+- **Transport** (R-06): Colyseus 0.18, rooms and messages only (no Schema state). The Colyseus room is a thin adapter over `RoomCore`.
 - **Hosting** (R-01, R-07): a KVM 1 VPS with Ubuntu 24.04. nginx serves `dist/` and proxies `/ws` and `/api`. Let's Encrypt provides HTTPS, a systemd unit runs the server, and Luka deploys with a PowerShell script from Windows.
 
 ## Technical Context
@@ -22,7 +22,7 @@ Play the existing game online with 2–4 friends in anonymous rooms, hosted on o
 
 **Primary Dependencies**:
 - Unchanged: three 0.187.x, @dimforge/rapier3d-compat 0.21.x, Vite 8.x; dev: Vitest 5.x, @playwright/test 1.64.x, ajv 8, tsx, sharp.
-- New runtime dependencies: **Colyseus 0.17.x** server package (`colyseus`, with its WebSocket transport) and the **matching 0.17 client SDK** for the browser. Exact versions are pinned at install, all on one minor version (R-06). Justified under constitution VI below.
+- New runtime dependencies: **Colyseus 0.18.x**: `@colyseus/core` + `@colyseus/ws-transport` (+ required peer `@colyseus/schema`) on the server, and `@colyseus/sdk` in the browser. Pinned exactly, all on one minor version (R-06, updated at implementation). Justified under constitution VI below.
 - Node built-ins on the server only: `node:crypto` (rolls, codes, tokens, hashes), `node:fs` (room files), `node:http`.
 
 **Storage**: Room files (JSON, one per room) in `/var/lib/rosada/rooms/` (R-09). The browser keeps seat tokens in `localStorage`. Save files keep the 001 format.
@@ -160,7 +160,7 @@ tests/
 
 | Risk | Mitigation |
 | --- | --- |
-| Colyseus 0.17 does not run cleanly with TypeScript 7 / Node 24 or the Vite SSR bundle | It is used only in `server/` and `src/net/`, behind `RoomCore`. The fallback is plain `ws` (R-06), recorded in Complexity Tracking if used |
+| Colyseus 0.18 does not run cleanly with TypeScript 7 / Node 24 or the Vite SSR bundle (checked at implementation: it runs; kept external in the SSR bundle) | It is used only in `server/` and `src/net/`, behind `RoomCore`. The fallback is plain `ws` (R-06), recorded in Complexity Tracking if used |
 | State hash differs between browser and server for equal states (key order, `-0`, `undefined`) | Both sides use the same bundled rules code; `stateCheck` canonicalises (sorted keys, drops `undefined`). The integration test compares hashes after every action of the scripted game |
 | The re-labelled die looks wrong (face numbers vs mesh texture) | The rotation is in the body frame and is an exact symmetry; a unit test covers all 400 face pairs, and a Playwright screenshot shows the final face |
 | A VPS reboot or deploy cuts connections | Rooms are restored from disk; clients rejoin with seat tokens automatically (US4); the deploy restart takes about 2 s |
