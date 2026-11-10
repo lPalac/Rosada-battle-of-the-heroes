@@ -3,8 +3,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const ROOTS = ['src/rules', 'src/game'];
-const FORBIDDEN = [/^three(\/|$)/, /^@dimforge\//, /^colyseus/, /(^|\/)(table|physics|ui)(\/|$)/];
+const ROOTS = ['src/rules', 'src/game', 'src/online'];
+// 005: src/online is engine-free too: no Colyseus, no Node built-ins, no browser network or server code.
+const FORBIDDEN = [/^three(\/|$)/, /^@dimforge\//, /^@?colyseus/, /^node:/, /(^|\/)(table|physics|ui|net|server)(\/|$)/];
 const FORBIDDEN_GLOBALS = /\b(document|window|localStorage|requestAnimationFrame|HTMLElement)\b/;
 
 function tsFiles(dir: string): string[] {

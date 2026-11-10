@@ -1,5 +1,5 @@
 // d20 geometry, face numbers and reading the top face (research R-06). Pure; used by the physics roll and tests.
-import { IcosahedronGeometry, Quaternion, Vector3 } from 'three';
+import { IcosahedronGeometry, Matrix4, Quaternion, Vector3 } from 'three';
 
 export const D20_RADIUS = 0.42;
 /** A roll counts only if the top face is this close to flat (dot of face normal and world-up). */
@@ -86,4 +86,47 @@ export function hullPoints(radius = D20_RADIUS): Float32Array {
     seen.set(p.map((v) => v.toFixed(4)).join(','), p);
   }
   return new Float32Array([...seen.values()].flat());
+}
+
+/** The three corners of each face of the unit d20 (same face order as `d20Faces`). */
+function faceCorners(): Vector3[][] {
+  const pos = d20Geometry(1).getAttribute('position');
+  const out: Vector3[][] = [];
+  for (let f = 0; f < pos.count / 3; f++) out.push([0, 1, 2].map((v) => new Vector3().fromBufferAttribute(pos, f * 3 + v)));
+  return out;
+}
+
+const symmetryCache = new Map<string, Quaternion>();
+
+/** 005 research R-05: a rotation of the icosahedron onto itself (body frame) that takes face `from` to face `to`.
+ * Applied to a thrown die as `q · R`, the face `from` ends where face `to` landed, and the shape is unchanged. */
+export function faceSymmetry(from: number, to: number): Quaternion {
+  const key = `${from}>${to}`;
+  const hit = symmetryCache.get(key);
+  if (hit) return hit.clone();
+  const corners = faceCorners();
+  const vertices = corners.flat();
+  const frame = (tri: Vector3[], k: number) => {
+    const c = tri[0].clone().add(tri[1]).add(tri[2]).divideScalar(3);
+    const n = c.clone().normalize();
+    const u = tri[k].clone().sub(c).normalize();
+    const w = new Vector3().crossVectors(n, u);
+    return new Matrix4().makeBasis(u, w, n);
+  };
+  const a = frame(corners[from], 0);
+  const aInv = a.clone().transpose();
+  for (let k = 0; k < 3; k++) {
+    const m = frame(corners[to], k).multiply(aInv);
+    // A symmetry maps every vertex onto a vertex.
+    const isSymmetry = vertices.every((v) => {
+      const image = v.clone().applyMatrix4(m);
+      return vertices.some((x) => x.distanceToSquared(image) < 1e-6);
+    });
+    if (isSymmetry) {
+      const q = new Quaternion().setFromRotationMatrix(m);
+      symmetryCache.set(key, q);
+      return q.clone();
+    }
+  }
+  throw new Error(`No d20 symmetry from face ${from} to face ${to}`);
 }

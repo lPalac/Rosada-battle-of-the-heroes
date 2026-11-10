@@ -1,9 +1,10 @@
 // Wires game ↔ table ↔ physics ↔ ui: input → `apply` → table sync + animations + HUD (T058, T073).
-import { GameSession } from './game/session.ts';
+import { GameSession, type SessionLike } from './game/session.ts';
 import { highlights, hudModel } from './game/hud-model.ts';
 import { toFixture } from './game/fixture.ts';
-import { t } from './i18n/strings.ts';
-import { throwDie } from './physics/roll.ts';
+import { hasString, t } from './i18n/strings.ts';
+import type { OnlineSession } from './net/online-session.ts';
+import { throwDie, throwDieTo } from './physics/roll.ts';
 import { createDiceWorld, type DiceWorld } from './physics/world.ts';
 import {
   createGame, createSetup, RULES, parseSquare, squareName, taverns,
@@ -43,6 +44,9 @@ import { renderResult } from './ui/result.ts';
 import { renderSettings } from './ui/settings.ts';
 import { SandboxPhysics } from './ui/sandbox-physics.ts';
 import { SetupWizard } from './ui/setup/index.ts';
+import { renderPicks } from './ui/setup/picks.ts';
+import { OnlineController, roomCodeFromHash } from './ui/online/controller.ts';
+import { renderOnlineBar } from './ui/online/screens.ts';
 import { clearLocal, downloadText, exportFile, loadLocal, readSaveFile, saveLocal } from './ui/storage.ts';
 
 const canvas = document.getElementById('table') as HTMLCanvasElement;
@@ -79,7 +83,7 @@ const picker = new Picker(ts.camera, canvas, () => [pieces.group, boardView.grou
 // --- ui ---
 const toasts = new Toasts();
 const dialogs = new Dialogs(dialogRoot);
-let session: GameSession | null = null;
+let session: SessionLike | null = null;
 let selected: string | null = null;
 let targeting: { kind: 'retreat'; options: Coord[] } | null = null;
 let held: Pick | null = null;
@@ -118,12 +122,87 @@ function showError(e: RuleError): void {
 function dispatch(action: Action): boolean {
   if (!session) return false;
   const r = session.dispatch(action);
+  // Online the action goes to the server; the change arrives as an `applied` message (005 R-13).
+  if (!r.ok && r.error.code === 'SENT') {
+    lastError = null;
+    return true;
+  }
   if (!r.ok) {
     showError(r.error);
     return false;
   }
   lastError = null;
   return true;
+}
+
+// --- online (005) ---
+const online = new OnlineController(overlay, {
+  attach: (s) => attachOnline(s),
+  detach: () => {
+    unsubscribe?.();
+    unsubscribe = null;
+    session = null;
+    wizard.reset();
+    render();
+  },
+  render: () => render(),
+  toast: (msg, error) => toasts.show(msg, { error }),
+});
+/** The local seat may act now (always true in hot-seat). */
+const myMove = (): boolean => !onlineSession() || onlineSession()!.canAct();
+const onlineSession = (): OnlineSession | null => (online.active ? online.session : null);
+
+/** Server rolls are animated before the result shows (FR-022); changes are handled one after another. */
+function attachOnline(s: OnlineSession): void {
+  unsubscribe?.();
+  physics.dispose();
+  session = s;
+  selected = null;
+  targeting = null;
+  held = null;
+  let pendingRoll: number | null = null;
+  let chain = Promise.resolve();
+  const offApplied = s.onApplied((info, a) => {
+    if (info.roll && a.type === 'submitRoll') pendingRoll = a.value;
+  });
+  const offChange = s.onChange((st, events) => {
+    const value = pendingRoll;
+    pendingRoll = null;
+    chain = chain.then(async () => {
+      if (value !== null) await playServerRoll(value);
+      onChange(st, events);
+    });
+  });
+  const offRefused = s.onRefused((r) => showError({ code: r.code, message: r.message, rule: r.rule ?? 'Online' }));
+  // FR-030: everyone sees an undo, with who undid what.
+  const offUndone = s.onUndone((m) => {
+    const name = s.room?.seats.find((x) => x.id === m.by)?.name ?? m.by;
+    const what = hasString(`actionName.${m.action.type}`) ? t(`actionName.${m.action.type}`) : m.action.type;
+    toasts.show(t('online.undid', { name, action: what }), { testid: 'online-undid' });
+  });
+  unsubscribe = () => {
+    offApplied();
+    offChange();
+    offRefused();
+    offUndone();
+  };
+  if (s.state.status !== 'setup') pieces.sync(s.state, [], false);
+  syncTable(s.state);
+  render();
+}
+
+async function playServerRoll(value: number): Promise<void> {
+  rolling = true;
+  render();
+  try {
+    if (isE2E) dice.show(value);
+    else {
+      diceWorld ??= await createDiceWorld();
+      await dice.play(throwDieTo(diceWorld, value).frames);
+    }
+  } finally {
+    rolling = false;
+  }
 }
 
 function onChange(s: GameState, events: GameEvent[]): void {
@@ -134,7 +213,8 @@ function onChange(s: GameState, events: GameEvent[]): void {
     const active = s.heroes.find((h) => h.id === s.activeHeroId);
     if (active) camera.setSide(active.side);
   }
-  if (session && s.status !== 'setup') saveLocal(session.initial, session.actions);
+  // Online games are kept by the server (FR-044); only hot-seat games go to local storage.
+  if (session && s.status !== 'setup' && !onlineSession()) saveLocal(session.initial, session.actions);
   if (s.status !== 'setup') pieces.sync(s, events);
   syncTable(s);
   syncPhysics(s);
@@ -144,8 +224,9 @@ function onChange(s: GameState, events: GameEvent[]): void {
 function startSession(initial: GameState, actions: Action[] = []): void {
   unsubscribe?.();
   physics.dispose();
-  session = new GameSession(initial);
-  if (actions.length) session.reset(initial, actions);
+  const hotSeat = new GameSession(initial);
+  if (actions.length) hotSeat.reset(initial, actions);
+  session = hotSeat;
   unsubscribe = session.onChange(onChange);
   selected = null;
   targeting = null;
@@ -164,6 +245,7 @@ const wizard = new SetupWizard(overlay, {
   startExtras: () => {
     const saved = loadLocal();
     return [
+      button(t('online.play'), () => online.openMenu(), { testid: 'play-online', kind: 'primary' }),
       saved ? button(t('setup.resume'), () => startSession(saved.initial, saved.actions), { testid: 'resume-saved' }) : null,
       button(t('settings.import'), () => importInput.click(), { testid: 'setup-import' }),
       button(t('setup.positionEditor'), openPositionEditor, { testid: 'position-editor' }),
@@ -270,6 +352,12 @@ async function doRetreat(tavern: Coord): Promise<void> {
 
 async function roll(): Promise<void> {
   if (rolling) return;
+  const net = onlineSession();
+  if (net) {
+    // The server picks the value; every screen plays the die when it arrives (FR-020, FR-021).
+    net.roll();
+    return;
+  }
   rolling = true;
   render();
   let value: number;
@@ -330,7 +418,7 @@ function sandboxDrop(from: Pick, to: Pick): void {
 
 function onPick(p: Pick): void {
   const s = state();
-  if (!s || s.status === 'setup' || rolling || modal) return;
+  if (!s || s.status === 'setup' || rolling || modal || !myMove()) return;
   if (s.enforcement === 'sandbox') {
     if (!held) {
       if (p.kind === 'unit' || p.kind === 'hero' || p.kind === 'graveUnit') held = p;
@@ -405,8 +493,34 @@ function playerName(id: string): string {
   return state()?.setup.players.find((p) => p.id === id)?.name ?? id;
 }
 
+/** 005: online picks: the seat whose pick it is chooses; the others wait (US2-AS1). */
+function renderOnlinePicks(net: OnlineSession): void {
+  const s = net.state;
+  hudRoot.replaceChildren(toasts.root);
+  hl.group.clear();
+  const picks = renderPicks(s.setup, (side, choice) => dispatch({ type: 'pickHero', side, ...choice }));
+  if (net.canAct()) {
+    mount(overlay, el('div', { class: 'panel setup', 'data-testid': 'setup' }, el('h2', {}, t('online.yourTurn')), picks,
+      el('div', { class: 'muted' }, t('online.autoSetup'))));
+  } else {
+    const names = net.waitingFor().map((id) => net.room?.seats.find((x) => x.id === id)?.name ?? id).join(', ');
+    picks.querySelectorAll('button').forEach((b) => b.setAttribute('disabled', ''));
+    mount(overlay, online.waitingPanel(names, picks));
+  }
+  ts.requestRender();
+}
+
 function render(): void {
   const s = state();
+  if (online.active && online.ownsOverlay()) {
+    hudRoot.replaceChildren(toasts.root);
+    hl.group.clear();
+    online.render();
+    ts.requestRender();
+    return;
+  }
+  const net = onlineSession();
+  if (net && s?.status === 'setup') return renderOnlinePicks(net);
   if (!s || s.status === 'setup') {
     hudRoot.replaceChildren(toasts.root);
     hl.group.clear();
@@ -416,10 +530,28 @@ function render(): void {
   }
   // Overlay: result screen, settings, or nothing.
   if (s.status === 'ended' && s.enforcement === 'rules') {
-    mount(overlay, renderResult(s.result!, {
-      newGame: () => { clearLocal(); session = null; wizard.reset(); render(); },
-      rematch: () => startSession(createGame(s.setup)),
-      sandbox: () => dispatch({ type: 'setEnforcement', mode: 'sandbox' }),
+    mount(overlay, net
+      ? renderResult(s.result!, {
+          newGame: () => void online.leave(),
+          // Online the room creator starts the rematch with the same seats (US2-AS8).
+          rematch: () => net.rematch(),
+          sandbox: null,
+        })
+      : renderResult(s.result!, {
+          newGame: () => { clearLocal(); session = null; wizard.reset(); render(); },
+          rematch: () => startSession(createGame(s.setup)),
+          sandbox: () => dispatch({ type: 'setEnforcement', mode: 'sandbox' }),
+        }));
+  } else if (settingsOpen && net) {
+    mount(overlay, renderSettings(false, {
+      online: true,
+      sandboxOn: () => {},
+      sandboxOff: () => {},
+      save: () => {},
+      exportFile: () => exportFile(net.initial, net.actions),
+      importFile: () => {},
+      newGame: () => { settingsOpen = false; void online.leave(); },
+      close: () => { settingsOpen = false; render(); },
     }));
   } else if (settingsOpen) {
     mount(overlay, renderSettings(s.enforcement === 'sandbox', {
@@ -443,13 +575,20 @@ function render(): void {
     mount(overlay, renderTracker(s, () => { trackerOpen = false; render(); }));
   } else overlay.replaceChildren();
 
+  const mine = myMove();
   if (!modal) {
-    if (s.enforcement === 'rules' && !dialogs.decision(s, dispatch) && !lastErrorProblemsOpen()) dialogs.close();
+    // Online, a decision dialog opens only for the player who owns it (US2-AS6).
+    if (s.enforcement === 'rules' && !(mine && dialogs.decision(s, dispatch)) && !lastErrorProblemsOpen()) dialogs.close();
   }
 
   const m = hudModel(s, selected);
   const busy = rolling || modal;
+  const waiting = net && !mine
+    ? el('div', { class: 'panel muted', 'data-testid': 'online-not-your-turn' },
+        t('online.waitingFor', { name: net.waitingFor().map((id) => net.room?.seats.find((x) => x.id === id)?.name ?? id).join(', ') }))
+    : null;
   mount(hudRoot,
+    net?.room ? renderOnlineBar(net.room, net.waitingFor(), online.status) : null,
     renderPhaseBar(m),
     renderSandboxBadge(s.enforcement === 'sandbox'),
     renderHeroes(m, playerName),
@@ -458,7 +597,7 @@ function render(): void {
       ? renderSandboxEditors(s, dispatch, () => void roll(), () => void sandboxOff(), () => downloadText('position.fixture.ts', toFixture(s), 'text/plain'),
           { canUndo: session!.canUndo(), undo: () => { session!.undo(); } })
       : null,
-    el('div', { class: 'actions' },
+    waiting ?? el('div', { class: 'actions' },
       renderRulePanel(lastError),
       renderHelp(helpText(s)),
       s.enforcement === 'rules' ? renderLeadPanel(m, rolling, () => void roll(), () => dispatch({ type: 'useRevenge' })) : null,
@@ -588,9 +727,24 @@ if (import.meta.env.DEV || isE2E) {
     },
     forceNextRoll: (n: number) => {
       if (!isE2E) throw new Error('forceNextRoll is only available in e2e builds');
-      forcedRoll = n;
+      // Online the server rolls: ask the test-mode server to use this value next (005 T039).
+      if (onlineSession()) online.conn?.send({ t: 'forceNextRoll', value: n });
+      else forcedRoll = n;
+    },
+    /** 005: the online view of this window (seat, room, whether it may act). */
+    online: () => {
+      const net = onlineSession();
+      return net ? { seat: net.mySeat, room: net.room, canAct: net.canAct(), seq: net.seq, resyncs: net.resyncs, status: online.status } : null;
     },
   };
 }
+
+// 005: a room link (`#/room/<code>`) joins that room, with the stored seat token if this browser has one (US4-AS1).
+const linkedRoom = roomCodeFromHash(location.hash);
+if (linkedRoom) void online.join(linkedRoom);
+window.addEventListener('hashchange', () => {
+  const code = roomCodeFromHash(location.hash);
+  if (code && online.conn?.code !== code) void online.join(code);
+});
 
 render();

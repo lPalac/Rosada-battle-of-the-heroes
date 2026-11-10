@@ -4,12 +4,15 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 
 ## Active feature
 
-`specs/004-named-heroes/`: the four named heroes from `Hero Rules 2_0.docx` (Cavalier, Monk, Scout, Magus) with starting abilities and three Epic forms each, an ability engine (timings, Bloodied costs, uses, marks, tokens, Modify, Push, reactions), TTS hero sheets, and the Tabletop Simulator assets (meshes, table, boards, tokens) imported into `public/tts/`. Builds on 001, 002 and 003 (all built). Read the 004 `spec.md` (Clarifications, Open Questions Q-39…Q-46), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
+`specs/005-online-multiplayer/` (built, not yet deployed): online rooms for 2–4 players (anonymous, join by code or link, seats per side and hero), a game server that runs the same rules core and replicates the action log, server-owned d20 rolls shown on the client physics die, reconnect with seat tokens, and hosting on a Hostinger KVM VPS (nginx, Let's Encrypt, systemd). Read the 005 `spec.md` (Open Questions Q-52…Q-59), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it. `src/online/` is engine-free like `src/rules` and `src/game`; Colyseus stays in `server/` and `src/net/`.
+
+Last built feature: `specs/004-named-heroes/`: the four named heroes from `Hero Rules 2_0.docx` (Cavalier, Monk, Scout, Magus) with starting abilities and three Epic forms each, an ability engine (timings, Bloodied costs, uses, marks, tokens, Modify, Push, reactions), TTS hero sheets, and the Tabletop Simulator assets (meshes, table, boards, tokens) imported into `public/tts/`. Builds on 001, 002 and 003 (all built). Read the 004 `spec.md` (Clarifications, Open Questions Q-39…Q-46), `plan.md`, `research.md`, `data-model.md` and `contracts/` before working on it.
 
 ## Tech stack
 
 - TypeScript 7, Node.js 24 LTS, Vite 8
 - three (3D table), @dimforge/rapier3d-compat (dice physics)
+- Colyseus 0.18 (`@colyseus/core`, `@colyseus/ws-transport`, `@colyseus/sdk`; messages only, no Schema state) for online rooms
 - Vitest (rules tests), Playwright (browser tests, screenshots)
 
 ## Rules that matter most
@@ -17,16 +20,21 @@ Browser video game of the Rošada board game. Spec-driven with GitHub Spec Kit (
 - `src/rules/` and `src/game/` are engine-free: no imports from `three`, `@dimforge/*`, DOM, or `src/table|physics|ui`. They change state only through `apply(state, action)`.
 - Heroes, units, health bars, board, tunables and art keys are JSON in `src/data/`.
 - Every spec acceptance scenario has a Vitest test named `US<n>-AS<m>`. Fix a rule bug with a failing test first.
-- Rolls come from the physics die and enter the rules core as `submitRoll(value)`; tests pass fixed values.
+- Rolls come from the physics die and enter the rules core as `submitRoll(value)`; tests pass fixed values. Online the server picks the value (`RoomCore.roll`) and the client plays `throwDieTo(value)`.
+- Online: the server never trusts client state. `actorFor` (`src/online/authority.ts`) decides which seat may act; `apply` decides what is legal. Clients apply the server's `applied` actions and compare `stateCheck`.
 - Rules source: `Basic Rules 2_5.docx` plus the tracked changes in `Basic Rules 2_5 - corrections.docx`; hero abilities from `Hero Rules 2_0.docx`. Don't invent rules: log unclear cases in the spec's Open Questions.
 
 ## Commands
 
 ```powershell
-npm run dev        # local game
-npm test           # type checks, data schemas, Vitest (incl. the engine-free boundary test)
-npm run test:e2e   # Playwright (own e2e server on port 5174; forceNextRoll works there)
+npm run dev          # local game (proxies /ws and /api to the game server)
+npm run dev:server   # online game server on :2567 (tsx watch)
+npm test             # type checks, data schemas, Vitest (incl. the engine-free boundary test, online core, server)
+npm run test:e2e     # Playwright (own servers on 5174 and 2568 in test mode; forceNextRoll works there)
+npm run build        # dist/ (site) and dist-server/ (game server)
 ```
+
+- Deploying to Hostinger: `docs/deploy-hostinger.md`, `scripts/vps-setup.sh`, `scripts/deploy.ps1`, `scripts/rollback.ps1`, `scripts/smoke.ts`. The VPS, SSH keys, domain and DNS are Luka's; nothing secret goes in the repo.
 
 - No ESLint: typescript-eslint does not support TypeScript 7 yet. `tests/boundaries.test.ts` and `tsconfig.rules.json` guard the engine-free folders (research R-04).
 - Undo, replay and save files use the action log (`src/game/session.ts`); the game keeps no random seed.
