@@ -1,6 +1,7 @@
 // Throwing the physics d20 (FR-034, FR-036, research R-06). The throw is simulated in fixed steps and recorded;
 // the table plays the frames back. No seed: the value goes to the rules core through `submitRoll` and is logged.
-import { hullPoints, restIsValid, SETTLE_SECONDS, topFace } from './d20.ts';
+import { Quaternion } from 'three';
+import { d20Faces, faceSymmetry, hullPoints, restIsValid, SETTLE_SECONDS, topFace } from './d20.ts';
 import type { DiceWorld } from './world.ts';
 
 export interface Frame {
@@ -62,4 +63,20 @@ export function throwDie(dw: DiceWorld, random: () => number = Math.random): Rol
   } finally {
     world.removeRigidBody(body);
   }
+}
+
+/** 005 research R-05: a normal physics throw that lands on `target` (the server's roll). The throw is simulated as
+ * usual; if it lands on another number, every frame's orientation is turned by a symmetry of the d20 (`q · R`), so
+ * the same tumble ends with `target` on top. Positions, bounces and the resting pose are unchanged. */
+export function throwDieTo(dw: DiceWorld, target: number, random: () => number = Math.random): RollResult {
+  const r = throwDie(dw, random);
+  if (r.value === target) return r;
+  const { numbers } = d20Faces();
+  const R = faceSymmetry(numbers.indexOf(target), numbers.indexOf(r.value));
+  const q = new Quaternion();
+  const frames = r.frames.map((f) => {
+    q.set(f.q[0], f.q[1], f.q[2], f.q[3]).multiply(R);
+    return { p: f.p, q: [q.x, q.y, q.z, q.w] as [number, number, number, number] };
+  });
+  return { value: target, frames, attempts: r.attempts };
 }
