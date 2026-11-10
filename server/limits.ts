@@ -26,13 +26,24 @@ export class RateLimiter {
   }
 }
 
-/** At most N room creations per address per hour. */
+/** At most N room creations per address per hour. Addresses live only in memory and are forgotten once their hour
+ * is over (FR-064, decided 2026-11-10: no client addresses on disk). */
 export class CreationLimiter {
   private byIp = new Map<string, number[]>();
 
   constructor(private readonly perHour = ONLINE.createsPerIpPerHour) {}
 
+  /** How many addresses are remembered now (tests). */
+  get size(): number {
+    return this.byIp.size;
+  }
+
+  private prune(now: number): void {
+    for (const [ip, times] of this.byIp) if (times.every((t) => now - t >= 3600_000)) this.byIp.delete(ip);
+  }
+
   allow(ip: string | undefined, now: number): boolean {
+    this.prune(now);
     const key = ip ?? 'unknown';
     const recent = (this.byIp.get(key) ?? []).filter((t) => now - t < 3600_000);
     if (recent.length >= this.perHour) {

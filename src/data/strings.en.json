@@ -650,5 +650,19 @@
   "error.BAD_MESSAGE": "That action is not valid",
   "error.SEAT_CONNECTED": "That player is connected",
   "error.SEAT_FREE": "That seat is already free",
-  "error.NOT_ENDED": "The game has not ended"
+  "error.NOT_ENDED": "The game has not ended",
+  "online.undid": "{name} undid: {action}",
+  "actionName.moveStep": "a move step",
+  "actionName.endPhase": "ending the phase",
+  "actionName.announceLead": "the announced Lead",
+  "actionName.useAbility": "an ability",
+  "actionName.buy": "a tavern purchase",
+  "actionName.inspiredLead": "Inspired Lead",
+  "actionName.heroRetreat": "Hero Retreat",
+  "actionName.becomeHeroUnit": "becoming a Hero Unit",
+  "actionName.leaveHeroUnit": "leaving the Hero Unit",
+  "actionName.kingsForces": "King’s Forces",
+  "actionName.useRevenge": "using Revenge",
+  "actionName.decide": "a decision",
+  "actionName.pickHero": "a hero pick"
 }

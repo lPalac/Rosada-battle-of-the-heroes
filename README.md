@@ -12,7 +12,7 @@ Decided Nov 3, 2026. This replaces the earlier Unity plan and may change later.
 | 3D table and rendering | Three.js |
 | Physics (pick up, throw, dice, stacking) | Rapier (WebAssembly, deterministic) |
 | Multiplayer | Hot-seat/local, and online rooms for 2–4 players with Colyseus (Node.js), feature 005 |
-| Hosting | Static website + Node.js game server on a Hostinger KVM VPS (nginx, Let's Encrypt, systemd) |
+| Hosting | Test: one free Render web service (site + game server). Go live: Hostinger KVM VPS (nginx, Let's Encrypt, systemd) |
 
 **Keep a later engine switch cheap:** game rules, hero abilities and turn logic live in plain TypeScript modules that don't import Three.js, Rapier or Colyseus. Components (heroes, cards, tokens, board) are defined as data (JSON). The sandbox core (table, physics, decks, dice, hand zones, save/load) stays separate from the Rošada game module.
 
@@ -51,7 +51,7 @@ npm run test:e2e                  # browser tests (Playwright, own servers on po
 npm run build                     # static site in dist/ and the game server in dist-server/
 ```
 
-Feature 005 adds online play: **Play online** creates a room with a 7-character code and a link; friends join, take seats (side and hero), and each plays only their own heroes. The game server runs the same rules core, checks every action and rolls the d20; every browser shows the physics die landing on the server's value. A reload or a dropped connection brings the player back to their seat, and rooms survive a server restart. Hosting on Hostinger: [docs/deploy-hostinger.md](docs/deploy-hostinger.md). Spec, plan and contracts: `specs/005-online-multiplayer/`.
+Feature 005 adds online play: **Play online** creates a room with a 7-character code and a link; friends join, take seats (side and hero), and each plays only their own heroes. The game server runs the same rules core, checks every action and rolls the d20; every browser shows the physics die landing on the server's value. A reload or a dropped connection brings the player back to their seat, and rooms survive a server restart. Free test deployment (now): one Render web service, [docs/deploy-render.md](docs/deploy-render.md) and `render.yaml`. Go live later on Hostinger: [docs/deploy-hostinger.md](docs/deploy-hostinger.md). Spec, plan and contracts: `specs/005-online-multiplayer/`.
 
 | Folder | What it is |
 | --- | --- |

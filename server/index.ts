@@ -8,6 +8,7 @@ import { BUILD_ID, dataHash } from '../src/online/version.ts';
 import { serverDeps } from './deps.ts';
 import { CreationLimiter } from './limits.ts';
 import { RosadaRoom, setServerContext, type ServerContext } from './rosada-room.ts';
+import { staticSite, type StaticSite } from './static.ts';
 import { RoomStore } from './store.ts';
 
 export interface StartOptions {
@@ -17,6 +18,8 @@ export interface StartOptions {
   testMode?: boolean;
   /** Override the build id (tests use it to check the version refusal). */
   buildId?: string;
+  /** Serve the built site from this folder too (FR-074; the Render test deployment). Unset behind nginx. */
+  staticDir?: string;
   log?: (msg: string) => void;
 }
 
@@ -55,6 +58,7 @@ export async function startServer(opts: StartOptions): Promise<RunningServer> {
     })),
   });
   await server.listen(opts.port, opts.host ?? '127.0.0.1');
+  routeRequests(httpServer, opts.staticDir ? staticSite(opts.staticDir) : null);
   const address = httpServer.address();
   const port = typeof address === 'object' && address ? address.port : opts.port;
 
@@ -93,6 +97,23 @@ export async function startServer(opts: StartOptions): Promise<RunningServer> {
   };
 }
 
+/** The browser reaches the game server under `/ws/` (matchmaking and sockets). Behind nginx the prefix is already
+ * stripped; serving alone (Render) the server strips it itself. With a static site, other GET requests are files. */
+function routeRequests(httpServer: http.Server, site: StaticSite | null): void {
+  const strip = (req: http.IncomingMessage) => {
+    if (req.url === '/ws' || req.url?.startsWith('/ws/') || req.url?.startsWith('/ws?')) req.url = req.url.slice(3) || '/';
+  };
+  httpServer.prependListener('upgrade', strip);
+  const colyseus = httpServer.listeners('request') as ((req: http.IncomingMessage, res: http.ServerResponse) => void)[];
+  httpServer.removeAllListeners('request');
+  httpServer.on('request', (req, res) => {
+    const prefixed = req.url === '/ws' || !!req.url?.startsWith('/ws/');
+    strip(req);
+    if (!prefixed && site?.handle(req, res)) return;
+    for (const handler of colyseus) handler.call(httpServer, req, res);
+  });
+}
+
 export async function cleanup(context: ServerContext, log: (m: string) => void, now = Date.now()): Promise<number> {
   let removed = 0;
   for (const [code, room] of [...context.rooms]) {
@@ -114,6 +135,7 @@ if (isMain) {
     host: process.env.HOST ?? '127.0.0.1',
     roomsDir: process.env.ROSADA_ROOMS_DIR ?? '.rooms',
     testMode: process.env.ROSADA_TEST === '1',
+    ...(process.env.ROSADA_STATIC_DIR ? { staticDir: process.env.ROSADA_STATIC_DIR } : {}),
   });
   const stop = () => void running.stop().then(() => process.exit(0));
   process.on('SIGTERM', stop);

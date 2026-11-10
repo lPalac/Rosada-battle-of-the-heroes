@@ -57,7 +57,11 @@ export class OnlineController {
   status: 'connected' | 'reconnecting' | 'closed' = 'connected';
   private draft: PlayOnlineDraft;
   private lobbyName: { value: string };
-  private server = new GameServer(browserEndpoint(location));
+  private serverInstance: GameServer | null = null;
+  /** Created on first use, so hot-seat games never touch the network code. */
+  private get server(): GameServer {
+    return (this.serverInstance ??= new GameServer(browserEndpoint(location)));
+  }
 
   constructor(private readonly root: HTMLElement, private readonly host: OnlineHost) {
     const name = read<string>('rosada.name') ?? '';

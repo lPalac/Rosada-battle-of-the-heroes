@@ -1,5 +1,9 @@
 // 005 US1 over the wire: create, join by code, seats, start, version check.
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join as joinPath } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { startServer } from '../../server/index.ts';
 import { JoinError } from '../../src/net/client.ts';
 import { create, join, sit, testServer, until, type TestServer } from './harness.ts';
 
@@ -57,6 +61,22 @@ describe('US1 rooms on the server', () => {
     await until(() => !a.session.room!.seats[1].taken, 5000, 'seat freed');
     await a.conn.leave();
     await b.conn.leave();
+  });
+
+  it('H1 forceNextRoll is refused when the server is not in test mode', async () => {
+    const dir = mkdtempSync(joinPath(tmpdir(), 'rosada-prod-'));
+    const prod = await startServer({ port: 0, roomsDir: dir, log: () => {} });
+    expect(prod.context.testMode).toBe(false);
+    const url = `http://127.0.0.1:${prod.port}`;
+    const a = await create(url, { playerCount: 2 });
+    a.conn.send({ t: 'forceNextRoll', value: 17 });
+    await until(() => a.refused.length > 0, 5000, 'refusal');
+    expect(a.refused[0]).toMatchObject({ code: 'NOT_ALLOWED' });
+    // Nothing was stored: the room's next roll stays the server's random one.
+    expect((prod.context.rooms.get(a.conn.code)!.core as unknown as { forcedRoll: number | null }).forcedRoll).toBeNull();
+    await a.conn.leave();
+    await prod.stop();
+    rmSync(dir, { recursive: true, force: true });
   });
 
   it('GET /api/health reports the build and room count', async () => {

@@ -73,6 +73,11 @@ UNIT
 systemctl daemon-reload
 systemctl enable rosada
 
+echo "== nginx log format without client addresses (FR-064: no IPs on disk)"
+cat > /etc/nginx/conf.d/rosada-log.conf <<'LOGFMT'
+log_format rosada_noip '[$time_local] "$request" $status $body_bytes_sent $request_time';
+LOGFMT
+
 echo "== nginx site for $DOMAIN"
 cat > /etc/nginx/sites-available/rosada <<NGINX
 server {
@@ -81,6 +86,10 @@ server {
   server_name $DOMAIN;
   root /opt/rosada/current/dist;
   index index.html;
+  # No client addresses in the logs (FR-064); errors are logged at "crit" only, which carries no client lines for
+  # normal traffic.
+  access_log /var/log/nginx/rosada.access.log rosada_noip;
+  error_log /var/log/nginx/rosada.error.log crit;
 
   gzip on;
   gzip_types application/javascript application/json text/css image/svg+xml text/plain application/octet-stream;
@@ -114,6 +123,9 @@ server {
 NGINX
 ln -sf /etc/nginx/sites-available/rosada /etc/nginx/sites-enabled/rosada
 rm -f /etc/nginx/sites-enabled/default
+# The global access log (combined format, with client IPs) is turned off; the site logs without addresses.
+sed -i 's#^\(\s*\)access_log /var/log/nginx/access.log;#\1access_log off;#' /etc/nginx/nginx.conf
+rm -f /var/log/nginx/access.log*
 nginx -t
 systemctl reload nginx
 

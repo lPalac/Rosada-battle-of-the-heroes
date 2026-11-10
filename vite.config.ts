@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 /** 005 research R-10: one build id for the client and the server bundle, so mismatched versions refuse to play. */
 function buildId(): string {
   if (process.env.ROSADA_BUILD_ID) return process.env.ROSADA_BUILD_ID;
+  if (process.env.RENDER_GIT_COMMIT) return process.env.RENDER_GIT_COMMIT.slice(0, 7); // Render builds (R-14)
   try {
     const hash = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
     const dirty = execSync('git status --porcelain', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() ? '+' : '';

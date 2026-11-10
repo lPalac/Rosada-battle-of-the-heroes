@@ -33,7 +33,8 @@ export interface ServerMessages {
   snapshot: SnapshotMessage;
   room: RoomView;
   applied: { seq: number; action: Action; by: Actor; check: number; roll: boolean };
-  undone: { seq: number; check: number };
+  /** `by` undid `action` (FR-030: everyone sees the undo). */
+  undone: { seq: number; check: number; by: SeatId; action: Action };
   refused: { clientSeq: number | null; code: string; message: string; rule?: string };
   seatToken: { seat: SeatId; token: string };
 }

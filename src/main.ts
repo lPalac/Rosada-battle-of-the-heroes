@@ -2,7 +2,7 @@
 import { GameSession, type SessionLike } from './game/session.ts';
 import { highlights, hudModel } from './game/hud-model.ts';
 import { toFixture } from './game/fixture.ts';
-import { t } from './i18n/strings.ts';
+import { hasString, t } from './i18n/strings.ts';
 import type { OnlineSession } from './net/online-session.ts';
 import { throwDie, throwDieTo } from './physics/roll.ts';
 import { createDiceWorld, type DiceWorld } from './physics/world.ts';
@@ -174,10 +174,17 @@ function attachOnline(s: OnlineSession): void {
     });
   });
   const offRefused = s.onRefused((r) => showError({ code: r.code, message: r.message, rule: r.rule ?? 'Online' }));
+  // FR-030: everyone sees an undo, with who undid what.
+  const offUndone = s.onUndone((m) => {
+    const name = s.room?.seats.find((x) => x.id === m.by)?.name ?? m.by;
+    const what = hasString(`actionName.${m.action.type}`) ? t(`actionName.${m.action.type}`) : m.action.type;
+    toasts.show(t('online.undid', { name, action: what }), { testid: 'online-undid' });
+  });
   unsubscribe = () => {
     offApplied();
     offChange();
     offRefused();
+    offUndone();
   };
   if (s.state.status !== 'setup') pieces.sync(s.state, [], false);
   syncTable(s.state);

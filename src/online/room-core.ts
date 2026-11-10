@@ -288,14 +288,16 @@ export class RoomCore {
     return undoLog(this.room.save.initial, this.room.save.actions) !== null;
   }
 
-  undo(by: SeatId): Result<{ seq: number; check: number }> {
-    if (!this.canUndoBy(by)) return no('CANNOT_UNDO', 'You can only undo your own last action, before anything is revealed');
-    this.room.save.actions.pop();
+  /** Undo one step (FR-030): repeated calls go back through the seat's own turn to the last reveal. Everyone gets
+   * the result, with who undid which action. */
+  undo(by: SeatId): Result<{ seq: number; check: number; by: SeatId; action: Action }> {
+    if (!this.canUndoBy(by)) return no('CANNOT_UNDO', 'You can only undo your own actions in your turn, back to the last reveal');
+    const action = this.room.save.actions.pop()!;
     this.room.actors.pop();
     this.current = replay(this.room.save.initial, this.room.save.actions);
     this.syncStatus();
     this.touch();
-    return ok({ seq: this.seq, check: stateCheck(this.current) });
+    return ok({ seq: this.seq, check: stateCheck(this.current), by, action });
   }
 
   /** After a result: same seats, a new game from hero picking (US2-AS8). */

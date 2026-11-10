@@ -120,7 +120,7 @@ test.describe('005 online play', () => {
     await a.getByTestId('play-online').click();
     await a.getByTestId('online-name').fill('Luka');
     await a.getByTestId('online-save-file').setInputFiles({ name: 'game.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(save)) });
-    await expect(a.getByTestId('lobby')).toBeVisible();
+    await expect(a.getByTestId('lobby')).toBeVisible({ timeout: 20_000 }); // the server replays the save first
     const code = (await online(a))!.room!.code;
     await joinByLink(b, code, 'Ana', 'P2');
     await a.getByTestId('online-start').click();

@@ -23,4 +23,13 @@ describe('server limits (FR-062)', () => {
     expect(c.allow('5.6.7.8', 10)).toBe(true);
     expect(c.allow('1.2.3.4', 3600_001)).toBe(true);
   });
+
+  it('H3 forgets addresses once their hour is over (in memory only, never on disk)', () => {
+    const c = new CreationLimiter(5);
+    c.allow('1.2.3.4', 0);
+    c.allow('5.6.7.8', 10);
+    expect(c.size).toBe(2);
+    c.allow('9.9.9.9', 3600_020);
+    expect(c.size).toBe(1);
+  });
 });

@@ -1,5 +1,4 @@
 // 005 US3: the server rolls (research R-05).
-import { randomInt } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { awaitingRoll, legalActions, type GameState } from '../../src/rules/index.ts';
 import { RoomCore } from '../../src/online/room-core.ts';
@@ -65,10 +64,14 @@ describe('US3 server dice', () => {
     for (const s of others) expect(core.act(s.id, { type: 'useRevenge' }).ok).toBe(false);
   });
 
-  it('US3-AS3 server rolls are uniform over 1–20 (chi-square, 200,000 draws)', () => {
+  it('US3-AS3 rolls drawn through RoomDeps are uniform over 1–20 (chi-square, 200,000 draws, seeded source)', () => {
+    // Constitution IV: a seeded source passed in through RoomDeps, so the test is repeatable (analysis C1).
+    // RoomCore.roll draws exactly `deps.randomInt(1, 21)` (US3-AS1); the server's deps use crypto.randomInt
+    // (tests/server/deps.test.ts).
+    const deps = testDeps('uniform');
     const counts = new Array(21).fill(0);
     const n = 200_000;
-    for (let i = 0; i < n; i++) counts[randomInt(1, 21)]++;
+    for (let i = 0; i < n; i++) counts[deps.randomInt(1, 21)]++;
     expect(counts[0]).toBe(0);
     const expected = n / 20;
     const chi = counts.slice(1).reduce((sum, c) => sum + (c - expected) ** 2 / expected, 0);

@@ -1,9 +1,21 @@
 // Game session: action log (with roll values), undo and replay (FR-012, FR-037, research R-11). Engine-free.
 import { apply, REVEAL_EVENTS, type Action, type ApplyResult, type GameEvent, type GameState } from '../rules/index.ts';
 
-/** Undo stops at reveal events and at every phase change (FR-012: undo within the current phase). */
-function isBarrier(events: GameEvent[]): boolean {
-  return events.some((e) => REVEAL_EVENTS.includes(e.type) || e.type === 'phaseChanged' || e.type === 'enforcementChanged');
+/** Undo stops at reveal events (a roll, a destroyed unit, a wound), at a switch of rules / sandbox, at the Active Hero
+ * hand-off and at another hero's decision (a reaction, a promotion choice, an Epic destiny). Phase changes inside the
+ * turn are not barriers: the acting player undoes step by step through their whole turn (001 FR-012 as amended by
+ * 005 FR-030, decided by the game's designer on 2026-11-10). */
+function isBarrier(before: GameState, action: Action, events: GameEvent[]): boolean {
+  if (events.some((e) => REVEAL_EVENTS.includes(e.type) || e.type === 'enforcementChanged' || e.type === 'turnStarted' || e.type === 'turnSkipped')) {
+    return true;
+  }
+  if (action.type === 'answerDraw' || action.type === 'offerDraw') return true;
+  const d = before.pendingDecision;
+  if (action.type === 'decide' && d && before.status === 'playing') {
+    const owner = d.type === 'promotion' ? d.chooserHeroId : d.type === 'drawOffer' ? null : d.heroId;
+    if (owner !== before.activeHeroId) return true;
+  }
+  return false;
 }
 
 /** Rebuild a state by re-applying the action log. No seed is needed: rolls are in the log. */
@@ -17,18 +29,23 @@ export function replay(initial: GameState, history: Action[]): GameState {
   return s;
 }
 
-/** Undo the last action if no reveal event or phase change happened since; returns the shorter log or null. */
-export function undo(initial: GameState, history: Action[]): Action[] | null {
-  if (history.length === 0) return null;
+/** Index after the last barrier in the log: actions from there on may be undone (newest first). */
+export function undoFloor(initial: GameState, history: readonly Action[]): number {
   let s = initial;
   let barrier = 0;
   history.forEach((a, i) => {
     const r = apply(s, a);
     if (!r.ok) throw new Error(`Replay failed at ${a.type}`);
-    if (isBarrier(r.events)) barrier = i + 1;
+    if (isBarrier(s, a, r.events)) barrier = i + 1;
     s = r.state;
   });
-  return history.length > barrier ? history.slice(0, -1) : null;
+  return barrier;
+}
+
+/** Undo the last action if no barrier came after it; returns the shorter log or null. */
+export function undo(initial: GameState, history: Action[]): Action[] | null {
+  if (history.length === 0) return null;
+  return history.length > undoFloor(initial, history) ? history.slice(0, -1) : null;
 }
 
 export type Listener = (state: GameState, events: GameEvent[], action: Action | null) => void;
@@ -69,7 +86,7 @@ export class GameSession implements SessionLike {
     const r = apply(this.state, action);
     if (!r.ok) return r;
     this.history.push(action);
-    if (isBarrier(r.events)) this.barrier = this.history.length;
+    if (isBarrier(this.state, action, r.events)) this.barrier = this.history.length;
     this.state = r.state;
     for (const l of this.listeners) l(this.state, r.events, action);
     return r;

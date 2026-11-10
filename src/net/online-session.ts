@@ -33,6 +33,7 @@ export class OnlineSession implements SessionLike {
   private appliedFns = new Set<(info: AppliedInfo, action: Action) => void>();
   private roomFns = new Set<(room: RoomView) => void>();
   private refusedFns = new Set<(r: Refusal) => void>();
+  private undoneFns = new Set<(m: ServerMessages['undone']) => void>();
   private tokenFns = new Set<(t: ServerMessages['seatToken']) => void>();
   private readyFns = new Set<() => void>();
   resyncs = 0;
@@ -40,7 +41,7 @@ export class OnlineSession implements SessionLike {
   constructor(readonly conn: RoomConnection) {
     conn.on('snapshot', (m) => this.onSnapshot(m));
     conn.on('applied', (m) => this.receive(m));
-    conn.on('undone', (m) => this.onUndone(m));
+    conn.on('undone', (m) => this.receiveUndo(m));
     conn.on('room', (m) => this.setRoom(m));
     conn.on('refused', (m) => this.refusedFns.forEach((f) => f(m)));
     conn.on('seatToken', (m) => this.tokenFns.forEach((f) => f(m)));
@@ -75,6 +76,12 @@ export class OnlineSession implements SessionLike {
     this.roomFns.add(fn);
     if (this.room) fn(this.room);
     return () => this.roomFns.delete(fn);
+  }
+
+  /** Someone undid an action (FR-030): the HUD says who and what. */
+  onUndone(fn: (m: ServerMessages['undone']) => void): () => void {
+    this.undoneFns.add(fn);
+    return () => this.undoneFns.delete(fn);
   }
 
   onRefused(fn: (r: Refusal) => void): () => void {
@@ -125,13 +132,14 @@ export class OnlineSession implements SessionLike {
     this.listeners.forEach((l) => l(this.state, r.events, m.action));
   }
 
-  private onUndone(m: ServerMessages['undone']): void {
+  private receiveUndo(m: ServerMessages['undone']): void {
     if (this.loading) return;
     if (m.seq !== this.seq - 1) return this.resync();
     this.history.pop();
     this.actors.pop();
     this.state = replay(this.initial, this.history);
     if (stateCheck(this.state) !== m.check) return this.resync();
+    this.undoneFns.forEach((f) => f(m));
     this.listeners.forEach((l) => l(this.state, [], null));
   }
 

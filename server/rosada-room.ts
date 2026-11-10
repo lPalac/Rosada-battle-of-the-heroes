@@ -264,7 +264,13 @@ export class RosadaRoom extends Room {
     }
   }
 
+  /** Write the room file. A failed write (disk full, folder gone) must not stop the game: it is logged and the next
+   * change tries again. Logs never contain client addresses (FR-064). */
   persist(): void {
-    ctx().store.save(this.core.toFile());
+    try {
+      ctx().store.save(this.core.toFile());
+    } catch (e) {
+      console.error(`[rosada] room ${this.roomId} not saved: ${e instanceof Error ? e.message : e}`);
+    }
   }
 }

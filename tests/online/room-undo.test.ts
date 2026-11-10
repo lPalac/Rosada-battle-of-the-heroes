@@ -18,10 +18,35 @@ describe('US2 undo online', () => {
     const r = core.undo(by);
     expect(r.ok).toBe(true);
     expect(stateCheck(core.state)).toBe(check);
-    if (r.ok) expect(r.value).toEqual({ seq: core.seq, check });
+    if (r.ok) expect(r.value).toMatchObject({ seq: core.seq, check, by });
   });
 
-  it('server setup actions and phase changes cannot be undone by a player', () => {
+  it('US2-AS9 the acting seat undoes step by step across phase changes, back to the start of its turn', () => {
+    const core = startedRoom();
+    pickAll(core);
+    const by = actor(core);
+    const start = core.seq;
+    const startCheck = stateCheck(core.state);
+    while (core.state.phase !== 'move') expect(core.act(by, { type: 'endPhase' }).ok).toBe(true);
+    const step = legalActions(core.state).find((a) => a.type === 'moveStep')!;
+    expect(core.act(by, step).ok).toBe(true);
+    expect(core.seq - start).toBeGreaterThan(1);
+    const undone: string[] = [];
+    while (core.canUndoBy(by)) {
+      const r = core.undo(by);
+      expect(r.ok).toBe(true);
+      if (r.ok) {
+        expect(r.value.by).toBe(by);
+        undone.push(r.value.action.type);
+      }
+    }
+    expect(undone[0]).toBe('moveStep');
+    expect(undone).toContain('endPhase');
+    expect(core.seq).toBe(start); // stops at the server's startGame
+    expect(stateCheck(core.state)).toBe(startCheck);
+  });
+
+  it('server setup actions cannot be undone by a player', () => {
     const core = startedRoom();
     pickAll(core);
     // The last action is the server's startGame.

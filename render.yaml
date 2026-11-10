@@ -1,0 +1,24 @@
+# 005 T062: free test deployment on Render (research R-14). One web service serves the built site, the game server
+# (/ws) and /api/health from one Node process (FR-074). Create it in Render: New → Blueprint → this repository.
+# Free plan: sleeps after 15 idle minutes (up to a minute to wake); the disk is temporary, so rooms are lost on a
+# restart, redeploy or spin-down. ROSADA_TEST must stay unset here (it would let clients choose die rolls).
+services:
+  - type: web
+    name: rosada
+    runtime: node
+    plan: free
+    branch: 005-online-multiplayer
+    autoDeploy: true
+    # Dev dependencies (TypeScript, Vite) are needed to build.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: node dist-server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: HOST
+        value: 0.0.0.0
+      - key: ROSADA_STATIC_DIR
+        value: dist
+      - key: ROSADA_ROOMS_DIR
+        value: /tmp/rosada-rooms
