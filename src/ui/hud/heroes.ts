@@ -7,7 +7,7 @@ export function renderHeroes(m: HudModel, playerName: (id: string) => string): H
   return el('div', { class: 'heroes' },
     ...m.heroes.map((h) =>
       el('div', { class: `panel hero-card ${h.active ? 'active' : ''}`, 'data-testid': `hero-${h.id}` },
-        el('div', { class: `name ${h.side}` }, `${h.id} · ${t(`side.${h.side}`)} ${t(`range.${h.rangeType}`)}`),
+        el('div', { class: `name ${h.side}` }, `${h.id} · ${t(`side.${h.side}`)} ${h.name || t(`range.${h.rangeType}`)}`),
         el('div', { class: 'muted' }, playerName(h.playerId)),
         el('div', { class: 'bar' }, el('div', { style: `width:${(100 * h.health) / h.maxHealth}%` })),
         el('div', { class: 'row muted' },

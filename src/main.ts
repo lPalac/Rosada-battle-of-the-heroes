@@ -9,6 +9,8 @@ import {
   createGame, createSetup, RULES, parseSquare, squareName, taverns,
   type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
 } from './rules/index.ts';
+import { onAssetLoaded } from './table/assets.ts';
+import { EffectsView } from './table/effects.ts';
 import { createBoard } from './table/board.ts';
 import { SQUARE, toWorld, ZONES } from './table/coords.ts';
 import { createCamera } from './table/camera.ts';
@@ -26,6 +28,7 @@ import assetsJson from './data/assets.json';
 import { Dialogs } from './ui/dialogs.ts';
 import { button, el, mount } from './ui/dom.ts';
 import { renderActions, renderHelp } from './ui/hud/actions.ts';
+import { offersOf, renderAbilities, targetLabel } from './ui/hud/abilities.ts';
 import { renderHeroes } from './ui/hud/heroes.ts';
 import { Toasts } from './ui/hud/notice.ts';
 import { renderPhaseBar } from './ui/hud/phase-bar.ts';
@@ -60,12 +63,15 @@ ts.scene.add(boardView.group, pieces.group, hl.group, dice.group);
 const room = createRoom(ts.scene);
 const strip = createStrip();
 const sheets = new SheetsView(() => ts.requestRender());
+onAssetLoaded(() => ts.requestRender());
 const tracks = new TracksView();
-ts.scene.add(strip, sheets.group, tracks.group);
+const effectsView = new EffectsView(() => ts.requestRender());
+ts.scene.add(strip, sheets.group, tracks.group, effectsView.group);
 function syncTable(s: GameState): void {
   if (s.status === 'setup') return;
   sheets.sync(s);
   tracks.sync(s);
+  effectsView.sync(s);
   ts.requestRender();
 }
 const picker = new Picker(ts.camera, canvas, () => [pieces.group, boardView.group]);
@@ -227,6 +233,26 @@ async function inspiredLead(): Promise<void> {
   if (!n) return render();
   const pay = await payFor(n);
   if (pay) dispatch({ type: 'inspiredLead', destiny: n, pay });
+}
+
+/** 004: use a hero ability from the HUD panel; several target choices open a dialog (T060). */
+async function useAbilityFromPanel(abilityId: string): Promise<void> {
+  const s = state()!;
+  const choices = offersOf(s, abilityId).flatMap((o) => o.targets.map((targets) => ({ option: o.option, targets, cost: o.cost })));
+  if (!choices.length) return;
+  let pick = choices[0];
+  if (choices.length > 1) {
+    modal = true;
+    const chosen = await dialogs.choose(t(`ability.${abilityId}.name`), choices.map((c) => ({
+      label: (c.option ? `${t(`option.${c.option}`)}: ` : '') + targetLabel(s, c.targets), value: c,
+    })));
+    modal = false;
+    if (!chosen) return render();
+    pick = chosen;
+  }
+  const pay = pick.cost > 0 ? await payFor(pick.cost) : undefined;
+  if (pick.cost > 0 && !pay) return;
+  dispatch({ type: 'useAbility', abilityId, targets: pick.targets, ...(pick.option ? { option: pick.option } : {}), ...(pay ? { pay } : {}) });
 }
 
 function heroRetreat(): void {
@@ -437,6 +463,7 @@ function render(): void {
       renderHelp(helpText(s)),
       s.enforcement === 'rules' ? renderLeadPanel(m, rolling, () => void roll(), () => dispatch({ type: 'useRevenge' })) : null,
       s.enforcement === 'rules' ? renderTavern(m, (item) => void buy(item)) : null,
+      s.enforcement === 'rules' && s.status === 'playing' ? renderAbilities(m, busy, (id) => void useAbilityFromPanel(id)) : null,
       s.enforcement === 'rules' && s.status === 'playing'
         ? renderActions(m, session!.canUndo(), busy, {
             endPhase: () => dispatch({ type: 'endPhase' }),
@@ -527,6 +554,7 @@ if (import.meta.env.DEV || isE2E) {
     },
     /** Largest tilt of any unit or upright hero, in degrees. */
     /** 003 US7: which table elements exist and what the sheets, tracks and medallions show. */
+    heroDefinitions: () => state()?.heroes.map((h) => h.definitionId) ?? [],
     tableElements: () => ({
       tableTop: !!room.tableTop.parent,
       roomFloor: !!room.floor.parent,
@@ -536,6 +564,12 @@ if (import.meta.env.DEV || isE2E) {
       tracks: tracks.trackList(),
       medallions: tracks.medallionList(),
       assets: assetsJson,
+      // 004 US6: what each unit shows (TTS model or placeholder), and the TTS table pieces.
+      pieceAssets: Object.fromEntries((state()?.units ?? []).map((u) => [u.id, pieces.unitObject(u.id)?.userData.assetKind ?? 'placeholder'])),
+      sky: !!room.group.userData.sky,
+      effectTokens: effectsView.list(),
+      ttsTable: !!room.tableTop.userData.tts,
+      ttsStrip: !!strip.userData.tts,
     }),
     sheetScreen: (heroId: string) => {
       const mesh = sheets.meshOf(heroId);

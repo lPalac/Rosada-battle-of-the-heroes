@@ -1,7 +1,6 @@
 // Phase machine, Active Hero hand-off, automatic steps (FR-010, FR-011, research R-08).
 // Phases with nothing for the player to do are passed automatically, so the game rests only where a choice exists.
 import { canHeroRetreat, canInspiredLead, abilitiesBlocked } from './abilities.ts';
-import { isTavern } from './board.ts';
 import { activeHero, emit, fail, hero, type Ctx } from './ctx.ts';
 import { RULES } from './data.ts';
 import { bothKingsInCheck, checkmateCheck, endGame } from './endgame.ts';
@@ -9,13 +8,15 @@ import { isForbiddenEndSquare, movementForTurn } from './heroes.ts';
 import { awaitingRoll, leadOptionsForActiveHero, noEligibleUnits } from './lead.ts';
 import type { GameState, TurnFlags } from './model/state.ts';
 import type { HeroId, Phase } from './model/types.ts';
-import { freeMeal, onHeroEntersSquare } from './taverns.ts';
+import { freeMeal, isTavernFor, onHeroEntersSquare } from './taverns.ts';
 import { canKingsForces } from './create.ts';
 import { gain } from './destiny.ts';
 import { maybeStartEpic } from './epic.ts';
 import { destinyGeneration } from './generation.ts';
 import { canLeaveHeroUnit, heroUnitOptions } from './hero-unit.ts';
 import { checkEndOfTurn, checkState, flushFavors } from './royal-favors.ts';
+import { onTurnEnd, onTurnStart } from './abilities/effects.ts';
+import { hasAbilityOffer } from './abilities/engine.ts';
 
 export function freshTurnFlags(): TurnFlags {
   return {
@@ -43,6 +44,7 @@ function onEnter(ctx: Ctx, phase: Phase): void {
     case 'beforeTurn':
       s.turn = freshTurnFlags();
       emit(ctx, { type: 'turnStarted', heroId: h.id, turnNumber: s.turnNumber });
+      onTurnStart(ctx); // 004: "until the beginning of your next turn" effects end, turn-start hooks
       for (const side of ['light', 'dark'] as const) s.royalFavors[side].tidesThisTurn = false;
       if (!checkmateCheck(ctx)) maybeStartEpic(ctx);
       break;
@@ -54,9 +56,9 @@ function onEnter(ctx: Ctx, phase: Phase): void {
         h.status.recoverAtBeginningOfTurn = false;
         emit(ctx, { type: 'heroRecovered', heroId: h.id });
       }
-      const penalty = h.status.movementPenaltyNextTurn + (isTavern(h.pos) ? RULES.tavern.startTurnMovementPenalty : 0);
+      const penalty = h.status.movementPenaltyNextTurn + (isTavernFor(s, h, h.pos) ? RULES.tavern.startTurnMovementPenalty : 0);
       h.status.movementPenaltyNextTurn = 0;
-      s.turn.movementLeft = movementForTurn(h, penalty);
+      s.turn.movementLeft = movementForTurn(h, penalty, s);
       onHeroEntersSquare(ctx, h);
       s.turn.bothKingsInCheckAtBeginning = bothKingsInCheck(ctx);
       break;
@@ -89,11 +91,19 @@ function onEnter(ctx: Ctx, phase: Phase): void {
 /** Pass the Active Hero token to the next hero in turn order (FR-011). */
 function handOff(ctx: Ctx): void {
   const { s } = ctx;
+  onTurnEnd(ctx); // 004: end-of-turn ability effects, then "end of turn" expiries
+  if (s.status !== 'playing') return;
   const keep = s.turn.doubleStepUnitId;
   for (const u of s.units) if (u.id !== keep) u.enPassantTarget = null;
+  // By turn order, not by id: Timey-Wimey Shift swaps turn orders (004).
   const next = (activeHero(s).turnOrder % 4) + 1;
-  s.activeHeroId = `H${next}` as HeroId;
+  s.activeHeroId = (s.heroes.find((x) => x.turnOrder === next)?.id ?? `H${next}`) as HeroId;
   s.turnNumber += 1;
+  setPhase(ctx, 'beforeTurn');
+}
+
+/** The Active Hero token was passed inside Before Turn (Timey-Wimey Shift): the new active hero's turn begins. */
+export function restartTurn(ctx: Ctx): void {
   setPhase(ctx, 'beforeTurn');
 }
 
@@ -103,8 +113,12 @@ export function hasPowerChoice(s: GameState): boolean {
   return heroUnitOptions(s, h.id).length > 0 || canLeaveHeroUnit(s, h.id) || canKingsForces(s);
 }
 
-/** Whether the current phase can be passed without a player choice. */
+/** Whether the current phase can be passed without a player choice; a usable ability makes it rest (004 R-03). */
 function isAutomatic(ctx: Ctx): boolean {
+  return isAutomaticBase(ctx) && !hasAbilityOffer(ctx.s);
+}
+
+function isAutomaticBase(ctx: Ctx): boolean {
   const { s } = ctx;
   switch (s.phase) {
     case 'beforeTurn':
@@ -118,7 +132,7 @@ function isAutomatic(ctx: Ctx): boolean {
     case 'beforeLead':
       return !canInspiredLead(ctx);
     case 'lead':
-      return !s.turn.leadPossible || (s.turn.leadAttempted && !awaitingRoll(s));
+      return !awaitingRoll(s) && (!s.turn.leadPossible || s.turn.leadAttempted);
     case 'endOfTurn':
       return !canHeroRetreat(ctx) && !hasPowerChoice(s);
   }
@@ -161,7 +175,7 @@ export function autoAdvance(ctx: Ctx): void {
 export function endPhase(ctx: Ctx): void {
   const { s } = ctx;
   const h = activeHero(s);
-  if (s.phase === 'move' && isForbiddenEndSquare(s, h.side, h.pos)) {
+  if (s.phase === 'move' && isForbiddenEndSquare(s, h.side, h.pos, h)) {
     fail('MOVE_ENDS_ON_UNIT', 'A Move may not end on an enemy unit or a King', 'Move');
   }
   if (s.phase === 'lead') {

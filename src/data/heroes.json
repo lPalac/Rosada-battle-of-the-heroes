@@ -14,7 +14,9 @@
       "art": "hero.short",
       "heroUnitType": "knight",
       "portrait": "portrait.short",
-      "epicArt": "epic.short"
+      "epicArt": "epic.short",
+      "selectable": false,
+      "sheet": "sheet.hero"
     },
     {
       "id": "generic-long",
@@ -29,7 +31,272 @@
       "art": "hero.long",
       "heroUnitType": "bishop",
       "portrait": "portrait.long",
-      "epicArt": "epic.long"
+      "epicArt": "epic.long",
+      "selectable": false,
+      "sheet": "sheet.hero"
+    },
+    {
+      "id": "cavalier",
+      "name": "Cavalier",
+      "rangeType": "short",
+      "movement": 5,
+      "range": 1,
+      "maxHealth": 10,
+      "epicMaxHealth": 20,
+      "healthBar": "bar-20",
+      "abilities": [
+        "cavalier.warhorse",
+        "cavalier.demoralise",
+        "cavalier.tightFormation"
+      ],
+      "art": "hero.short",
+      "heroUnitType": "knight",
+      "portrait": "portrait.cavalier",
+      "epicArt": "epic.short",
+      "selectable": true,
+      "sheet": "sheet.cavalier",
+      "forms": {
+        "fanatic": {
+          "id": "deathKnight",
+          "name": "Death Knight",
+          "portrait": "portrait.deathKnight",
+          "sheet": "sheet.deathKnight",
+          "abilities": [
+            "deathKnight.auraOfFear",
+            "deathKnight.seekRevenge",
+            "deathKnight.paleSteed",
+            "deathKnight.imNotDoneWithYou",
+            "deathKnight.dutyBeyondTheGrave",
+            "deathKnight.legendaryAncient"
+          ]
+        },
+        "resolute": {
+          "id": "dragonLord",
+          "name": "Dragon Lord",
+          "portrait": "portrait.dragonLord",
+          "sheet": "sheet.dragonLord",
+          "abilities": [
+            "dragonLord.wingedStride",
+            "dragonLord.dragonMount",
+            "dragonLord.breathOfFieryDestruction",
+            "dragonLord.draconicDescent",
+            "dragonLord.terrifyingRoar",
+            "dragonLord.greatWyrmOffering"
+          ],
+          "stats": {
+            "movement": 6
+          }
+        },
+        "dominant": {
+          "id": "holyPaladin",
+          "name": "Holy Paladin",
+          "portrait": "portrait.holyPaladin",
+          "sheet": "sheet.holyPaladin",
+          "abilities": [
+            "holyPaladin.auraOfRadiance",
+            "holyPaladin.magnificentStallion",
+            "holyPaladin.divineProtector",
+            "holyPaladin.paragonOfHonor",
+            "holyPaladin.crusade",
+            "holyPaladin.knightAPeasant",
+            "holyPaladin.holyWrath"
+          ]
+        }
+      }
+    },
+    {
+      "id": "monk",
+      "name": "Monk",
+      "rangeType": "short",
+      "movement": 5,
+      "range": 1,
+      "maxHealth": 10,
+      "epicMaxHealth": 20,
+      "healthBar": "bar-20",
+      "abilities": [
+        "monk.rejuvenatingStroll",
+        "monk.preaching",
+        "monk.makePeaceNotWar"
+      ],
+      "art": "hero.short",
+      "heroUnitType": "bishop",
+      "portrait": "portrait.monk",
+      "epicArt": "epic.short",
+      "selectable": true,
+      "sheet": "sheet.monk",
+      "forms": {
+        "fanatic": {
+          "id": "cultist",
+          "name": "Cultist",
+          "portrait": "portrait.cultist",
+          "sheet": "sheet.hero",
+          "abilities": [
+            "cultist.righteousMight",
+            "cultist.spiritualHealing",
+            "cultist.religiousFervor",
+            "cultist.knightmare",
+            "cultist.sacrifice",
+            "cultist.falseSalvation",
+            "cultist.dreamOfIllFate"
+          ]
+        },
+        "resolute": {
+          "id": "saint",
+          "name": "Saint",
+          "portrait": "portrait.saint",
+          "sheet": "sheet.saint",
+          "abilities": [
+            "saint.saintlyInspiration",
+            "saint.sacredRite",
+            "saint.pilgrimage",
+            "saint.martyrdom",
+            "saint.wingsOfDestiny"
+          ]
+        },
+        "dominant": {
+          "id": "supremeInquisitor",
+          "name": "Supreme Inquisitor",
+          "portrait": "portrait.supremeInquisitor",
+          "sheet": "sheet.supremeInquisitor",
+          "abilities": [
+            "supremeInquisitor.zealotMob",
+            "supremeInquisitor.unexpectedVisit",
+            "supremeInquisitor.inquisition",
+            "supremeInquisitor.sanctimonious",
+            "supremeInquisitor.blindFaith",
+            "supremeInquisitor.dogmaticIndoctrination"
+          ]
+        }
+      }
+    },
+    {
+      "id": "scout",
+      "name": "Scout",
+      "rangeType": "long",
+      "movement": 3,
+      "range": 3,
+      "maxHealth": 8,
+      "epicMaxHealth": 16,
+      "healthBar": "bar-16",
+      "abilities": [
+        "scout.elusive",
+        "scout.bearTraps",
+        "scout.poisonWater"
+      ],
+      "art": "hero.long",
+      "heroUnitType": "knight",
+      "portrait": "portrait.scout",
+      "epicArt": "epic.long",
+      "selectable": true,
+      "sheet": "sheet.scout",
+      "forms": {
+        "fanatic": {
+          "id": "scoundrel",
+          "name": "Scoundrel",
+          "portrait": "portrait.scoundrel",
+          "sheet": "sheet.scoundrel",
+          "abilities": [
+            "scoundrel.elusiveSabotage",
+            "scoundrel.bushwack",
+            "scoundrel.massConfusion",
+            "scoundrel.misdirection",
+            "scoundrel.deviousGambit",
+            "scoundrel.highTreason"
+          ]
+        },
+        "resolute": {
+          "id": "spyMaster",
+          "name": "Spy Master",
+          "portrait": "portrait.spyMaster",
+          "sheet": "sheet.spyMaster",
+          "abilities": [
+            "spyMaster.evasive",
+            "spyMaster.smugglersGrotto",
+            "spyMaster.misinformation",
+            "spyMaster.infiltrate",
+            "spyMaster.mislead",
+            "spyMaster.counterintelligence"
+          ]
+        },
+        "dominant": {
+          "id": "royalAssassin",
+          "name": "Royal Assassin",
+          "portrait": "portrait.royalAssassin",
+          "sheet": "sheet.royalAssassin",
+          "abilities": [
+            "royalAssassin.patientPreparation",
+            "royalAssassin.killOrder",
+            "royalAssassin.assassinateTheUnworthy",
+            "royalAssassin.reapTheWeary",
+            "royalAssassin.redCarpet",
+            "royalAssassin.regicide"
+          ]
+        }
+      }
+    },
+    {
+      "id": "magus",
+      "name": "Magus",
+      "rangeType": "long",
+      "movement": 3,
+      "range": 3,
+      "maxHealth": 8,
+      "epicMaxHealth": 16,
+      "healthBar": "bar-16",
+      "abilities": [
+        "magus.futureSight",
+        "magus.flamingBolt",
+        "magus.soulsClash"
+      ],
+      "art": "hero.long",
+      "heroUnitType": "bishop",
+      "portrait": "portrait.magus",
+      "epicArt": "epic.long",
+      "selectable": true,
+      "sheet": "sheet.magus",
+      "forms": {
+        "fanatic": {
+          "id": "necromancer",
+          "name": "Necromancer",
+          "portrait": "portrait.necromancer",
+          "sheet": "sheet.necromancer",
+          "abilities": [
+            "necromancer.graveSacrifice",
+            "necromancer.soulSyphon",
+            "necromancer.bloodRitual",
+            "necromancer.leechingTouch",
+            "necromancer.awakenTheDeathless",
+            "necromancer.undeadLegions"
+          ]
+        },
+        "resolute": {
+          "id": "grandArcanist",
+          "name": "Grand Arcanist",
+          "portrait": "portrait.grandArcanist",
+          "sheet": "sheet.grandArcanist",
+          "abilities": [
+            "grandArcanist.magicBombardment",
+            "grandArcanist.arcaneShackles",
+            "grandArcanist.conjurePortal",
+            "grandArcanist.summonShadowDemon",
+            "grandArcanist.fireball"
+          ]
+        },
+        "dominant": {
+          "id": "chronomonger",
+          "name": "Chronomonger",
+          "portrait": "portrait.chronomonger",
+          "sheet": "sheet.chronomonger",
+          "abilities": [
+            "chronomonger.noTimeToLose",
+            "chronomonger.certaintyAndDeath",
+            "chronomonger.rapidMarch",
+            "chronomonger.timeyWimeyShift",
+            "chronomonger.convergeTimelines",
+            "chronomonger.temporalFlux"
+          ]
+        }
+      }
     }
   ]
 }

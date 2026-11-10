@@ -5,7 +5,8 @@ import heroesJson from '../data/heroes.json';
 import healthbarsJson from '../data/healthbars.json';
 import rulesJson from '../data/rules.json';
 import favorsJson from '../data/royal-favors.json';
-import type { FavorId, PowerId, RangeType, Side, UnitType } from './model/types.ts';
+import abilitiesJson from '../data/abilities.json';
+import type { EpicDestiny, FavorId, PowerId, RangeType, Side, UnitType } from './model/types.ts';
 
 export type { FavorId, PowerId };
 
@@ -23,6 +24,41 @@ export interface HeroDefinition {
   heroUnitType: UnitType;
   portrait: string;
   epicArt: string;
+  /** 004: offered in setup (false for the generic heroes, spec Q-42). */
+  selectable?: boolean;
+  sheet?: string;
+  forms?: Record<EpicDestiny, HeroForm>;
+}
+
+/** 004: an Epic form of a named hero. */
+export interface HeroForm {
+  id: string;
+  name: string;
+  portrait: string;
+  sheet: string;
+  abilities: string[];
+  stats?: { movement?: number };
+}
+
+export type Timing =
+  | 'beginningOfTurn' | 'beforeMove' | 'duringMove' | 'beforeLead' | 'insteadOfLead' | 'duringLead' | 'afterLead'
+  | 'endOfTurn' | 'beforeTurn' | 'duringEnemyLead' | 'beginningOfEpicStage';
+
+/** 004 contracts/abilities-data.md. */
+export interface AbilityDefinition {
+  id: string;
+  kind: 'passive' | 'action' | 'reaction';
+  timings: Timing[];
+  cost: { normal: number; bloodied: number } | null;
+  uses: number | null;
+  oncePerTurn: boolean;
+  flags: { notAsHeroUnit?: boolean; notRoyalty?: boolean; mustNotCheck?: boolean; noRoll?: boolean };
+  values: Record<string, number | [number, number]>;
+  options?: string[];
+  icons: string[];
+  name: string;
+  text: string;
+  sheet?: { printedCost?: [number, number] };
 }
 
 
@@ -105,6 +141,7 @@ export interface StaticData {
   healthbars: HealthBar[];
   rules: RulesData;
   favors: FavorsData;
+  abilities: AbilityDefinition[];
 }
 
 export function loadStaticData(): StaticData {
@@ -115,6 +152,7 @@ export function loadStaticData(): StaticData {
     healthbars: (healthbarsJson as unknown as { bars: HealthBar[] }).bars,
     rules: rulesJson as unknown as RulesData,
     favors: favorsJson as unknown as FavorsData,
+    abilities: (abilitiesJson as unknown as { abilities: AbilityDefinition[] }).abilities,
   };
 }
 
@@ -129,8 +167,21 @@ export function heroDefinition(id: string): HeroDefinition {
   return def;
 }
 
+const ABILITY_MAP = new Map(DATA.abilities.map((a) => [a.id, a]));
+
+export function abilityDefinition(id: string): AbilityDefinition {
+  const a = ABILITY_MAP.get(id);
+  if (!a) throw new Error(`Unknown ability ${id}`);
+  return a;
+}
+
+export function hasAbilityDefinition(id: string): boolean {
+  return ABILITY_MAP.has(id);
+}
+
+/** Generic heroes keep the 001 behaviour: first non-selectable definition of the range type. */
 export function heroDefinitionFor(rangeType: RangeType): HeroDefinition {
-  const def = DATA.heroes.find((h) => h.rangeType === rangeType);
+  const def = DATA.heroes.find((h) => h.rangeType === rangeType && !h.selectable) ?? DATA.heroes.find((h) => h.rangeType === rangeType);
   if (!def) throw new Error(`No hero definition for range type ${rangeType}`);
   return def;
 }

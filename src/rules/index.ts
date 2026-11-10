@@ -22,6 +22,12 @@ import { autoAdvance, endPhase, settleFavors, startFirstTurn } from './turn.ts';
 import { canKingsForces, kingsForces } from './create.ts';
 import { chooseDestiny } from './epic.ts';
 import { becomeHeroUnit, canLeaveHeroUnit, heroUnitOptions, leaveHeroUnit } from './hero-unit.ts';
+import { abilityOffers, useAbility } from './abilities/engine.ts';
+import { answerReaction } from './abilities/reactions.ts';
+import { answerChoice } from './abilities/choices.ts';
+import { resumeLead } from './lead.ts';
+import { pickableHeroes } from './setup.ts';
+import { cleanTargets } from './abilities/effects.ts';
 
 export type ApplyResult = { ok: true; state: GameState; events: GameEvent[] } | { ok: false; error: RuleError };
 
@@ -65,6 +71,17 @@ function decide(ctx: Ctx, answer: DecisionAnswer): void {
     if (answer.type !== 'destiny') fail('BAD_ANSWER', 'Choose a destiny', 'Epic Heroes');
     s.pendingDecision = null;
     chooseDestiny(ctx, d.heroId, answer.destiny);
+  } else if (d.type === 'reaction') {
+    if (answer.type !== 'reaction') fail('BAD_ANSWER', 'Use the reaction or decline it', 'Hero Abilities');
+    answerReaction(ctx, answer.use, answer.targets, answer.pay);
+    s.pendingDecision = s.decisionQueue.shift() ?? null;
+    if (!s.pendingDecision) resumeLead(ctx);
+    return;
+  } else if (d.type === 'abilityChoice') {
+    if (answer.type !== 'abilityChoice' || !d.choices.includes(answer.choice)) fail('BAD_ANSWER', 'Choose one of the options', 'Hero Abilities');
+    s.pendingDecision = s.decisionQueue.shift() ?? null;
+    answerChoice(ctx, d, answer.choice);
+    return;
   } else {
     if (answer.type !== 'square') fail('BAD_ANSWER', 'Choose one of the offered squares', 'Decisions');
     if (!d.options.some((o) => eq(o, answer.to))) fail('BAD_ANSWER', 'Choose one of the offered squares', 'Decisions');
@@ -78,7 +95,7 @@ function dispatch(ctx: Ctx, action: Action): void {
   const { s } = ctx;
   if (s.status === 'setup') {
     switch (action.type) {
-      case 'pickHero': return pickHero(ctx, action.side, action.rangeType);
+      case 'pickHero': return pickHero(ctx, action.side, action.rangeType, action.heroDefinitionId);
       case 'setTurnOrder': return setTurnOrder(ctx, action.side, action.first);
       case 'setStartFile': return setStartFile(ctx, action.pickIndex, action.file);
       case 'startGame': {
@@ -117,6 +134,7 @@ function dispatch(ctx: Ctx, action: Action): void {
     case 'becomeHeroUnit': return becomeHeroUnit(ctx, action.types);
     case 'leaveHeroUnit': return leaveHeroUnit(ctx);
     case 'kingsForces': return kingsForces(ctx);
+    case 'useAbility': return useAbility(ctx, action.abilityId, action.targets ?? [], action.option, action.pay);
     case 'announceLead': return announceLead(ctx, action.unitId, action.to, action.promoteTo);
     case 'useRevenge': return useRevenge(ctx);
     case 'submitRoll': return submitRoll(ctx, action.value);
@@ -132,6 +150,7 @@ export function apply(state: GameState, action: Action): ApplyResult {
   const ctx = newCtx(state);
   try {
     dispatch(ctx, action);
+    if (ctx.s.effects?.length) cleanTargets(ctx);
     if (ctx.s.status === 'playing' && ctx.s.enforcement === 'rules') autoAdvance(ctx);
     else settleFavors(ctx);
   } catch (e) {
@@ -148,7 +167,9 @@ export function legalActions(state: GameState): Action[] {
   const out: Action[] = [];
   if (s.status === 'setup') {
     const picker = nextPicker(s.setup);
-    if (picker) for (const rangeType of RANGE_TYPES) out.push({ type: 'pickHero', side: picker, rangeType });
+    // Named heroes (004); range-type picks stay accepted for the generic heroes but are not offered (spec Q-42).
+    if (picker) for (const def of pickableHeroes(s.setup)) out.push({ type: 'pickHero', side: picker, heroDefinitionId: def.id });
+    void RANGE_TYPES;
     if (picksComplete(s.setup)) {
       for (const side of ['light', 'dark'] as const) {
         if (side === 'dark' && !s.setup.turnOrder.light) continue;
@@ -172,6 +193,10 @@ export function legalActions(state: GameState): Action[] {
     if (d.type === 'drawOffer') out.push({ type: 'answerDraw', accept: true }, { type: 'answerDraw', accept: false });
     else if (d.type === 'promotion') for (const to of DATA.units.promotion) out.push({ type: 'decide', decision: { type: 'promotion', to } });
     else if (d.type === 'epicDestiny') for (const destiny of d.options) out.push({ type: 'decide', decision: { type: 'destiny', destiny } });
+    else if (d.type === 'reaction') {
+      out.push({ type: 'decide', decision: { type: 'reaction', use: false } });
+      for (const targets of d.options) out.push({ type: 'decide', decision: { type: 'reaction', use: true, targets } });
+    } else if (d.type === 'abilityChoice') for (const choice of d.choices) out.push({ type: 'decide', decision: { type: 'abilityChoice', choice } });
     else for (const to of d.options) out.push({ type: 'decide', decision: { type: 'square', to } });
     return out;
   }
@@ -192,7 +217,7 @@ export function legalActions(state: GameState): Action[] {
       if (shopOpen(ctx)) {
         for (const item of ['drink', 'meal'] as const) if (available(ctx, h) >= RULES.tavern[item].cost) out.push({ type: 'buy', item });
       }
-      if (!isForbiddenEndSquare(s, h.side, h.pos)) out.push({ type: 'endPhase' });
+      if (!isForbiddenEndSquare(s, h.side, h.pos, h)) out.push({ type: 'endPhase' });
       break;
     case 'beforeLead':
       if (canInspiredLead(ctx)) for (let x = 1; x <= available(ctx, h); x++) out.push({ type: 'inspiredLead', destiny: x });
@@ -213,7 +238,13 @@ export function legalActions(state: GameState): Action[] {
       out.push({ type: 'endPhase' });
       break;
     default:
+      // Before Turn, Before Move, After Lead rest only when an ability is usable (004 R-03).
+      out.push({ type: 'endPhase' });
       break;
+  }
+  // 004: hero abilities usable now, one action per target choice.
+  for (const o of abilityOffers(s)) {
+    for (const targets of o.targets) out.push({ type: 'useAbility', abilityId: o.abilityId, targets, ...(o.option ? { option: o.option } : {}) });
   }
   if (!awaitingRoll(s)) out.push({ type: 'offerDraw' });
   return out;
@@ -231,6 +262,10 @@ export type { Unit } from './model/unit.ts';
 export { squareName, parseSquare, regionOf, chebyshev, tavernOwner, taverns, heroStartSquares, inGrid, isBattlefield } from './board.ts';
 export { nextPicker, picksComplete, setupReady, sidePicks, defaultPlayers } from './setup.ts';
 export { abilitiesBlocked } from './abilities.ts';
+export { abilityOffers, abilityCost, usesLeft, type AbilityOffer } from './abilities/engine.ts';
+export { activeEffects } from './abilities/effects.ts';
+export { heroAbilityIds } from './abilities/hooks.ts';
+export { selectableHeroes, pickableHeroes } from './setup.ts';
 export { awaitingRoll } from './lead.ts';
 export { unitsAt } from "./paths.ts";
 export { isProtected, isCheckmate, threatenedSquares } from './check.ts';

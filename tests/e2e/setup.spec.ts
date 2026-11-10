@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { hook } from './helpers.ts';
 
 test('4-player Draft setup reaches the table with the chosen turn order and squares', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?generic');
   for (let i = 1; i <= 4; i++) await page.getByTestId(`player-name-${i}`).fill(`P${i}name`);
   await page.getByTestId('setup-next').click();
   await page.getByTestId('mode-draft').click();

@@ -3,6 +3,8 @@
 // `>5` (x = 9), taverns `<0` `>0` `<9` `>9`.
 import { act, newGame } from '../helpers/game.ts';
 import { DATA } from '../../src/rules/data.ts';
+import type { Effect } from '../../src/rules/model/state.ts';
+import type { UnitTag } from '../../src/rules/model/unit.ts';
 import {
   apply, type EpicDestiny, type FavorId, type GameState, type HeroId, type Phase, type RangeType, type Side, type UnitType,
 } from '../../src/rules/index.ts';
@@ -35,6 +37,15 @@ export interface PositionOptions {
   heroUnits?: Partial<Record<HeroId, UnitType[]>>;
   /** Squares whose units are auxiliary. */
   auxiliary?: string[];
+  // 004
+  /** Named hero per hero slot (`cavalier`, `monk`, `scout`, `magus`); stats come from heroes.json. */
+  heroDefs?: Partial<Record<HeroId, string>>;
+  /** Uses left per hero and ability id. */
+  uses?: Partial<Record<HeroId, Record<string, number>>>;
+  /** Effects placed before the game resumes (ids are assigned). */
+  effects?: Omit<Effect, 'id'>[];
+  /** Tags per unit square (`{ d4: ['undead'] }`). */
+  tags?: Record<string, UnitTag[]>;
 }
 
 const TYPES: Record<string, UnitType> = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
@@ -75,19 +86,38 @@ export function position(diagram: string, opts: PositionOptions = {}): GameState
         health: def.maxHealth, healthBarId: def.healthBar, definitionId: def.id,
       });
     }
+    const named = opts.heroDefs?.[h.id];
+    if (named) {
+      const def = DATA.heroes.find((d) => d.id === named)!;
+      Object.assign(h, {
+        rangeType: def.rangeType, movement: def.movement, range: def.range, maxHealth: def.maxHealth,
+        health: def.maxHealth, healthBarId: def.healthBar, definitionId: def.id, heroUnitType: def.heroUnitType, art: def.art,
+      });
+    }
     if (heroPos[h.id]) h.pos = heroPos[h.id]!;
     if (opts.stage === 'epic') {
       const def = DATA.heroes.find((d) => d.id === h.definitionId)!;
       h.maxHealth = def.epicMaxHealth;
       h.health = def.epicMaxHealth;
       h.epic = { destiny: opts.epic?.[h.id] ?? 'resolute' };
+      const form = def.forms?.[h.epic.destiny];
+      if (form) {
+        h.form = form.id;
+        if (form.stats?.movement) h.movement = form.stats.movement;
+      }
     }
+    if (opts.uses?.[h.id]) s.abilityState[h.id] = { uses: { ...opts.uses[h.id] }, usedThisTurn: [] };
     if (opts.health?.[h.id] !== undefined) h.health = opts.health[h.id]!;
     if (opts.pools?.[h.id] !== undefined) h.pool = opts.pools[h.id]!;
     if (opts.movementPenalty?.[h.id] !== undefined) h.status.movementPenaltyNextTurn = opts.movementPenalty[h.id]!;
   }
   for (const u of s.units) if (opts.led?.includes(squareName(u.pos))) u.hasBeenLed = true;
   for (const u of s.units) if (opts.auxiliary?.includes(squareName(u.pos))) u.kind = 'auxiliary';
+  for (const u of s.units) {
+    const tags = opts.tags?.[squareName(u.pos)];
+    if (tags) u.tags = [...tags];
+  }
+  for (const e of opts.effects ?? []) s.effects.push({ ...structuredClone(e), id: s.nextEffectId++ });
   if (opts.stage === 'epic') {
     s.stage = 'epic';
     s.tokens.peaceTreaty = 'removed';

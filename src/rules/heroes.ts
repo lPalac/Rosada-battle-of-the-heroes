@@ -12,22 +12,45 @@ import { leadRange, removeHeroUnit } from './hero-unit.ts';
 import { unitAt } from './paths.ts';
 import { complete, progress } from './royal-favors.ts';
 import { onHeroEntersSquare, onHeroLeavesSquare } from './taverns.ts';
+import { hookSources } from './abilities/hooks.ts';
+import type { WoundCause } from './abilities/types.ts';
 
-/** Movement for a turn: base − penalties, never reduced by more than 2 (FR-022). */
-export function movementForTurn(hero: Hero, penalty: number): number {
-  return Math.max(0, hero.movement - Math.min(penalty, RULES.maxMovementReduction));
+/** Movement for a turn: base − penalties, never reduced by more than 2 (FR-022); ability caps apply (Martyrdom). */
+export function movementForTurn(hero: Hero, penalty: number, state?: GameState): number {
+  let m = Math.max(0, hero.movement - Math.min(penalty, RULES.maxMovementReduction));
+  if (state) for (const { hooks, src } of hookSources(state, 'movementCap')) {
+    const cap = hooks.movementCap(state, src, hero);
+    if (cap !== null) m = Math.min(m, cap);
+  }
+  return m;
 }
 
-/** A hero may not end a Move (or any voluntary placement) on an enemy unit or a King. */
-export function isForbiddenEndSquare(state: Pick<GameState, 'units'>, side: Side, p: Coord): boolean {
-  const u = unitAt(state, p);
-  return !!u && (u.type === 'king' || u.side !== side);
+/**
+ * A hero may not end a Move (or any voluntary placement) on an enemy unit or a King. 004: Elusive heroes may end on
+ * an enemy (non-King) unit's square.
+ */
+export function isForbiddenEndSquare(state: Pick<GameState, 'units'> & Partial<GameState>, side: Side, p: Coord, h?: Hero): boolean {
+  const here = state.units.filter((u) => eq(u.pos, p));
+  if (here.some((u) => u.type === 'king')) return true;
+  if (!here.some((u) => u.side !== side)) return false;
+  if (h && hookSources(state, 'allowEndOnEnemy').some(({ hooks, src }) => hooks.allowEndOnEnemy(state as GameState, src, h))) return false;
+  return true;
 }
 
 export function legalMoveSquares(state: GameState): Coord[] {
   if (state.status !== 'playing' || state.enforcement !== 'rules' || state.phase !== 'move' || state.pendingDecision) return [];
   if (state.turn.movementLeft <= 0) return [];
-  return adjacent8(activeHero(state).pos).filter(inGrid);
+  const h = activeHero(state);
+  const extra = hookSources(state, 'extraMoveSquares').flatMap(({ hooks, src }) => hooks.extraMoveSquares(state, src, h));
+  return [...adjacent8(h.pos).filter(inGrid), ...extra.filter((p) => !adjacent8(h.pos).some((q) => eq(q, p)))];
+}
+
+/** A hero arrives on a square by Move, push or placement: square tokens react (Bear Trap, Religious Fervor, Portal). */
+export function heroEntered(ctx: Ctx, h: Hero): void {
+  for (const { hooks, src } of hookSources(ctx.s, 'onHeroEnters')) {
+    if (src.effect && !ctx.s.effects.some((e) => e.id === src.effect!.id)) continue;
+    hooks.onHeroEnters(ctx, src, h);
+  }
 }
 
 export function moveStep(ctx: Ctx, to: Coord): void {
@@ -35,7 +58,7 @@ export function moveStep(ctx: Ctx, to: Coord): void {
   if (s.phase !== 'move') fail('WRONG_PHASE', 'Heroes move only in the Move phase', 'Move');
   const h = activeHero(s);
   if (s.turn.movementLeft <= 0) fail('NO_MOVEMENT_LEFT', 'No Movement left', 'Move');
-  if (!inGrid(to) || chebyshev(h.pos, to) !== 1) fail('NOT_ADJACENT', 'Move one adjacent square at a time', 'Move');
+  if (!inGrid(to) || !legalMoveSquares(s).some((p) => eq(p, to))) fail('NOT_ADJACENT', 'Move one adjacent square at a time', 'Move');
   const from = h.pos;
   onHeroLeavesSquare(ctx, h);
   h.pos = to;
@@ -43,6 +66,7 @@ export function moveStep(ctx: Ctx, to: Coord): void {
   s.turn.movePath.push(to);
   emit(ctx, { type: 'heroMoved', heroId: h.id, from, to, reason: 'move' });
   onHeroEntersSquare(ctx, h);
+  heroEntered(ctx, h);
 }
 
 export function unitsInRange(state: GameState, hero: Hero): Unit[] {
@@ -60,8 +84,18 @@ export function heal(ctx: Ctx, h: Hero, amount: number, reason: string): void {
  * Wound a hero. Enemy wounds give the wounded hero Resilient Destiny (FR-054) and the attacking side 1 D.
  * At 0 health the hero goes Unconscious and must be placed in a friendly tavern (FR-051).
  */
-export function wound(ctx: Ctx, h: Hero, amount: number, source: { enemySide: Side | null }): void {
+export function wound(ctx: Ctx, h: Hero, amount: number, source: { enemySide: Side | null }, cause: WoundCause = 'other'): void {
   if (h.status.unconscious || amount <= 0) return;
+  // 004 hooks: Make Peace Not War, Elusive, Divine Protector (research R-06).
+  for (const { hooks, src } of hookSources(ctx.s, 'woundTaken')) amount = hooks.woundTaken(ctx.s, src, h, amount, cause);
+  for (const { hooks, src } of hookSources(ctx.s, 'redirectWounds')) {
+    const to = hooks.redirectWounds(ctx.s, src, h);
+    if (to && to.id !== h.id && !to.status.unconscious) {
+      wound(ctx, to, amount, { enemySide: source.enemySide === to.side ? null : source.enemySide }, cause);
+      return;
+    }
+  }
+  if (amount <= 0) return;
   const before = h.health;
   const wasBloodied = heroIsBloodied(ctx.s, h);
   h.health = Math.max(0, h.health - amount);
@@ -86,6 +120,9 @@ export function wound(ctx: Ctx, h: Hero, amount: number, source: { enemySide: Si
     h.status.recoverAtBeginningOfTurn = false;
     emit(ctx, { type: 'heroUnconscious', heroId: h.id });
     queueDecision(ctx, { type: 'unconsciousTavern', heroId: h.id, options: taverns(h.side) });
+    for (const { hooks, src } of hookSources({ ...ctx.s, heroes: ctx.s.heroes.filter((x) => x.id === h.id).map((x) => ({ ...x, status: { ...x.status, unconscious: false } })) }, 'onUnconscious')) {
+      hooks.onUnconscious(ctx, src, h);
+    }
   }
 }
 

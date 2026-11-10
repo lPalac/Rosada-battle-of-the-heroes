@@ -13,7 +13,7 @@ export function summaryLines(setup: SetupChoices): { n: number; text: string }[]
       const players = setup.players.filter((p) => p.side === side);
       const player = players[Math.min(slot, players.length - 1)].name;
       const square = squareName(heroStartSquares(side)[setup.startFiles[String(pickIndex)] === 'c' ? 0 : 1]);
-      out.push({ n, text: t('setup.heroLine', { n, side: t(`side.${side}`), range: t(`range.${pick.rangeType}`), player, square }) });
+      out.push({ n, text: t('setup.heroLine', { n, side: t(`side.${side}`), range: pick.heroDefinitionId ? t(`hero.${pick.heroDefinitionId}.name`) : t(`range.${pick.rangeType}`), player, square }) });
     });
   }
   return out.sort((a, b) => a.n - b.n);

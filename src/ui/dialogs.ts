@@ -59,6 +59,21 @@ export class Dialogs {
         })));
       return true;
     }
+    if (d.type === 'reaction') {
+      // 004: a "During Enemy Lead" reaction of the defending hero (research R-03).
+      this.show(el('h3', {}, t('dialog.reaction', { hero: d.heroId, ability: t(`ability.${d.abilityId}.name`), cost: d.cost })),
+        el('div', { class: 'muted small' }, t(`ability.${d.abilityId}.text`)),
+        el('div', { class: 'row' },
+          ...d.options.map((targets, i) => button(t('dialog.reactionUse', { n: i + 1 }), () => dispatch({ type: 'decide', decision: { type: 'reaction', use: true, targets } }), { kind: 'primary', testid: `reaction-use-${i}` })),
+          button(t('dialog.decline'), () => dispatch({ type: 'decide', decision: { type: 'reaction', use: false } }), { testid: 'reaction-decline' })));
+      return true;
+    }
+    if (d.type === 'abilityChoice') {
+      this.show(el('h3', {}, t(`ability.${d.abilityId}.name`)),
+        el('div', { class: 'col choice-list' }, ...d.choices.slice(0, 64).map((choice) =>
+          button(choice, () => dispatch({ type: 'decide', decision: { type: 'abilityChoice', choice } }), { testid: `choice-${choice}` }))));
+      return true;
+    }
     if (d.type === 'unconsciousTavern') {
       this.show(el('h3', {}, t('dialog.unconscious', { hero: d.heroId })),
         el('div', { class: 'row' }, ...d.options.map((to) =>
@@ -87,6 +102,16 @@ export class Dialogs {
         el('div', { class: 'row' }, ...Array.from({ length: max }, (_, i) => i + 1).map((n) =>
           button(label(n), () => { this.close(); resolve(n); }, { testid: `amount-${n}` }))),
         button(t('action.cancel'), () => { this.close(); resolve(null); }));
+    });
+  }
+
+  /** Pick one of several labelled options (ability targets). */
+  choose<T>(title: string, options: { label: string; value: T }[]): Promise<T | null> {
+    return new Promise((resolve) => {
+      this.show(el('h3', {}, title),
+        el('div', { class: 'col choice-list' }, ...options.map((o, i) =>
+          button(o.label, () => { this.close(); resolve(o.value); }, { testid: `target-${i}` }))),
+        button(t('action.cancel'), () => { this.close(); resolve(null); }, { testid: 'target-cancel' }));
     });
   }
 

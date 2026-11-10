@@ -198,3 +198,23 @@ describe('003 – sandbox values for the Epic Stage, Royal Favors and Hero Units
     expect(act(s, { type: 'setEnforcement', mode: 'rules' }).state.enforcement).toBe('rules');
   });
 });
+
+describe('004 sandbox edits (T066)', () => {
+  it('sets a named hero\'s form, uses left and removes an effect', async () => {
+    const { board } = await import('../fixtures/position.ts');
+    const { act } = await import('../helpers/game.ts');
+    let s = board({ c3: 'N', h7: 'p' }, {
+      heroDefs: { H1: 'cavalier' }, stage: 'epic', epic: { H1: 'fanatic' },
+      effects: [{ kind: 'cannotLead', source: { abilityId: 'test', heroId: 'H1' }, target: { unitId: 'L-N@c3' }, expires: { at: 'removed' }, data: {} }],
+    });
+    s = act(s, { type: 'setEnforcement', mode: 'sandbox' }).state;
+    s = act(s, { type: 'sandboxSet', path: 'destiny', target: 'H1', value: 'resolute' }).state;
+    expect([s.heroes[0].form, s.heroes[0].movement]).toEqual(['dragonLord', 6]);
+    s = act(s, { type: 'sandboxSet', path: 'form', target: 'H1', value: '' }).state;
+    expect([s.heroes[0].form, s.heroes[0].movement]).toEqual([null, 5]);
+    s = act(s, { type: 'sandboxSet', path: 'uses', target: 'H1:cavalier.demoralise', value: 0 }).state;
+    expect(s.abilityState.H1!.uses['cavalier.demoralise']).toBe(0);
+    s = act(s, { type: 'sandboxSet', path: 'removeEffect', value: s.effects[0].id }).state;
+    expect(s.effects).toEqual([]);
+  });
+});

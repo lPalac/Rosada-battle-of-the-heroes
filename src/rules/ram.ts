@@ -10,6 +10,8 @@ import type { Coord } from './model/types.ts';
 import type { LeadOption } from './paths.ts';
 import { unitsAt } from './paths.ts';
 import { progress } from './royal-favors.ts';
+import { hookSources } from './abilities/hooks.ts';
+import { heroEntered } from './heroes.ts';
 
 /** Landing is blocked by a King (King's Majesty) or the edge of the 10×10 grid → starting square. */
 function resolveLanding(ctx: Ctx, h: Hero, landing: Coord): { pos: Coord; sentToStart: boolean } {
@@ -27,13 +29,22 @@ export function applyRams(ctx: Ctx, unit: Unit, opt: LeadOption): RamOutcome[] {
   const { s } = ctx;
   const outcomes: RamOutcome[] = [];
   const beyondEnd = add(opt.to, opt.pushDir);
-  const isKing = unit.type === 'king';
+  // King's Banishment; the Legendary Ancient can use it too (004 research R-07).
+  const isKing = unit.type === 'king' || !!unit.tags?.includes('legendaryAncient');
+  const pushBlocked = (h: Hero) => hookSources(s, 'pushBlocked').some(({ hooks, src }) => hooks.pushBlocked(s, src, h));
+  const noRam = (h: Hero) => hookSources(s, 'noRam').some(({ hooks, src }) => hooks.noRam(s, src, h, unit, opt.from));
   const hit = new Set<string>();
   for (const sq of opt.path) {
     for (const h of s.heroes) {
       // Hero Units are never Rammed or pushed (003 FR-031a).
       if (!eq(h.pos, sq) || hit.has(h.id) || h.status.unconscious || h.heroUnitId) continue;
       hit.add(h.id);
+      if (h.side !== unit.side && noRam(h)) continue;
+      if (pushBlocked(h)) {
+        // Divine Protector: not pushed; the Ram wounds still come (and are redirected).
+        if (h.side !== unit.side) outcomes.push({ heroId: h.id, landing: h.pos, sentToStart: false, wounds: RULES.ramWounds, friendly: false });
+        continue;
+      }
       if (h.side !== unit.side) {
         let landing: { pos: Coord; sentToStart: boolean };
         if (isKing) {
@@ -64,9 +75,11 @@ export function applyRams(ctx: Ctx, unit: Unit, opt: LeadOption): RamOutcome[] {
   }
   // Wounds after all pushes, in path order (research R-08: Battle → Ram wounds → Destiny).
   for (const o of outcomes) {
-    if (o.friendly) continue;
     const h = s.heroes.find((x) => x.id === o.heroId)!;
-    wound(ctx, h, o.wounds, { enemySide: unit.side });
+    if (!eq(h.pos, opt.to)) heroEntered(ctx, h);
+    if (o.friendly) continue;
+    wound(ctx, h, o.wounds, { enemySide: unit.side }, 'ram');
+    for (const { hooks, src } of hookSources(s, 'onRammed')) hooks.onRammed(ctx, src, h);
   }
   return outcomes;
 }

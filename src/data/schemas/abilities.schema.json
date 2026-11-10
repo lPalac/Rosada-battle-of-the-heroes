@@ -1,0 +1,170 @@
+{
+  "$id": "abilities.schema.json",
+  "type": "object",
+  "required": [
+    "abilities"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "abilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "timings",
+          "cost",
+          "uses",
+          "oncePerTurn",
+          "flags",
+          "values",
+          "icons",
+          "name",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z]*.[a-z][A-Za-z]*$"
+          },
+          "kind": {
+            "enum": [
+              "passive",
+              "action",
+              "reaction"
+            ]
+          },
+          "timings": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "beginningOfTurn",
+                "beforeMove",
+                "duringMove",
+                "beforeLead",
+                "insteadOfLead",
+                "duringLead",
+                "afterLead",
+                "endOfTurn",
+                "beforeTurn",
+                "duringEnemyLead",
+                "beginningOfEpicStage"
+              ]
+            }
+          },
+          "cost": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "normal",
+                  "bloodied"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "normal": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "bloodied": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            ]
+          },
+          "uses": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ]
+          },
+          "oncePerTurn": {
+            "type": "boolean"
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "notAsHeroUnit": {
+                "type": "boolean"
+              },
+              "notRoyalty": {
+                "type": "boolean"
+              },
+              "mustNotCheck": {
+                "type": "boolean"
+              },
+              "noRoll": {
+                "type": "boolean"
+              }
+            }
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ]
+            }
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "icons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "sheet": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "printedCost": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

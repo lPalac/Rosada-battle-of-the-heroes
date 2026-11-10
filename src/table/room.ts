@@ -3,7 +3,8 @@
 import {
   Color, ExtrudeGeometry, Fog, Group, Mesh, MeshStandardMaterial, PlaneGeometry, PointLight, RepeatWrapping, Scene, Shape,
 } from 'three';
-import { assetEntry } from './assets.ts';
+import { EquirectangularReflectionMapping } from 'three';
+import { assetEntry, loadImageTexture } from './assets.ts';
 import { canvasTexture, rng, woodGrain } from './canvas.ts';
 
 export interface RoomView {
@@ -73,9 +74,24 @@ export function createRoom(scene: Scene): RoomView {
   tableTop.receiveShadow = true;
   tableTop.userData = { kind: 'table' };
   group.add(tableTop);
+  // 004 US6-AS3: the TTS table wood replaces the drawn grain when it has loaded.
+  loadImageTexture('tts.table', (tex) => {
+    tex.wrapS = tex.wrapT = RepeatWrapping;
+    tex.repeat.set(1 / (2 * HALF_W), 1 / (2 * HALF_D));
+    tex.offset.set(0.5, 0.5);
+    (tableTop.material as MeshStandardMaterial).map = tex;
+    (tableTop.material as MeshStandardMaterial).needsUpdate = true;
+    tableTop.userData.tts = true;
+  });
 
   // Dim room: fog and warm point lights around the table (the sun from scene.ts stays the key light).
   scene.background = new Color('#14110e');
+  // 004 US6-AS3: the TTS sky around the room.
+  loadImageTexture('room.sky', (tex) => {
+    tex.mapping = EquirectangularReflectionMapping;
+    scene.background = tex;
+    group.userData.sky = true;
+  });
   scene.fog = new Fog('#14110e', 38, 90);
   for (const [x, z] of [[-14, 10], [14, 10], [-14, -10], [14, -10]]) {
     const l = new PointLight('#ffb36b', 60, 40, 1.6);

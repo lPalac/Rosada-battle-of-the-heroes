@@ -3,16 +3,23 @@
 import {
   BoxGeometry, BufferGeometry, CanvasTexture, Color, ConeGeometry, CylinderGeometry, Group, LatheGeometry, Mesh,
   MeshStandardMaterial, Object3D, OctahedronGeometry, PlaneGeometry, SphereGeometry, SRGBColorSpace, TextureLoader,
-  TorusGeometry, Vector2,
+  TorusGeometry, Vector2, type Texture,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import assetsJson from '../data/assets.json';
 import { d20Faces, d20Geometry } from '../physics/d20.ts';
+import { loadTtsModel } from './tts-models.ts';
 
 export interface AssetEntry {
   placeholder?: string;
   gltf?: string;
   image?: string;
+  /** 004: Tabletop Simulator model (OBJ) with textures and a collider. */
+  mesh?: string;
+  texture?: string;
+  normal?: string;
+  collider?: string;
+  flipY?: boolean;
   color?: string;
   scale?: number;
 }
@@ -166,6 +173,12 @@ export function tokenMesh(key: string): Mesh {
   const e = assetEntry(key);
   const m = new Mesh(cachedGeometry('token', () => new CylinderGeometry(0.32, 0.32, 0.06, 32)), material(e.color ?? '#ffffff'));
   m.castShadow = true;
+  // 004: the TTS face (Peace Treaty / Declaration of War) on the top of the token.
+  loadImageTexture(`tts.${key}`, (tex) => {
+    const side = m.material as MeshStandardMaterial;
+    (m as unknown as { material: MeshStandardMaterial[] }).material = [side, new MeshStandardMaterial({ map: tex, roughness: 0.8 }), side];
+    m.userData.face = true;
+  });
   return m;
 }
 
@@ -185,8 +198,34 @@ export function createAsset(key: string): Object3D {
   else if (key === 'die.d20') placeholder = d20Mesh();
   else placeholder = new Mesh(new BoxGeometry(0.3, 0.3, 0.3), material(e.color ?? '#888888'));
   holder.add(placeholder);
+  holder.userData.assetKind = 'placeholder';
   if (e.scale) holder.scale.setScalar(e.scale);
-  if (e.gltf) {
+  if (e.mesh && ttsModelsEnabled()) {
+    // Height of the placeholder piece, so the TTS model fills the same space (US6-AS1).
+    // TTS pieces are slimmer than the lathe placeholders: 1.6× the placeholder height gives a similar footprint.
+    const height = (key.startsWith('unit.') ? unitHeight(type) : 0.8) * TTS_HEIGHT_FACTOR;
+    loadTtsModel({ mesh: e.mesh, texture: e.texture, normal: e.normal, flipY: e.flipY }, height)
+      .then((model) => {
+        // Picking reads userData on the hit mesh: give the model the holder's data (piece id, kind).
+        const data = { ...holder.userData };
+        model.traverse((c) => {
+          c.userData = { ...data };
+          c.raycast = () => {}; // picking keeps using the placeholder shape (002 picking and drag unchanged)
+        });
+        // The placeholder stays as an invisible pick proxy: same footprint for clicks as before 004.
+        placeholder.traverse((c) => {
+          const m = (c as Mesh).material as MeshStandardMaterial | undefined;
+          if (m) {
+            (c as Mesh).material = proxyMaterial;
+            c.castShadow = false;
+          }
+        });
+        holder.add(model);
+        holder.userData = { ...data, assetKind: 'tts' };
+        assetLoaded();
+      })
+      .catch(() => { /* missing file: the placeholder stays (US6-AS4) */ });
+  } else if (e.gltf) {
     gltfLoader.load(e.gltf, (gltf) => {
       holder.remove(placeholder);
       holder.add(gltf.scene);
@@ -204,3 +243,35 @@ export function createAsset(key: string): Object3D {
 }
 
 export { material };
+
+const TTS_HEIGHT_FACTOR = 1.6;
+/** Invisible material for pick proxies: raycasts still hit it, nothing is drawn. */
+const proxyMaterial = new MeshStandardMaterial({ colorWrite: false, depthWrite: false });
+let assetLoaded: () => void = () => {};
+/** Called when a model finishes loading, so the on-demand renderer draws a frame (004). */
+export function onAssetLoaded(fn: () => void): void {
+  assetLoaded = fn;
+}
+
+/** Load an image texture of an asset key (TTS art), or null when the key has no image. Requests a frame when loaded. */
+export function loadImageTexture(key: string, apply: (tex: Texture) => void): boolean {
+  const img = ASSETS[key]?.image;
+  if (!img) return false;
+  textureLoader.load(encodeURI(`${import.meta.env.BASE_URL ?? '/'}${img}`), (tex) => {
+    tex.colorSpace = SRGBColorSpace;
+    apply(tex);
+    assetLoaded();
+  });
+  return true;
+}
+
+/** Height of a placeholder unit, from its lathe profile. */
+export function unitHeight(type: string): number {
+  const p = profile(type);
+  return p[p.length - 1][1];
+}
+
+/** TTS models load unless the page asks for placeholders (`?placeholders`, used by tests that measure geometry). */
+export function ttsModelsEnabled(): boolean {
+  return typeof location === 'undefined' || !new URLSearchParams(location.search).has('placeholders');
+}

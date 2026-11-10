@@ -2,51 +2,111 @@
   "$schema": "./schemas/assets.schema.json",
   "unit.light.king": {
     "placeholder": "king",
-    "color": "#e8e2d0"
+    "color": "#e8e2d0",
+    "mesh": "tts/mesh/king.obj",
+    "texture": "tts/texture/king-light.webp",
+    "normal": "tts/texture/king-normal.webp",
+    "collider": "tts/mesh/king-collider.obj",
+    "flipY": true
   },
   "unit.light.queen": {
     "placeholder": "queen",
-    "color": "#e8e2d0"
+    "color": "#e8e2d0",
+    "mesh": "tts/mesh/queen.obj",
+    "texture": "tts/texture/queen-light.webp",
+    "normal": "tts/texture/queen-normal.webp",
+    "collider": "tts/mesh/queen-collider.obj",
+    "flipY": true
   },
   "unit.light.rook": {
     "placeholder": "rook",
-    "color": "#e8e2d0"
+    "color": "#e8e2d0",
+    "mesh": "tts/mesh/rook.obj",
+    "texture": "tts/texture/rook-light.webp",
+    "normal": "tts/texture/rook-normal.webp",
+    "collider": "tts/mesh/rook-collider.obj",
+    "flipY": true
   },
   "unit.light.bishop": {
     "placeholder": "bishop",
-    "color": "#e8e2d0"
+    "color": "#e8e2d0",
+    "mesh": "tts/mesh/bishop.obj",
+    "texture": "tts/texture/bishop-light.webp",
+    "normal": "tts/texture/bishop-normal.webp",
+    "collider": "tts/mesh/bishop-collider.obj",
+    "flipY": true
   },
   "unit.light.knight": {
     "placeholder": "knight",
-    "color": "#e8e2d0"
+    "color": "#e8e2d0",
+    "mesh": "tts/mesh/knight.obj",
+    "texture": "tts/texture/knight-light.webp",
+    "normal": "tts/texture/knight-normal.webp",
+    "collider": "tts/mesh/knight-collider.obj",
+    "flipY": true
   },
   "unit.light.pawn": {
     "placeholder": "pawn",
-    "color": "#e8e2d0"
+    "color": "#e8e2d0",
+    "mesh": "tts/mesh/pawn.obj",
+    "texture": "tts/texture/pawn-light.webp",
+    "normal": "tts/texture/pawn-normal.webp",
+    "collider": "tts/mesh/pawn-collider.obj",
+    "flipY": true
   },
   "unit.dark.king": {
     "placeholder": "king",
-    "color": "#2b2b2b"
+    "color": "#2b2b2b",
+    "mesh": "tts/mesh/king.obj",
+    "texture": "tts/texture/king-dark.webp",
+    "normal": "tts/texture/king-normal.webp",
+    "collider": "tts/mesh/king-collider.obj",
+    "flipY": true
   },
   "unit.dark.queen": {
     "placeholder": "queen",
-    "color": "#2b2b2b"
+    "color": "#2b2b2b",
+    "mesh": "tts/mesh/queen.obj",
+    "texture": "tts/texture/queen-dark.webp",
+    "normal": "tts/texture/queen-normal.webp",
+    "collider": "tts/mesh/queen-collider.obj",
+    "flipY": true
   },
   "unit.dark.rook": {
     "placeholder": "rook",
-    "color": "#2b2b2b"
+    "color": "#2b2b2b",
+    "mesh": "tts/mesh/rook.obj",
+    "texture": "tts/texture/rook-dark.webp",
+    "normal": "tts/texture/rook-normal.webp",
+    "collider": "tts/mesh/rook-collider.obj",
+    "flipY": true
   },
   "unit.dark.bishop": {
     "placeholder": "bishop",
-    "color": "#2b2b2b"
+    "color": "#2b2b2b",
+    "mesh": "tts/mesh/bishop.obj",
+    "texture": "tts/texture/bishop-dark.webp",
+    "normal": "tts/texture/bishop-normal.webp",
+    "collider": "tts/mesh/bishop-collider.obj",
+    "flipY": true
   },
   "unit.dark.knight": {
     "placeholder": "knight",
-    "color": "#2b2b2b"
+    "color": "#2b2b2b",
+    "mesh": "tts/mesh/knight.obj",
+    "texture": "tts/texture/knight-dark.webp",
+    "normal": "tts/texture/knight-normal.webp",
+    "collider": "tts/mesh/knight-collider.obj",
+    "flipY": true
   },
   "unit.dark.pawn": {
     "placeholder": "pawn",
-    "color": "#2b2b2b"
+    "color": "#2b2b2b",
+    "mesh": "tts/mesh/pawn.obj",
+    "texture": "tts/texture/pawn-dark.webp",
+    "normal": "tts/texture/pawn-normal.webp",
+    "collider": "tts/mesh/pawn-collider.obj",
+    "flipY": true
   },
   "hero.short": {
     "placeholder": "hero-short"
@@ -130,5 +190,330 @@
   "marker.auxiliary": {
     "placeholder": "aux-ring",
     "color": "#7fd1ff"
+  },
+  "sheet.cavalier": {
+    "image": "tts/sheet/cavalier.jpg"
+  },
+  "sheet.deathKnight": {
+    "image": "tts/sheet/deathKnight.jpg"
+  },
+  "sheet.dragonLord": {
+    "image": "tts/sheet/dragonLord.jpg"
+  },
+  "sheet.holyPaladin": {
+    "image": "tts/sheet/holyPaladin.jpg"
+  },
+  "sheet.monk": {
+    "image": "tts/sheet/monk.jpg"
+  },
+  "sheet.saint": {
+    "image": "tts/sheet/saint.jpg"
+  },
+  "sheet.supremeInquisitor": {
+    "image": "tts/sheet/supremeInquisitor.jpg"
+  },
+  "sheet.scout": {
+    "image": "tts/sheet/scout.jpg"
+  },
+  "sheet.scoundrel": {
+    "image": "tts/sheet/scoundrel.jpg"
+  },
+  "sheet.spyMaster": {
+    "image": "tts/sheet/spyMaster.jpg"
+  },
+  "sheet.royalAssassin": {
+    "image": "tts/sheet/royalAssassin.jpg"
+  },
+  "sheet.magus": {
+    "image": "tts/sheet/magus.jpg"
+  },
+  "sheet.necromancer": {
+    "image": "tts/sheet/necromancer.jpg"
+  },
+  "sheet.grandArcanist": {
+    "image": "tts/sheet/grandArcanist.jpg"
+  },
+  "sheet.chronomonger": {
+    "image": "tts/sheet/chronomonger.jpg"
+  },
+  "portrait.cavalier": {
+    "image": "tts/portrait/cavalier.webp"
+  },
+  "portrait.deathKnight": {
+    "image": "tts/portrait/deathKnight.webp"
+  },
+  "portrait.dragonLord": {
+    "image": "tts/portrait/dragonLord.webp"
+  },
+  "portrait.holyPaladin": {
+    "image": "tts/portrait/holyPaladin.webp"
+  },
+  "portrait.monk": {
+    "image": "tts/portrait/monk.webp"
+  },
+  "portrait.cultist": {
+    "image": "tts/portrait/cultist.webp"
+  },
+  "portrait.saint": {
+    "image": "tts/portrait/saint.webp"
+  },
+  "portrait.supremeInquisitor": {
+    "image": "tts/portrait/supremeInquisitor.webp"
+  },
+  "portrait.scout": {
+    "image": "tts/portrait/scout.webp"
+  },
+  "portrait.scoundrel": {
+    "image": "tts/portrait/scoundrel.webp"
+  },
+  "portrait.spyMaster": {
+    "image": "tts/portrait/spyMaster.webp"
+  },
+  "portrait.royalAssassin": {
+    "image": "tts/portrait/royalAssassin.webp"
+  },
+  "portrait.magus": {
+    "image": "tts/portrait/magus.webp"
+  },
+  "portrait.necromancer": {
+    "image": "tts/portrait/necromancer.webp"
+  },
+  "portrait.grandArcanist": {
+    "image": "tts/portrait/grandArcanist.webp"
+  },
+  "portrait.chronomonger": {
+    "image": "tts/portrait/chronomonger.webp"
+  },
+  "token.ability.arcaneShackles": {
+    "image": "tts/token/ability-arcaneShackles.webp"
+  },
+  "token.ability.banishment": {
+    "image": "tts/token/ability-banishment.webp"
+  },
+  "token.ability.certaintyAndDeath": {
+    "image": "tts/token/ability-certaintyAndDeath.webp"
+  },
+  "token.ability.tightFormation": {
+    "image": "tts/token/ability-tightFormation.webp"
+  },
+  "token.ability.convergeTimelines": {
+    "image": "tts/token/ability-convergeTimelines.webp"
+  },
+  "token.ability.counterintelligence": {
+    "image": "tts/token/ability-counterintelligence.webp"
+  },
+  "token.ability.crusade": {
+    "image": "tts/token/ability-crusade.webp"
+  },
+  "token.ability.divineProtector": {
+    "image": "tts/token/ability-divineProtector.webp"
+  },
+  "token.ability.infiltrate": {
+    "image": "tts/token/ability-infiltrate.webp"
+  },
+  "token.ability.inquisition": {
+    "image": "tts/token/ability-inquisition.webp"
+  },
+  "token.ability.killOrder": {
+    "image": "tts/token/ability-killOrder.webp"
+  },
+  "token.ability.martyrdom": {
+    "image": "tts/token/ability-martyrdom.webp"
+  },
+  "token.ability.mislead": {
+    "image": "tts/token/ability-mislead.webp"
+  },
+  "token.ability.paragonOfHonor": {
+    "image": "tts/token/ability-paragonOfHonor.webp"
+  },
+  "token.ability.poisonWater": {
+    "image": "tts/token/ability-poisonWater.webp"
+  },
+  "token.ability.preaching": {
+    "image": "tts/token/ability-preaching.webp"
+  },
+  "token.ability.sanctimonious": {
+    "image": "tts/token/ability-sanctimonious.webp"
+  },
+  "token.ability.seekRevenge": {
+    "image": "tts/token/ability-seekRevenge.webp"
+  },
+  "token.aura.auraOfFear": {
+    "image": "tts/token/aura-auraOfFear.webp"
+  },
+  "token.aura.auraOfRadiance": {
+    "image": "tts/token/aura-auraOfRadiance.webp"
+  },
+  "token.aura.zealotMob": {
+    "image": "tts/token/aura-zealotMob.webp"
+  },
+  "token.aura.elusiveSabotage": {
+    "image": "tts/token/aura-elusiveSabotage.webp"
+  },
+  "token.unit.legendaryAncient": {
+    "image": "tts/token/unit-legendaryAncient.webp"
+  },
+  "token.unit.demon": {
+    "image": "tts/token/unit-demon.webp"
+  },
+  "token.square.portal1": {
+    "image": "tts/token/square-portal1.webp"
+  },
+  "token.square.portal2": {
+    "image": "tts/token/square-portal2.webp"
+  },
+  "token.square.makePeaceNotWar": {
+    "image": "tts/token/square-makePeaceNotWar.webp"
+  },
+  "token.square.bearTrap": {
+    "image": "tts/token/square-bearTrap.webp"
+  },
+  "token.square.grotto": {
+    "image": "tts/token/square-grotto.webp"
+  },
+  "token.ring.knight": {
+    "image": "tts/token/ring-knight.webp"
+  },
+  "token.ring.bishop": {
+    "image": "tts/token/ring-bishop.webp"
+  },
+  "tts.token.peace": {
+    "image": "tts/token/tts-token-peace.webp"
+  },
+  "tts.token.war": {
+    "image": "tts/token/tts-token-war.webp"
+  },
+  "token.active": {
+    "image": "tts/token/active.webp"
+  },
+  "token.destiny.dark": {
+    "image": "tts/token/destiny-dark.webp"
+  },
+  "token.destiny.light": {
+    "image": "tts/token/destiny-light.webp"
+  },
+  "room.sky": {
+    "image": "tts/sky/sky.jpg"
+  },
+  "tts.graveyard": {
+    "image": "tts/board/graveyard.webp"
+  },
+  "tts.board": {
+    "image": "tts/board/board.webp"
+  },
+  "tts.achievements": {
+    "image": "tts/board/achievements.webp"
+  },
+  "pool.common.light": {
+    "image": "tts/board/common-pool.webp"
+  },
+  "pool.hero": {
+    "image": "tts/board/hero-pool.webp"
+  },
+  "bar.16": {
+    "image": "tts/board/bar-16.webp"
+  },
+  "bar.20": {
+    "image": "tts/board/bar-20.webp"
+  },
+  "legend": {
+    "image": "tts/board/legend.webp"
+  },
+  "legend.wound": {
+    "image": "tts/icon/wound.webp"
+  },
+  "legend.heal": {
+    "image": "tts/icon/heal.webp"
+  },
+  "legend.movement": {
+    "image": "tts/icon/movement.webp"
+  },
+  "legend.hero": {
+    "image": "tts/icon/hero.webp"
+  },
+  "legend.push": {
+    "image": "tts/icon/push.webp"
+  },
+  "legend.adjacent": {
+    "image": "tts/icon/adjacent.webp"
+  },
+  "legend.range": {
+    "image": "tts/icon/range.webp"
+  },
+  "legend.destiny": {
+    "image": "tts/icon/destiny.webp"
+  },
+  "legend.lead": {
+    "image": "tts/icon/lead.webp"
+  },
+  "legend.cannotLead": {
+    "image": "tts/icon/cannotLead.webp"
+  },
+  "legend.battle": {
+    "image": "tts/icon/battle.webp"
+  },
+  "legend.cannotBattle": {
+    "image": "tts/icon/cannotBattle.webp"
+  },
+  "legend.linked": {
+    "image": "tts/icon/linked.webp"
+  },
+  "legend.cannot": {
+    "image": "tts/icon/cannot.webp"
+  },
+  "legend.destroy": {
+    "image": "tts/icon/destroy.webp"
+  },
+  "legend.cannotBeDestroyed": {
+    "image": "tts/icon/cannotBeDestroyed.webp"
+  },
+  "legend.destroyInBattle": {
+    "image": "tts/icon/destroyInBattle.webp"
+  },
+  "legend.cannotBeDestroyedInBattle": {
+    "image": "tts/icon/cannotBeDestroyedInBattle.webp"
+  },
+  "legend.notRoyalty": {
+    "image": "tts/icon/notRoyalty.webp"
+  },
+  "legend.mustNotCheck": {
+    "image": "tts/icon/mustNotCheck.webp"
+  },
+  "legend.noRoll": {
+    "image": "tts/icon/noRoll.webp"
+  },
+  "marker.auxiliary.light.pawn": {
+    "image": "tts/token/aux-pawn-light.webp"
+  },
+  "marker.auxiliary.dark.pawn": {
+    "image": "tts/token/aux-pawn-dark.webp"
+  },
+  "marker.auxiliary.light.knight": {
+    "image": "tts/token/aux-knight-light.webp"
+  },
+  "marker.auxiliary.dark.knight": {
+    "image": "tts/token/aux-knight-dark.webp"
+  },
+  "marker.auxiliary.light.bishop": {
+    "image": "tts/token/aux-bishop-light.webp"
+  },
+  "marker.auxiliary.dark.bishop": {
+    "image": "tts/token/aux-bishop-dark.webp"
+  },
+  "marker.auxiliary.light.rook": {
+    "image": "tts/token/aux-rook-light.webp"
+  },
+  "marker.auxiliary.dark.rook": {
+    "image": "tts/token/aux-rook-dark.webp"
+  },
+  "marker.auxiliary.light.queen": {
+    "image": "tts/token/aux-queen-light.webp"
+  },
+  "marker.auxiliary.dark.queen": {
+    "image": "tts/token/aux-queen-dark.webp"
+  },
+  "tts.table": {
+    "mesh": "tts/mesh/table.obj",
+    "texture": "tts/texture/table.webp"
   }
 }

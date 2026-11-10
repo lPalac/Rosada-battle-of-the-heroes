@@ -1,6 +1,6 @@
 // Sandbox value editors: health, pools, Common Pools, Revenge, Peace/War; free roll (FR-101).
 import { t } from '../../i18n/strings.ts';
-import { EPIC_DESTINIES, FAVORS, type Action, type GameState } from '../../rules/index.ts';
+import { EPIC_DESTINIES, FAVORS, heroAbilityIds, usesLeft, type Action, type GameState } from '../../rules/index.ts';
 import { button, el } from '../dom.ts';
 
 export function renderSandboxEditors(
@@ -67,6 +67,14 @@ export function renderSandboxEditors(
         el('span', { class: 'muted' }, t('action.kingsForces')),
         num(s.royalFavors[side].kingsForces, `edit-kings-forces-${side}`, (v) => dispatch({ type: 'sandboxSet', path: 'kingsForces', target: side, value: v })),
       )),
+    // 004: uses left per limited ability, and the effects in play (remove one).
+    el('div', { class: 'row' }, ...s.heroes.flatMap((h) => heroAbilityIds(h).filter((id) => usesLeft(s, h.id, id) !== null).map((id) =>
+      el('label', { class: 'muted small' }, `${h.id} ${t(`ability.${id}.name`)}`,
+        num(usesLeft(s, h.id, id) ?? 0, `edit-uses-${h.id}-${id}`, (v) => dispatch({ type: 'sandboxSet', path: 'uses', target: `${h.id}:${id}`, value: v })))))),
+    s.effects.length
+      ? el('div', { class: 'row' }, ...s.effects.map((e) =>
+          button(`✕ ${t(`effect.${e.kind}`)}`, () => dispatch({ type: 'sandboxSet', path: 'removeEffect', value: e.id }), { testid: `remove-effect-${e.id}` })))
+      : null,
     button(t('sandbox.exportFixture'), onExportFixture, { testid: 'export-fixture' }),
   );
 }

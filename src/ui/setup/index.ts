@@ -51,8 +51,8 @@ export class SetupWizard {
       });
     } else if (state && !picksComplete(state.setup)) {
       index = 2;
-      body = renderPicks(state.setup, (side, rangeType) => {
-        this.host.dispatch({ type: 'pickHero', side, rangeType });
+      body = renderPicks(state.setup, (side, choice) => {
+        this.host.dispatch({ type: 'pickHero', side, ...choice });
         this.render();
       });
     } else if (state && (!this.orderDone.light || !this.orderDone.dark)) {

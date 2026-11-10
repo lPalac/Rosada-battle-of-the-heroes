@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Ajv } from 'ajv';
 
 const DIR = 'src/data';
-const FILES = ['board', 'units', 'heroes', 'healthbars', 'rules', 'assets', 'royal-favors'] as const;
+const FILES = ['board', 'units', 'heroes', 'healthbars', 'rules', 'assets', 'royal-favors', 'abilities'] as const;
 
 function load(name: string): any {
   return JSON.parse(readFileSync(join(DIR, name), 'utf8'));
@@ -56,6 +56,50 @@ export function checkData(): string[] {
   if (th.some((t, i) => i > 0 && t <= th[i - 1])) errors.push('royal-favors.json: power thresholds must ascend');
   for (const key of ['table.top', 'room.floor', 'board.border', 'strip.graveyard', 'sheet.hero', 'track.favors', 'medallion', 'marker.auxiliary']) {
     if (!(key in data.assets)) errors.push(`assets.json: missing ${key}`);
+  }
+  errors.push(...checkAbilities(data));
+  return errors;
+}
+
+/** 004 contracts/abilities-data.md rules 1, 3, 4, 5, 6 and 7. Rule 2 (implementations) is a Vitest test. */
+function checkAbilities(data: Record<string, any>): string[] {
+  const errors: string[] = [];
+  const strings = load('strings.en.json');
+  const abilities = new Map<string, any>((data.abilities.abilities ?? []).map((a: any) => [a.id, a]));
+  const owner = new Map<string, string[]>();
+  const own = (id: string, by: string) => owner.set(id, [...(owner.get(id) ?? []), by]);
+  for (const a of abilities.values()) if (a.id.startsWith('general.')) own(a.id, 'general');
+  for (const h of data.heroes.heroes ?? []) {
+    for (const id of h.abilities) own(id, h.id);
+    if (h.selectable) {
+      // Rule 7: exactly the three forms.
+      const forms = Object.keys(h.forms ?? {}).sort().join(',');
+      if (forms !== 'dominant,fanatic,resolute') errors.push(`heroes.json ${h.id}: needs the forms fanatic, resolute, dominant`);
+      for (const k of ['portrait', 'sheet']) if (!(h[k] in data.assets)) errors.push(`heroes.json ${h.id}: ${k} key ${h[k]} missing from assets.json`);
+    }
+    for (const form of Object.values<any>(h.forms ?? {})) {
+      for (const id of form.abilities) {
+        own(id, form.id);
+        const a = abilities.get(id);
+        // Rule 3: Epic form actions have a cost (Beginning of Epic Stage placements excepted), never uses.
+        if (a && a.kind !== 'passive' && !a.timings.includes('beginningOfEpicStage') && !a.cost) errors.push(`abilities.json ${id}: Epic ability needs a cost`);
+      }
+      // Rule 6: art keys exist.
+      for (const k of ['portrait', 'sheet']) if (!(form[k] in data.assets)) errors.push(`heroes.json ${form.id}: ${k} key ${form[k]} missing from assets.json`);
+      if (!strings[`form.${form.id}.name`]) errors.push(`strings.en.json: missing form.${form.id}.name`);
+    }
+  }
+  // Rule 1: every hero / form ability exists, and every ability belongs to exactly one owner.
+  for (const [id, by] of owner) if (!abilities.has(id)) errors.push(`heroes.json ${by.join(',')}: unknown ability ${id}`);
+  for (const a of abilities.values()) {
+    const by = owner.get(a.id) ?? [];
+    if (by.length !== 1) errors.push(`abilities.json ${a.id}: belongs to ${by.length} heroes or forms`);
+    if (a.cost && a.uses) errors.push(`abilities.json ${a.id}: has both cost and uses`);
+    // Rule 4: values pairs are [normal, bloodied].
+    for (const [k, v] of Object.entries<any>(a.values)) if (Array.isArray(v) && v.length !== 2) errors.push(`abilities.json ${a.id}: value ${k} must be [normal, bloodied]`);
+    // Rule 5: strings and icons.
+    for (const key of [a.name, a.text, ...a.timings.map((t: string) => `timing.${t}`)]) if (!strings[key]) errors.push(`strings.en.json: missing ${key}`);
+    for (const icon of a.icons) if (!(`legend.${icon}` in data.assets)) errors.push(`abilities.json ${a.id}: icon ${icon} is not a Symbol Legend key`);
   }
   return errors;
 }

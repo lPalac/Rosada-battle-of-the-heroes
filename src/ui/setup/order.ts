@@ -15,7 +15,8 @@ function playerName(setup: SetupChoices, side: Side, slot: number): string {
 }
 
 function describe(setup: SetupChoices, p: Pick, slot: number): string {
-  return `${t(`range.${p.rangeType}`)} (${playerName(setup, p.side, slot)})`;
+  const label = p.heroDefinitionId ? t(`hero.${p.heroDefinitionId}.name`) : t(`range.${p.rangeType}`);
+  return `${label} (${playerName(setup, p.side, slot)})`;
 }
 
 export function renderOrder(setup: SetupChoices, side: Side, choice: OrderChoice, onChange: () => void, onConfirm: () => void): HTMLElement {

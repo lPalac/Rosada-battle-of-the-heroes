@@ -2,7 +2,7 @@
 // then the starting position (rulebook *Setup*, FR-002).
 import { c, heroStartSquares } from './board.ts';
 import { emit, fail, type Ctx } from './ctx.ts';
-import { DATA, heroDefinitionFor, type StaticData } from './data.ts';
+import { DATA, heroDefinition, heroDefinitionFor, type HeroDefinition, type StaticData } from './data.ts';
 import type { Hero } from './model/hero.ts';
 import type { GameState, Pick, Player, SetupChoices } from './model/state.ts';
 import type { Unit } from './model/unit.ts';
@@ -40,6 +40,7 @@ function emptyBoardState(setup: SetupChoices): GameState {
     tokens: { peaceTreaty: 'peace', revenge: { light: 0, dark: 0 } },
     stage: 'starting', epicPending: false, royalFavors: { light: emptyFavorRecord(), dark: emptyFavorRecord() },
     pendingDecision: null, decisionQueue: [], result: null, sandboxMoved: [], log: [],
+    effects: [], abilityState: {}, nextEffectId: 1,
   };
 }
 
@@ -71,17 +72,38 @@ function requireSetup(ctx: Ctx): SetupChoices {
   return ctx.s.setup;
 }
 
-export function pickHero(ctx: Ctx, side: Side, rangeType: RangeType): void {
+/** Named heroes offered in setup (spec Q-42: the generic heroes are not). */
+export function selectableHeroes(): HeroDefinition[] {
+  return DATA.heroes.filter((h) => h.selectable);
+}
+
+/** Named heroes still free for a pick: Draft offers each hero once, Mirror any (spec Q-41). */
+export function pickableHeroes(setup: SetupChoices): HeroDefinition[] {
+  return selectableHeroes().filter((h) => setup.mode === 'mirror' || !setup.picks.some((p) => p.heroDefinitionId === h.id));
+}
+
+export function pickHero(ctx: Ctx, side: Side, rangeType?: RangeType, heroDefinitionId?: string): void {
   const setup = requireSetup(ctx);
   const picker = nextPicker(setup);
   if (!picker) fail('PICKS_DONE', 'All heroes are picked', 'Setup');
   if (picker !== side) fail('NOT_YOUR_PICK', `It is ${picker}'s pick`, 'Setup');
+  let defId: string | undefined;
+  if (heroDefinitionId) {
+    if (!DATA.heroes.some((h) => h.id === heroDefinitionId)) fail('UNKNOWN_HERO', 'Unknown hero', 'Setup');
+    if (setup.mode === 'draft' && setup.picks.some((p) => p.heroDefinitionId === heroDefinitionId)) {
+      fail('HERO_TAKEN', 'In Draft each hero can be picked once', 'Setup');
+    }
+    defId = heroDefinitionId;
+    rangeType = heroDefinition(heroDefinitionId).rangeType;
+  }
+  if (!rangeType) fail('UNKNOWN_HERO', 'Pick a hero', 'Setup');
+  const extra = defId ? { heroDefinitionId: defId } : {};
   if (setup.mode === 'mirror') {
     // One pick fills the same hero slot for both sides.
-    setup.picks.push({ side: 'light', rangeType, pickIndex: setup.picks.length });
-    setup.picks.push({ side: 'dark', rangeType, pickIndex: setup.picks.length });
+    setup.picks.push({ side: 'light', rangeType, pickIndex: setup.picks.length, ...extra });
+    setup.picks.push({ side: 'dark', rangeType, pickIndex: setup.picks.length, ...extra });
   } else {
-    setup.picks.push({ side, rangeType, pickIndex: setup.picks.length });
+    setup.picks.push({ side, rangeType, pickIndex: setup.picks.length, ...extra });
   }
   emit(ctx, { type: 'setupChanged' });
 }
@@ -156,7 +178,7 @@ export function createGameState(setup: SetupChoices, data: StaticData = DATA): G
     order.forEach((pickIndex, i) => {
       const pick = setup.picks.find((p) => p.pickIndex === pickIndex)!;
       const turnOrder = side === 'light' ? 1 + 2 * i : 2 + 2 * i;
-      const def = heroDefinitionFor(pick.rangeType);
+      const def = pick.heroDefinitionId ? heroDefinition(pick.heroDefinitionId) : heroDefinitionFor(pick.rangeType);
       const startSquare = setup.startFiles[String(pickIndex)] === 'c' ? starts[0] : starts[1];
       heroes.push({
         id: `H${turnOrder}` as HeroId, side, turnOrder, playerId: playerFor(setup, pick).id, definitionId: def.id,
@@ -164,7 +186,7 @@ export function createGameState(setup: SetupChoices, data: StaticData = DATA): G
         health: def.maxHealth, healthBarId: def.healthBar, pos: { ...startSquare }, startSquare: { ...startSquare },
         pool: data.rules.destiny.heroPoolStart,
         status: { unconscious: false, skipNextTurn: false, recoverAtBeginningOfTurn: false, movementPenaltyNextTurn: 0 },
-        rammedBy: null, art: def.art, epic: null, heroUnitId: null, heroUnitType: def.heroUnitType,
+        rammedBy: null, art: def.art, epic: null, heroUnitId: null, heroUnitType: def.heroUnitType, form: null,
       });
     });
   }
