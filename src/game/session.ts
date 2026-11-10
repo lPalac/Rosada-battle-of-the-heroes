@@ -31,9 +31,20 @@ export function undo(initial: GameState, history: Action[]): Action[] | null {
   return history.length > barrier ? history.slice(0, -1) : null;
 }
 
-type Listener = (state: GameState, events: GameEvent[], action: Action | null) => void;
+export type Listener = (state: GameState, events: GameEvent[], action: Action | null) => void;
 
-export class GameSession {
+/** What the table and HUD need from a game: hot-seat (GameSession) or online (src/net OnlineSession, 005 R-13). */
+export interface SessionLike {
+  readonly state: GameState;
+  readonly initial: GameState;
+  readonly actions: readonly Action[];
+  onChange(fn: Listener): () => void;
+  dispatch(action: Action): ApplyResult;
+  canUndo(): boolean;
+  undo(): boolean;
+}
+
+export class GameSession implements SessionLike {
   private history: Action[] = [];
   private barrier = 0;
   private listeners: Listener[] = [];

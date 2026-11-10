@@ -8,17 +8,17 @@ export function seatOfHero(state: GameState, heroId: HeroId): SeatId | null {
   return (h?.playerId as SeatId | undefined) ?? null;
 }
 
-function seatsOfSide(seats: readonly Seat[], side: Side): Seat[] {
+function seatsOfSide<S extends Pick<Seat, 'side'>>(seats: readonly S[], side: Side): S[] {
   return seats.filter((s) => s.side === side);
 }
 
 /** The seat on `side` that controls hero slot `slot` (0 or 1). */
-export function seatForSlot(seats: readonly Seat[], side: Side, slot: number): SeatId | null {
+export function seatForSlot(seats: readonly Pick<Seat, 'id' | 'side' | 'heroSlots'>[], side: Side, slot: number): SeatId | null {
   return seatsOfSide(seats, side).find((s) => s.heroSlots.includes(slot))?.id ?? null;
 }
 
 /** Seats allowed to send the next action (empty: nobody, e.g. setup steps the server makes, or the game ended). */
-export function actorFor(room: Pick<Room, 'seats'>, state: GameState): Set<SeatId> {
+export function actorFor(room: { seats: readonly Pick<Seat, 'id' | 'side' | 'heroSlots'>[] }, state: GameState): Set<SeatId> {
   const out = new Set<SeatId>();
   const add = (id: SeatId | null) => id && out.add(id);
   if (state.status === 'setup') {
@@ -50,7 +50,7 @@ export function isDecision(state: GameState): boolean {
 }
 
 /** The roll button belongs to the active seat while the rules wait for a roll and nothing else is pending. */
-export function canRoll(room: Pick<Room, 'seats'>, state: GameState, seat: SeatId): boolean {
+export function canRoll(room: { seats: readonly Pick<Seat, 'id' | 'side' | 'heroSlots'>[] }, state: GameState, seat: SeatId): boolean {
   return state.status === 'playing' && !state.pendingDecision && awaitingRoll(state) && actorFor(room, state).has(seat);
 }
 
