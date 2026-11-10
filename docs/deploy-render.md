@@ -1,5 +1,7 @@
 # Free test deployment on Render
 
+**Live now: https://rosada.onrender.com** (service `rosada`, created 2026-11-10 from the public repository URL; new versions: **Manual Deploy → Deploy latest commit** on the service page, since auto-deploy needs the GitHub connection).
+
 This puts the whole game online for testing on one free Render web service: the website, the online game server and `/api/health`, at a `https://<name>.onrender.com` address. Hosting on Hostinger under your own subdomain is the later go-live step ([deploy-hostinger.md](deploy-hostinger.md)). The decision is in [specs/005-online-multiplayer/research.md](../specs/005-online-multiplayer/research.md) R-14.
 
 ## What the free plan means

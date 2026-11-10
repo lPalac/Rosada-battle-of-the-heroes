@@ -119,7 +119,7 @@
 - [X] T061 [US5] FR-074: server/static.ts serves `dist/` from the game server (index fallback, long cache for hashed `assets/`, no-cache for `index.html`, no path escapes) on the same port as `/ws` and `/api/health`; test in tests/server/static.test.ts
 - [X] T062 [P] [US5] render.yaml (Blueprint): free web service, Node 24, build `npm ci && npm run build`, start `node dist-server/index.js`, health check `/api/health`, auto-deploy from `005-online-multiplayer`, `ROSADA_ROOMS_DIR=/tmp/rosada-rooms`, `HOST=0.0.0.0`, no `ROSADA_TEST`
 - [X] T063 [P] [US5] docs/deploy-render.md: sign up, connect the repository, create from the Blueprint, the URL, the free-plan limits (sleep after 15 idle minutes, up to a minute to wake, rooms lost on restart or redeploy)
-- [ ] T064 [US5] Deploy: push the branch, create the Render service from render.yaml (Luka approves the GitHub connection and any terms), run `scripts/smoke.ts <url>` and record the URL in quickstart.md
+- [X] T064 [US5] Deploy: push the branch, create the Render service from render.yaml (Luka approves the GitHub connection and any terms), run `scripts/smoke.ts <url>` and record the URL in quickstart.md
 
 ---
 

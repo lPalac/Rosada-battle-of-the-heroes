@@ -34,6 +34,8 @@ npm run test:e2e     # + online specs: Playwright starts the game server in test
 
 ## Test deployment on Render (now)
 
+**Live: https://rosada.onrender.com** (deployed 2026-11-10 from `005-online-multiplayer` @ 16be535; `scripts/smoke.ts` passed: HTTP → HTTPS redirect, health, a room created and joined over wss). The service was created from the public repository URL, so Render does not auto-deploy on push: use **Manual Deploy → Deploy latest commit** on the service page (or connect GitHub in Render to get auto-deploy).
+
 Guide: [docs/deploy-render.md](../../docs/deploy-render.md). One free web service from `render.yaml` serves the site and the game server. Check it with:
 
 ```powershell
