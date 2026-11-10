@@ -177,7 +177,7 @@ Connected players see "reconnecting" for about a second; their rooms come back f
 | Script injection via names | names are trimmed and limited to 1–20 characters with control characters removed, and always rendered with `textContent` (FR-063) |
 | Eavesdropping | HTTPS / WSS only (nginx); HSTS header |
 | Server exposure | port 2567 on localhost only; `ufw`; non-root service user; SSH keys only; unattended-upgrades for security updates |
-| Personal data | only display names and games; no IPs stored beyond nginx's default logs (rotated, 14 days); no analytics (FR-064) |
+| Personal data | only display names, seat tokens (hashed) and games; **no client IP addresses on disk** (decided 2026-11-10): nginx uses a log format without `$remote_addr` / `$http_x_forwarded_for`, the game server never logs addresses, and the per-address limits keep them in memory only until their window expires; no analytics (FR-064) |
 
 ## R-12 Testing approach
 
@@ -186,6 +186,14 @@ Connected players see "reconnecting" for about a second; their rooms come back f
 - **Vitest, server integration**: start the real Colyseus server on a random port and connect 2–4 client SDK instances in Node. Play the 004 scripted game through the server and compare the final state with the hot-seat replay (US2 independent test). Then run the **fuzz test** (SC-004): thousands of random legal, illegal, out-of-turn and malformed messages from every seat, checking afterwards that the server's log equals the accepted subset and replays cleanly.
 - **Playwright**: a second `webServer` entry starts the game server in test mode on port 2568, and the e2e Vite server proxies to it. Multi-context tests cover create/join by code and link (US1), turn flow and refusal messages (US2), the forced server roll shown in every window (US3), reconnect after a page reload (US4), and the version-mismatch prompt (US5-AS3).
 - **Deployment smoke test**: `scripts/smoke.ts <url>` opens the deployed site over HTTPS, checks the certificate, creates a room, joins it with a second client, and plays one Lead (US5).
+
+## R-14 Free test deployment on Render (decided 2026-11-10)
+
+**Decision**: Before go live on Hostinger, run the whole game as **one free Render web service**: the Node game server also serves the built site (`dist/`) as static files with an `index.html` fallback (FR-074), so the site, `/ws` and `/api` share one HTTPS origin and no CORS or allowed-origin setup is needed. A `render.yaml` Blueprint builds with `npm ci && npm run build` and starts `node dist-server/index.js`, health check `/api/health`, auto-deploy from the `005-online-multiplayer` branch. `ROSADA_TEST` stays unset; `ROSADA_ROOMS_DIR` points to a temporary folder.
+
+**Free plan, from Render's docs ([Deploy for Free](https://render.com/docs/free), [WebSocket changelog](https://render.com/changelog/free-web-services-now-remain-active-while-receiving-websocket-messages))**: the service spins down after 15 minutes without inbound traffic (HTTP requests or WebSocket messages on open connections keep it awake) and takes up to a minute to start again; the filesystem is ephemeral, so room files are lost on every redeploy, restart or spin-down (US4-AS5 holds only at go live); a workspace has 750 free instance hours a month, enough for one always-on service. Fine for testing with friends; not for long games left idle.
+
+**Alternatives considered**: Netlify for `dist/` plus Render for the server: two origins, so the client would need a configurable server URL and the server an allowed-origin check; kept only as a fallback if Render's free plan does not fit. Hostinger Premium Web Hosting (Luka's current plan): cannot run a long-lived Node process with WebSockets (R-01).
 
 ## R-13 Client integration
 

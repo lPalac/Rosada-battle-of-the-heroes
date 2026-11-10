@@ -82,6 +82,10 @@ server {
     proxy_read_timeout 1h;
   }
   location /api/ { proxy_pass http://127.0.0.1:2567; proxy_set_header X-Forwarded-For $remote_addr; }
+  # No client addresses on disk (spec Clarifications 2026-11-10, FR-064): this format has no $remote_addr or
+  # $http_x_forwarded_for. log_format rosada_noip is defined once in /etc/nginx/conf.d/rosada-log.conf:
+  #   log_format rosada_noip '[$time_local] "$request" $status $body_bytes_sent $request_time';
+  access_log /var/log/nginx/rosada.access.log rosada_noip;
   # listen 443 ssl + certificate lines are added by certbot --nginx; port 80 redirects to HTTPS
 }
 ```
@@ -106,3 +110,4 @@ Large TTS assets under `public/tts/` are served by nginx with gzip on for JSON/J
 3. `scripts/smoke.ts https://<domain>` passes.
 4. `sudo reboot`; after about a minute, checks 1–2 pass again without logging in (FR-071).
 5. `certbot renew --dry-run` succeeds (FR-070).
+6. No client IPs on disk: `sudo grep -cE '([0-9]{1,3}\.){3}[0-9]{1,3}' /var/log/nginx/rosada.access.log` prints 0, and `journalctl -u rosada` shows no client addresses (FR-064).

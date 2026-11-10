@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-07
 
-**Status**: Draft
+**Status**: Built (2026-11-10); not yet deployed
 
 **Input**: User description: "Online multiplayer for 2–4 players with anonymous rooms (create, join by code or link), seats per side and hero, server-authoritative turn flow where each player acts only for their heroes, server-owned d20 rolls animated on the client physics die, reconnect/resume, and hosting on a Hostinger KVM VPS (static site + Node.js server, domain, HTTPS)."
 
@@ -23,6 +23,13 @@
 - Q: Accounts or anonymous rooms? → A: Anonymous rooms. A player types a display name and creates or joins a room by code or link. No sign-up.
 - Q: Who rolls the d20 online? → A: The server picks the value. Every player's screen plays the physics die landing on that value.
 
+### Session 2026-11-10 (analysis round, decided by Luka, the game's designer)
+
+- Q: Online turn order and starting squares (was Q-52)? → A: Pick order. Each side's first-picked hero plays first (Light turn 1, Dark turn 2) and starts behind the c-file Bishop; the second-picked plays turns 3 / 4 and starts at f.
+- Q: How far back can a player undo? → A: Everything in their own turn until a reveal such as a dice roll; everyone sees the undo. Undo goes back step by step across phase changes inside the turn, back to the last reveal event (a roll, a destroyed unit, a wound) or the start of the turn. It never crosses the Active Hero hand-off or another player's action (a reaction or other decision). This changes 001 FR-012 for hot-seat too.
+- Q: Access logs keep client IP addresses (nginx default)? → A: Drop IPs. Neither nginx nor the game server writes client addresses to disk; per-address limits stay in memory only.
+- Q: Hosting now? → A: A free test deployment first: one free Render web service serves the website and the game server (a different URL is fine). Hostinger is a later "go live" step: production will be a subdomain of Luka's existing domain on a Hostinger KVM VPS (his Premium Web Hosting plan cannot run the server).
+
 ---
 
 ## Scope
@@ -35,11 +42,12 @@
 - Leaving, refreshing and dropping connection: a player gets back to their seat and the game continues where it was.
 - Undo for the acting player, within the same limits as hot-seat.
 - Saving: download the online game as a normal save file; continue a saved game in a new online room.
-- Hosting the game on a Hostinger KVM VPS under the project's domain with HTTPS: the website and the game server, with documented deployment steps.
+- A free **test deployment** on Render: one web service serves the website and the game server from one Node process, over HTTPS, at a Render URL.
+- **Go live (later step)**: hosting on a Hostinger KVM VPS under a subdomain of the project's domain with HTTPS, with documented deployment steps (scripts and guide are built; running them waits for the VPS).
 - Hot-seat and the sandbox keep working, without the server.
 
 **Out (later features):**
-- Accounts, friends, profiles, ratings, match history, public room lists and matchmaking.
+- Accounts, friends, user profiles (and any personal data they would bring), ratings, match history, public room lists and matchmaking.
 - Chat (players use their own voice or chat app).
 - Spectators.
 - Turn timers.
@@ -82,13 +90,14 @@ Each player picks the hero for their own seat in the Draft or Mirror order. Turn
 **Acceptance Scenarios**:
 
 1. **Given** online hero picking, **Then** each pick is made by the player of the seat that owns that hero slot, in the 001 pick order, and the others see each pick when it is made.
-2. **Given** all heroes are picked, **Then** turn order and starting squares are set automatically (Q-52) and shown to everyone before turn 1.
+2. **Given** all heroes are picked, **Then** turn order and starting squares are set automatically in pick order (Clarifications 2026-11-10) and shown to everyone before turn 1.
 3. **Given** it is hero H1's turn, **When** H1's player moves, leads or uses an ability, **Then** every other screen shows the same change within 1 second.
 4. **Given** it is H1's turn, **When** another player tries to act (or sends an action by hand), **Then** the server refuses it, nothing changes, and that player is told it is not their turn.
 5. **Given** an action the rules forbid, **When** any player sends it, **Then** the server refuses it with the same rule message hot-seat would show, and the game state does not change.
 6. **Given** a pending decision owned by a hero (reaction, promotion, Epic destiny, tavern or advance square, ability choice), **Then** only that hero's player can answer it, and everyone else sees who is deciding.
 7. **Given** a draw offer from one side, **Then** any player of the other side can accept or decline it (Q-54).
 8. **Given** the game ends, **Then** every player sees the same result screen, and the room offers a rematch with the same seats.
+9. **Given** it is the acting player's turn, **When** they undo, **Then** they can go back step by step through their own turn, across phase changes, to the last reveal (a roll, a destroyed unit) or the start of the turn; every player sees each undo and the log says who undid what. **Given** another player has acted since (a reaction or decision) or the turn has passed, **Then** undo is refused.
 
 ---
 
@@ -124,7 +133,7 @@ A player refreshes the page, closes the tab by mistake, or loses connection. Whe
 2. **Given** a player who is away, **Then** the others see "away" next to that player's name; the game goes on until it needs that player, then shows "waiting for <name>".
 3. **Given** a player who lost their seat token (another browser, cleared data), **Then** the room creator can let them take back their seat (Q-55), and no one else can take a seat that belongs to someone.
 4. **Given** every player has left a room, **Then** the room is kept for at least 24 hours (Q-56) and can be continued from the link.
-5. **Given** the game server restarts (update or crash), **Then** rooms in progress are restored and players can reconnect to them.
+5. **Given** the game server restarts (update or crash), **Then** rooms in progress are restored and players can reconnect to them. *(Built and tested locally. On the free test deployment the disk is temporary, so rooms are lost on a restart there; required again at go live on Hostinger.)*
 
 ---
 
@@ -134,15 +143,15 @@ Anyone with the link can open the game at the project's address in a desktop bro
 
 **Why this priority**: Friends cannot play online unless the game is hosted.
 
-**Independent Test**: Follow the quickstart on a fresh Hostinger VPS: the game loads at the domain over HTTPS, a 2-player room works between two different networks, and the browser shows no security warnings.
+**Independent Test**: Test deployment: the game loads at its Render URL over HTTPS and `scripts/smoke.ts <url>` passes (a room is created and joined over wss). Go live (later): follow the quickstart on a fresh Hostinger VPS: the game loads at the domain over HTTPS, a 2-player room works between two different networks, and the browser shows no security warnings.
 
 **Acceptance Scenarios**:
 
-1. **Given** the game is deployed, **When** someone opens the domain in a desktop browser, **Then** the game loads over HTTPS with a valid certificate within the 001 load target.
+1. **Given** the game is deployed (test deployment on Render now, Hostinger at go live), **When** someone opens its address in a desktop browser, **Then** the game loads over HTTPS with a valid certificate within the 001 load target (on the free plan, after a wake-up of up to about a minute when it was idle). Checked by `scripts/smoke.ts`.
 2. **Given** the deployed game, **Then** hot-seat and the sandbox work exactly as locally, with or without the game server running.
 3. **Given** a new version is deployed, **Then** players with an older version open in their browser are told to reload instead of joining a room with a mismatched version.
-4. **Given** the server machine restarts, **Then** the website and the game server start again without anyone logging in.
-5. **Given** the quickstart, **Then** a new version can be deployed in under 15 minutes by running the documented commands.
+4. **Given** the server machine restarts, **Then** the website and the game server start again without anyone logging in. *(Deployment check.)*
+5. **Given** the quickstart, **Then** a new version can be deployed in under 15 minutes by running the documented commands. *(Deployment check at go live on Hostinger; on Render every push to the branch deploys.)*
 
 ---
 
@@ -169,7 +178,7 @@ Any player can download the online game as a save file. The room creator can sta
 - A player answers a decision that was already answered: refused as "nothing to decide".
 - The active player is away for a long time: the game waits (no timers, Q-57). Other players can leave and come back later (US4).
 - A player leaves a 3- or 4-player room before start: their seat is free again.
-- A player wants to undo after another player has already acted (for example a reaction): not possible; undo only takes back the acting player's own last action within the hot-seat undo limits (FR-030).
+- A player wants to undo after another player has already acted (for example a reaction): not possible; undo only goes back through the acting player's own actions in their turn, to the last reveal (FR-030).
 - Someone sends malformed, huge or very many messages: the server drops them and may disconnect that client; the game state does not change.
 - A room link is shared beyond the friends: once all seats are taken, no one else can get in.
 - The server is down: online play shows "server not available"; hot-seat still works.
@@ -213,7 +222,7 @@ Any player can download the online game as a save file. The room creator can sta
 
 **Undo**
 
-- **FR-030**: The player who made the last action MUST be able to undo it, within the hot-seat undo limits (001 FR-012: not past a reveal event or phase change), and only while no other player's action came after it. The server applies the undo for everyone.
+- **FR-030**: During their own turn, the acting player MUST be able to undo their actions step by step, across phase changes, back to the last reveal event (a roll, a destroyed unit, a wound; 001 REVEAL_EVENTS) or the start of the turn. Undo MUST NOT cross the Active Hero hand-off or another player's action (a reaction or other decision), nor actions the server made. The server applies each undo for everyone and every client shows it; the log says who undid what. (Clarified 2026-11-10; 001 FR-012 amended to match.)
 
 **Reconnect and resume**
 
@@ -239,7 +248,8 @@ Any player can download the online game as a save file. The room creator can sta
 
 **Hosting**
 
-- **FR-070**: The website (the built game) and the game server MUST run on one Hostinger KVM VPS under the project's domain, with a valid HTTPS certificate that renews automatically.
+- **FR-070**: The website (the built game) and the game server MUST run on one host under one origin with HTTPS: now a free Render web service (test deployment, Render URL); at go live one Hostinger KVM VPS under a subdomain of the project's domain, with a certificate that renews automatically.
+- **FR-074**: The game server MUST be able to serve the built website itself (static files with an index fallback), so one Node process is the whole game on hosts without nginx (Render).
 - **FR-071**: The website and the game server MUST start automatically when the server machine starts and restart if they crash.
 - **FR-072**: Deploying a new version MUST be a documented set of commands (quickstart), runnable from the developer's machine or the VPS.
 - **FR-073**: Hot-seat and the sandbox MUST keep working without the game server, locally and in the deployed game.
@@ -276,20 +286,21 @@ Numbering continues from 004 (Q-51).
 
 | # | Question | Who | Blocking? |
 | --- | --- | --- | --- |
-| Q-52 | Online setup sets turn order and starting squares automatically (001). Which rule? Default: each side's heroes play in pick order (Light's first pick plays turn 1, Dark's first pick turn 2, and so on); the hero playing first on a side starts behind the c-file Bishop, the other behind the f-file Bishop. | Luka | No |
 | Q-53 | With two players on a side, can one player act for the teammate's hero (for example when the teammate is away)? Default: no; each player acts only for their own hero(es). | Luka | No |
 | Q-54 | Who answers a draw offer when a side has two players? Default: either player of that side; the first answer counts. | Luka | No |
 | Q-55 | How does a player get their seat back on a new browser? Default: the room creator hands an away seat to the person who asks. If the creator is the one who lost the token, any other seated player can hand it back. | Luka | No |
 | Q-56 | How long are rooms kept after everyone left? Default: 7 days for games in progress, 24 hours for rooms in the lobby or ended games. | Luka | No |
 | Q-57 | Should there be turn timers or a way to skip an away player? Default: no (Out of scope); the game waits. | Luka | No |
 | Q-58 | Does Rošada have any hidden information that other players must not see (for example a hero's chosen destiny before it is revealed)? Default: no; the whole game state is public, as at the table, so every client gets the full state. | Rules designer | No |
-| Q-59 | The domain: which name will the game use, and is it registered with Hostinger? Default: a domain or subdomain pointed to the VPS; the deployment does not depend on the name. | Luka | Yes, for deployment only |
+| Q-59 | The domain for go live: a subdomain of Luka's existing domain on a Hostinger KVM VPS (answered 2026-11-10); the subdomain name is not chosen yet. The test deployment uses its Render URL. | Luka | Yes, for go live only |
+| Q-60 | Found while building: the seat token is kept per browser, so two tabs of the same browser are the same player. Is that right? Default: yes; to sit two players on one computer, use two browser profiles or a private window. | Luka | No |
 
 ## Assumptions
 
 - **A-01**: Players use a current desktop Chrome, Edge or Firefox (001).
 - **A-02**: Players know each other and share the link themselves (no public room list).
-- **A-03**: The game server and the website run on one Hostinger KVM VPS (entry level is enough for friends' games); Luka manages the VPS, the domain and DNS.
+- **A-03**: For testing, the game runs on a free Render web service (it sleeps after about 15 idle minutes and wakes in about a minute; its disk is temporary). At go live, the game server and the website run on one Hostinger KVM VPS (entry level is enough for friends' games); Luka manages the VPS, the domain and DNS.
+- **A-08**: No client IP addresses are written to disk by nginx or the game server (Clarifications 2026-11-10). User profiles and any personal data they bring are a later feature.
 - **A-04**: Online games use the named heroes (004) and the same setup choices as hot-seat, without the generic heroes (004 Q-42).
 - **A-05**: There is no hidden information in the game state (Q-58), so every client may hold the full state.
 - **A-06**: A player's seat token lives in that browser's local storage; clearing it is handled by Q-55.

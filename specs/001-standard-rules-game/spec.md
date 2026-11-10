@@ -264,7 +264,7 @@ The game is shown on a 3D table with 3D units, hero figures, d20, Destiny crysta
 
 - **FR-010**: System MUST run each hero turn as the phases *Before Turn → Beginning of Turn → Before Move → Move → Before Lead → Lead → After Lead → End of Turn*, showing the current phase.
 - **FR-011**: System MUST follow turn order 1→2→3→4 (Light 1 and 3, Dark 2 and 4) and pass the Active Hero token at *End of Turn*.
-- **FR-012**: System MUST let the player undo actions within the current phase until new information is revealed (a roll, a destroyed unit), per the designers' note. Undo across the Active Hero hand-off MUST NOT be possible.
+- **FR-012**: System MUST let the player undo actions within the current phase until new information is revealed (a roll, a destroyed unit), per the designers' note. Undo across the Active Hero hand-off MUST NOT be possible. *(Amended by 005 at the designer's request, 2026-11-10: the acting player may undo step by step through their whole turn, across phase changes, back to the last reveal or the start of the turn; see 005 FR-030.)*
 
 **Heroes (generic)**
 

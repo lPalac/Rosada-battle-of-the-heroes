@@ -14,7 +14,9 @@ Play the existing game online with 2–4 friends in anonymous rooms, hosted on o
 - **Dice** (R-05): the server draws every d20 value with `crypto.randomInt`. Each client plays a normal physics throw, re-labelled with an icosahedral symmetry rotation, so the die lands on the server's value.
 - **Reconnect** (R-09): 128-bit seat tokens (stored hashed). Room files on disk are written after every action and restored on server start.
 - **Transport** (R-06): Colyseus 0.18, rooms and messages only (no Schema state). The Colyseus room is a thin adapter over `RoomCore`.
-- **Hosting** (R-01, R-07): a KVM 1 VPS with Ubuntu 24.04. nginx serves `dist/` and proxies `/ws` and `/api`. Let's Encrypt provides HTTPS, a systemd unit runs the server, and Luka deploys with a PowerShell script from Windows.
+- **Test deployment now** (R-14): one free Render web service; the game server also serves `dist/` (FR-074), so one Node process is the whole game at a Render URL (`render.yaml`, `docs/deploy-render.md`).
+- **Go live later** (R-01, R-07): a KVM 1 VPS with Ubuntu 24.04 under a subdomain of Luka's domain. nginx serves `dist/` and proxies `/ws` and `/api` (access logs without client IPs). Let's Encrypt provides HTTPS, a systemd unit runs the server, and Luka deploys with a PowerShell script from Windows.
+- **Undo** (clarified 2026-11-10): the acting player undoes step by step through their whole turn back to the last reveal; the shared undo barrier in `src/game/session.ts` becomes reveal events, enforcement changes and the turn hand-off (no longer every phase change), for hot-seat and online.
 
 ## Technical Context
 
@@ -166,6 +168,11 @@ tests/
 | A VPS reboot or deploy cuts connections | Rooms are restored from disk; clients rejoin with seat tokens automatically (US4); the deploy restart takes about 2 s |
 | Hostinger first-term vs renewal price | Noted in R-01; KVM 1 is enough, and the move to KVM 2 is a plan change in hPanel |
 | Domain not decided (Q-59) | Deployment takes the domain as a parameter; everything before US5 is independent of it |
+
+## Steps after the build
+
+1. **Test deployment (now)**: push the branch; create the Render service from `render.yaml`; run `scripts/smoke.ts <render url>`.
+2. **Go live (later)**: Hostinger KVM VPS, subdomain (Q-59), `scripts/vps-setup.sh`, `scripts/deploy.ps1`; the US4-AS5 restart check and the US5-AS4 / AS5 deployment checks are done there.
 
 ## Follow-ups (not part of this plan)
 

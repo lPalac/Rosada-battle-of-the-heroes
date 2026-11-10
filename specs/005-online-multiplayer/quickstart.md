@@ -32,7 +32,17 @@ npm run test:e2e     # + online specs: Playwright starts the game server in test
 8. **Reconnect.** Reload window C: within 10 s it is back in its seat with the current table. Stop `dev:server` and start it again: all windows show "reconnecting", then continue at the same position (FR-044).
 9. **Save.** Download the save in any window and load it in hot-seat: same position. Create a new room from it: after everyone sits, the game continues.
 
-## Deploy to Hostinger (first time)
+## Test deployment on Render (now)
+
+Guide: [docs/deploy-render.md](../../docs/deploy-render.md). One free web service from `render.yaml` serves the site and the game server. Check it with:
+
+```powershell
+npx tsx scripts/smoke.ts https://<service>.onrender.com
+```
+
+That is the US5-AS1 check (HTTPS, health, a room created and joined over wss). The free service sleeps after 15 idle minutes (about a minute to wake) and loses rooms on a restart.
+
+## Deploy to Hostinger (go live, later step)
 
 Step-by-step guide with everything Luka must buy, click and provide: [docs/deploy-hostinger.md](../../docs/deploy-hostinger.md). Details: [contracts/deployment.md](./contracts/deployment.md).
 
@@ -63,4 +73,4 @@ Players who have an older version open are asked to reload (US5-AS3). Rooms in p
 
 ## Acceptance traceability
 
-Each scenario in [spec.md](./spec.md) maps to a `US<story>-AS<scenario>` test: Vitest for `src/online` and the server integration, Playwright for screens across several windows. US5 deployment scenarios are checked by `scripts/smoke.ts` and the checks in [contracts/deployment.md](./contracts/deployment.md); US5-AS3 (version mismatch) also has a Playwright test. Contracts: [protocol.md](./contracts/protocol.md), [online-core-api.md](./contracts/online-core-api.md), [deployment.md](./contracts/deployment.md). Data: [data-model.md](./data-model.md).
+Each scenario in [spec.md](./spec.md) maps to a `US<story>-AS<scenario>` test: Vitest for `src/online` and the server integration, Playwright for screens across several windows. US5-AS1 is checked by `scripts/smoke.ts <url>`; US5-AS2 (no server: hot-seat still works, Play online says the server is not available) and US5-AS3 (version mismatch) have Playwright tests; US5-AS4 (restart without logging in) and US5-AS5 (deploy in under 15 minutes) are **deployment checks** at go live, listed in [contracts/deployment.md](./contracts/deployment.md). Contracts: [protocol.md](./contracts/protocol.md), [online-core-api.md](./contracts/online-core-api.md), [deployment.md](./contracts/deployment.md). Data: [data-model.md](./data-model.md).
