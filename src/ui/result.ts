@@ -6,7 +6,8 @@ import { button, el } from './dom.ts';
 export interface ResultHandlers {
   newGame(): void;
   rematch(): void;
-  sandbox(): void;
+  /** null: no sandbox (online games, 005 FR-017). */
+  sandbox: (() => void) | null;
 }
 
 export function renderResult(r: GameResult, h: ResultHandlers): HTMLElement {
@@ -19,7 +20,7 @@ export function renderResult(r: GameResult, h: ResultHandlers): HTMLElement {
     el('div', { class: 'row' },
       button(t('result.newGame'), h.newGame, { testid: 'result-new' }),
       button(t('result.rematch'), h.rematch, { kind: 'primary', testid: 'result-rematch' }),
-      button(t('result.sandbox'), h.sandbox, { testid: 'result-sandbox' }),
+      h.sandbox ? button(t('result.sandbox'), h.sandbox, { testid: 'result-sandbox' }) : null,
     ),
   );
 }

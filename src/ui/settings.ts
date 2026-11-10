@@ -10,6 +10,8 @@ export interface SettingsHandlers {
   importFile(file: File): void;
   newGame(): void;
   close(): void;
+  /** 005: an online game: no sandbox, no local save or import; "new game" leaves the room. */
+  online?: boolean;
 }
 
 export function renderSettings(inSandbox: boolean, h: SettingsHandlers): HTMLElement {
@@ -20,6 +22,14 @@ export function renderSettings(inSandbox: boolean, h: SettingsHandlers): HTMLEle
       if (f) h.importFile(f);
     },
   });
+  if (h.online) {
+    return el('div', { class: 'panel dialog col', 'data-testid': 'settings' },
+      el('h3', {}, t('settings.title')),
+      button(t('online.download'), h.exportFile, { testid: 'settings-export' }),
+      button(t('online.leave'), h.newGame, { testid: 'settings-new' }),
+      button(t('action.close'), h.close, { testid: 'settings-close' }),
+    );
+  }
   return el('div', { class: 'panel dialog col', 'data-testid': 'settings' },
     el('h3', {}, t('settings.title')),
     inSandbox

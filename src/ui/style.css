@@ -152,3 +152,10 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .ability-name { font-weight: 600; }
 .badge { background: #8a2b2b; color: #fff; border-radius: 6px; padding: 0 4px; font-size: 11px; }
 .choice-list { max-height: 50vh; overflow: auto; }
+
+/* 005 online: status bar, seats, waiting notices */
+.online-bar { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); gap: 10px; flex-wrap: wrap; align-items: center; padding: 4px 10px; font-size: .9rem; }
+.online-bar .away { opacity: .55; }
+.online-bar .your-turn { font-weight: 700; color: var(--accent, #e8c66a); }
+.seat { gap: 10px; align-items: center; }
+.error { color: #ff8a80; }
