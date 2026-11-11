@@ -10,7 +10,7 @@ import { affectable, heroOf, isRoyal, onStartingSquareOfType, squareOf, starting
 import type { AbilityCall, HeroModule } from '../abilities/types.ts';
 import { createSpecial, destroyByAbility, woundUnit } from '../abilities/units.ts';
 import {
-  abilityLead, backDir, heroesAt, jumpOption, leadable, leadTargets, mark, moveHeroTo, optionsOf, pickOption,
+  abilityLead, backDir, heroesAt, jumpOption, leadable, leadTargets, mark, moveHeroTo, movePathSquares, optionsOf, pickOption,
   srcHero, stepSquares, targetHeroId, targetUnitId, touchesAdjacent, val,
 } from './util.ts';
 
@@ -74,7 +74,8 @@ export const CAVALIER: HeroModule = {
       targets: (c0) => {
         if (c0.option === 'square') {
           if (c0.s.phase !== 'move') return [];
-          const squares = c0.s.turn.movePath.filter((p, i, a) => a.findIndex((q) => eq(q, p)) === i);
+          // 006 FR-003: the start square and every square entered, until the Move ends.
+          const squares = movePathSquares(c0.s);
           return squares.filter((p) => heroesAt(c0.s, p).some((x) => x.side !== c0.h.side)).map((p) => [{ square: p }]);
         }
         if (c0.s.phase !== 'lead') return [];

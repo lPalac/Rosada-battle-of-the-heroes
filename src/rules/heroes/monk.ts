@@ -12,7 +12,7 @@ import { affectable, heroOf, isRoyal, onStartingSquareOfType, squareOf, starting
 import type { AbilityCall, HeroModule, HookSrc } from '../abilities/types.ts';
 import { createSpecial, destroyByAbility } from '../abilities/units.ts';
 import {
-  abilityLead, heroesAt, jumpOption, leadable, leadTargets, mark, markBy, pickOption, srcHero, stepSquares, targetHeroId, targetUnitId,
+  abilityLead, heroesAt, heroesOnMovePath, jumpOption, leadable, leadTargets, mark, markBy, pickOption, srcHero, stepSquares, targetHeroId, targetUnitId,
   touchesAdjacent, val,
 } from './util.ts';
 
@@ -20,8 +20,13 @@ const adjacentTo = (c0: AbilityCall, u: Unit) => chebyshev(u.pos, c0.h.pos) <= 1
 const enemyUnits = (c0: AbilityCall, pred: (u: Unit) => boolean): AbilityTarget[][] =>
   c0.s.units.filter((u) => u.side !== c0.h.side && affectable(c0.s, u, !!c0.def.flags.notRoyalty) && pred(u)).map((u) => [{ unitId: u.id }]);
 /** Friendly heroes sharing the square ("while passing through that hero's square"). */
+/**
+ * Friendly heroes the hero passes: during the Move every friendly hero on the Move's path (the start square
+ * included, also after stepping further; 006 FR-003); otherwise those on the hero's square.
+ */
 const heroesHere = (c0: AbilityCall): AbilityTarget[][] =>
-  heroesAt(c0.s, c0.h.pos).filter((x) => x.side === c0.h.side && x.id !== c0.h.id).map((x) => [{ heroId: x.id }]);
+  (c0.s.phase === 'move' ? heroesOnMovePath(c0.s) : heroesAt(c0.s, c0.h.pos))
+    .filter((x) => x.side === c0.h.side && x.id !== c0.h.id).map((x) => [{ heroId: x.id }]);
 
 /** Pilgrimage: forward through enemy-occupied squares of its file to the first unoccupied square, not the Royal Rank. */
 function pilgrimages(c0: AbilityCall) {

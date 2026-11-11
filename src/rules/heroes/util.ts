@@ -113,6 +113,21 @@ export const backDir = (u: Unit): Coord => c(0, -forward(u.side));
 /** Heroes in a square (not Unconscious). */
 export const heroesAt = (s: GameState, p: Coord): Hero[] => s.heroes.filter((h) => eq(h.pos, p) && !h.status.unconscious);
 
+/**
+ * 006 FR-003: the squares of this turn's Move: the square it started on and every square entered (the current one
+ * included), without duplicates. `turn.movePath` keeps its meaning ("squares entered"; empty = not moved yet).
+ */
+export function movePathSquares(s: GameState): Coord[] {
+  const all = [...(s.turn.moveStart ? [s.turn.moveStart] : []), ...s.turn.movePath];
+  return all.filter((p, i) => all.findIndex((q) => eq(q, p)) === i);
+}
+
+/** Heroes (not Unconscious) standing on the Move's path, other than the active hero. */
+export function heroesOnMovePath(s: GameState): Hero[] {
+  const squares = movePathSquares(s);
+  return s.heroes.filter((h) => h.id !== s.activeHeroId && !h.status.unconscious && squares.some((p) => eq(p, h.pos)));
+}
+
 /** Squares adjacent to p, p included. */
 export const area3 = (p: Coord): Coord[] => [p, ...adjacent8(p)];
 

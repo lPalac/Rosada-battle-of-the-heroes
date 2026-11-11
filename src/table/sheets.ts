@@ -56,8 +56,17 @@ export interface SheetInfo {
   /** 004: sheet image key (`sheet.hero` = canvas-drawn), uses left per ability, corrected-cost badges, marks. */
   sheetKey: string;
   uses: Record<string, number>;
+  /** 006 FR-002: Destiny crystals placed on a Starting sheet: one per spent use of an ability that costs Destiny. */
+  crystals: Record<string, number>;
   badges: string[];
   marks: string[];
+}
+
+/** One crystal per spent use of a Starting ability that costs Destiny (Basic Rules *Hero abilities*). */
+function crystalsOf(model: SheetModel): Record<string, number> {
+  return Object.fromEntries(model.abilities
+    .filter((a) => a.uses !== null && a.usesLeft !== null && a.cost)
+    .map((a) => [a.id, a.uses! - a.usesLeft!]));
 }
 
 interface Sheet {
@@ -101,6 +110,7 @@ export class SheetsView {
         destiny: h.epic?.destiny ?? null, epicColumn: h.epic ? EPIC_DESTINIES.indexOf(h.epic.destiny) : null, generation, bloodied,
         sheetKey: model.sheetKey,
         uses: Object.fromEntries(model.abilities.filter((a) => a.usesLeft !== null).map((a) => [a.id, a.usesLeft!])),
+        crystals: crystalsOf(model),
         badges: model.abilities.filter((a) => a.printedCost).map((a) => a.id),
         marks: model.marks,
       };
@@ -166,11 +176,27 @@ export class SheetsView {
       x += tag(`${h.health}/${h.maxHealth}`, x, 8, '#2e5c2e') + 6;
       if (model.bloodied) x += tag('BLOODIED', x, 8, '#b03a2e') + 6;
       if (h.status.unconscious) x += tag('Unconscious', x, 8, '#555') + 6;
+      // A Destiny crystal (purple diamond) for each spent use of an ability that costs Destiny (006 FR-002).
+      const crystal = (cx: number, cy: number) => {
+        g.fillStyle = '#8e5bd6';
+        g.strokeStyle = '#2a1650';
+        g.lineWidth = 2;
+        g.beginPath();
+        g.moveTo(cx, cy - 10);
+        g.lineTo(cx + 7, cy);
+        g.lineTo(cx, cy + 10);
+        g.lineTo(cx - 7, cy);
+        g.closePath();
+        g.fill();
+        g.stroke();
+      };
+      const crystals = crystalsOf(model);
       let ty = 40;
       for (const a of model.abilities) {
         const name = S[a.nameKey] ?? a.id;
         if (a.usesLeft !== null) {
-          tag(`${name}: ${a.usesLeft}/${a.uses}`, 8, ty, '#5a4a1a');
+          const w = tag(`${name}: ${a.usesLeft}/${a.uses}`, 8, ty, '#5a4a1a');
+          for (let i = 0; i < (crystals[a.id] ?? 0); i++) crystal(8 + w + 12 + i * 18, ty + 12);
           ty += 28;
         }
         if (a.printedCost && a.cost) {

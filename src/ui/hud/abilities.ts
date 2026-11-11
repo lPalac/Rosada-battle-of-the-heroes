@@ -1,6 +1,5 @@
 // HUD ability panel (004 T060, US5-AS6): the active hero's abilities with Symbol Legend icons, cost normal / Bloodied,
 // timing, uses left and "usable now". A usable ability is used with one click; a choice of targets opens a dialog.
-import type { AbilityRow } from '../../game/sheet-model.ts';
 import type { HudModel } from '../../game/hud-model.ts';
 import { t } from '../../i18n/strings.ts';
 import { abilityOffers, squareName, type AbilityOffer, type AbilityTarget, type GameState } from '../../rules/index.ts';
@@ -12,12 +11,6 @@ function icon(key: string): HTMLElement {
   return url ? el('img', { class: 'ability-icon', src: url, alt: key, title: key }) : el('span', { class: 'ability-icon' });
 }
 
-function costText(a: AbilityRow): string {
-  if (a.cost) return a.cost[0] === a.cost[1] ? `${a.cost[0]} D` : `${a.cost[0]}/${a.cost[1]} D`;
-  if (a.uses !== null) return t('ability.usesLeft', { n: a.usesLeft ?? 0, of: a.uses });
-  return '';
-}
-
 export function renderAbilities(m: HudModel, busy: boolean, onUse: (abilityId: string) => void): HTMLElement | null {
   const hero = m.heroes.find((h) => h.active);
   if (!hero || !hero.abilities.length) return null;
@@ -27,7 +20,7 @@ export function renderAbilities(m: HudModel, busy: boolean, onUse: (abilityId: s
       el('div', { class: `ability-row${a.usableNow ? ' usable' : ''}`, 'data-testid': `ability-${a.id}`, title: t(a.textKey) },
         el('div', { class: 'row' }, ...a.icons.map(icon),
           el('span', { class: 'ability-name' }, t(a.nameKey)),
-          el('span', { class: 'muted small' }, costText(a)),
+          el('span', { class: 'muted small', 'data-testid': `ability-${a.id}-cost` }, a.costText),
           a.printedCost ? el('span', { class: 'badge', title: t('ability.corrected') }, `≠ ${a.printedCost[0]}/${a.printedCost[1]}`) : null),
         el('div', { class: 'muted small' }, a.timings.length ? a.timings.map((x) => t(`timing.${x}`)).join(' / ') : t('timing.always')),
         a.usableNow && a.kind === 'action'

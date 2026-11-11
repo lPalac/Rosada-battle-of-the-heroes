@@ -52,7 +52,11 @@ export interface AbilityDefinition {
   cost: { normal: number; bloodied: number } | null;
   uses: number | null;
   oncePerTurn: boolean;
-  flags: { notAsHeroUnit?: boolean; notRoyalty?: boolean; mustNotCheck?: boolean; noRoll?: boolean };
+  /** 006: `noUnitEffect`: the effect cannot add, move, retype or remove a unit (no check test, FR-016); `bothUses`:
+   * a different effect when both uses are spent at once (FR-017). */
+  flags: { notAsHeroUnit?: boolean; notRoyalty?: boolean; mustNotCheck?: boolean; noRoll?: boolean; noUnitEffect?: boolean; bothUses?: boolean };
+  /** 006 FR-004: what the ability needs as a target, for the "why not" text (`hint.<targetHint>`). */
+  targetHint?: string;
   values: Record<string, number | [number, number]>;
   options?: string[];
   icons: string[];

@@ -29,6 +29,17 @@ describe('sheet model (US5)', () => {
     expect(sheetModel(s, 'H1').abilities.find((a) => a.id === 'magus.flamingBolt')!.usesLeft).toBe(1);
   });
 
+  it('006 US1-AS7 (FR-002) cost and uses are shown together: "1 D · 1 of 1 left"', () => {
+    let s = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' }, heroes: { H1: 'd4' }, phase: 'beforeMove' });
+    const row = (st: typeof s, id: string) => sheetModel(st, 'H1').abilities.find((a) => a.id === id)!;
+    expect(row(s, 'cavalier.demoralise').costText).toBe('1 D · 1 of 1 left');
+    expect(row(s, 'cavalier.warhorse').costText).toBe('');
+    s = use(s, 'cavalier.demoralise').state;
+    expect(row(s, 'cavalier.demoralise').costText).toBe('1 D · 0 of 1 left');
+    const epic = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' }, stage: 'epic', epic: { H1: 'resolute' } });
+    expect(sheetModel(epic, 'H1').abilities.find((a) => a.id === 'dragonLord.breathOfFieryDestruction')!.costText).toBe('3/4 D');
+  });
+
   it('FR-001a a corrected-cost badge where the printed sheet differs from Hero Rules 2_0', () => {
     const s = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' }, stage: 'epic', epic: { H1: 'resolute' } });
     const breath = sheetModel(s, 'H1').abilities.find((a) => a.id === 'dragonLord.breathOfFieryDestruction')!;

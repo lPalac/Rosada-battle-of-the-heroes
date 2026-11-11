@@ -63,6 +63,9 @@ function onEnter(ctx: Ctx, phase: Phase): void {
       s.turn.bothKingsInCheckAtBeginning = bothKingsInCheck(ctx);
       break;
     }
+    case 'move':
+      s.turn.moveStart = { ...h.pos }; // 006 FR-003: the start square is part of the Move's path.
+      break;
     case 'beforeLead':
       s.turn.tavernShopOpen = null; // Buying only before or during Move (FR-060).
       break;

@@ -291,7 +291,7 @@ export type { Unit } from './model/unit.ts';
 export { squareName, parseSquare, regionOf, chebyshev, tavernOwner, taverns, heroStartSquares, inGrid, isBattlefield } from './board.ts';
 export { nextPicker, picksComplete, setupReady, sidePicks, defaultPlayers } from './setup.ts';
 export { abilitiesBlocked } from './abilities.ts';
-export { abilityOffers, abilityCost, usesLeft, type AbilityOffer } from './abilities/engine.ts';
+export { abilityOffers, abilityCost, abilityStatus, usesLeft, type AbilityOffer, type AbilityStatus, type AbilityStatusReason } from './abilities/engine.ts';
 export { activeEffects } from './abilities/effects.ts';
 export { heroAbilityIds } from './abilities/hooks.ts';
 export { selectableHeroes, pickableHeroes } from './setup.ts';

@@ -136,6 +136,44 @@ export function abilityOffers(s: GameState, opts: { first?: boolean } = {}): Abi
   return out;
 }
 
+/** 006 FR-004: why an ability of the active hero is or is not usable now. */
+export type AbilityStatus =
+  | { abilityId: string; usable: true }
+  | { abilityId: string; usable: false; reason: AbilityStatusReason; hint?: string };
+export type AbilityStatusReason = 'timing' | 'noUses' | 'usedThisTurn' | 'notEnoughDestiny' | 'notAsHeroUnit' | 'noTarget' | 'wouldCheck';
+
+const STATUS_OF_BLOCKER: Record<string, AbilityStatusReason> = {
+  ABILITY_WRONG_TIMING: 'timing', ABILITY_NO_USES: 'noUses', ABILITY_USED_THIS_TURN: 'usedThisTurn',
+  ABILITY_NOT_AS_HERO_UNIT: 'notAsHeroUnit', NOT_ENOUGH_DESTINY: 'notEnoughDestiny',
+};
+
+/**
+ * Every action ability of the active hero, usable now or the reason it is not (contracts/rules-api-changes.md).
+ * `usable` is true exactly for the abilities `abilityOffers` lists (guarantee 21). Passives and reactions have no
+ * Use button and no status. Never changes the state.
+ */
+export function abilityStatus(s: GameState): AbilityStatus[] {
+  if (s.status !== 'playing' || s.enforcement !== 'rules') return [];
+  const h = activeHero(s);
+  const timings = openTimings(s);
+  const offered = new Set(abilityOffers(s).map((o) => o.abilityId));
+  const out: AbilityStatus[] = [];
+  for (const id of heroAbilityIds(h)) {
+    const def = abilityDefinition(id);
+    if (def.kind !== 'action' || !impl(id)) continue;
+    if (offered.has(id)) {
+      out.push({ abilityId: id, usable: true });
+      continue;
+    }
+    // Outside its timing window first: that is the reason a player sees most often.
+    const inWindow = def.timings.some((t) => timings.includes(t)) && !h.status.unconscious;
+    const code = inWindow ? blocker(s, h, def, timings) : 'ABILITY_WRONG_TIMING';
+    const reason = code ? STATUS_OF_BLOCKER[code] ?? 'timing' : 'noTarget';
+    out.push({ abilityId: id, usable: false, reason, ...(reason === 'noTarget' && def.targetHint ? { hint: def.targetHint } : {}) });
+  }
+  return out;
+}
+
 export function hasAbilityOffer(s: GameState): boolean {
   return abilityOffers(s, { first: true }).length > 0;
 }

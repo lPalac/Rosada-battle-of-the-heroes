@@ -1,4 +1,5 @@
 // What each hero sheet and the HUD ability panel show (004 T057, research R-12), from the state only. Engine-free.
+import { t } from '../i18n/strings.ts';
 import {
   abilityCost, abilityOffers, DATA, heroAbilityIds, healthBarOf, isBloodied, usesLeft, type GameState, type HeroId,
 } from '../rules/index.ts';
@@ -18,8 +19,16 @@ export interface AbilityRow {
   printedCost: [number, number] | null;
   uses: number | null;
   usesLeft: number | null;
+  /** 006 FR-002: cost and uses as one text: "1 D · 1 of 1 left", "3/4 D", "2 of 2 left", or "". */
+  costText: string;
   usableNow: boolean;
   options: string[];
+}
+
+function costTextOf(cost: [number, number] | null, uses: number | null, usesLeft: number | null): string {
+  const d = cost ? (cost[0] === cost[1] ? `${cost[0]} D` : `${cost[0]}/${cost[1]} D`) : '';
+  const u = uses !== null ? t('ability.usesLeft', { n: usesLeft ?? 0, of: uses }) : '';
+  return d && u ? t('ability.costAndUses', { cost: d, uses: u }) : d || u;
 }
 
 export interface SheetModel {
@@ -58,7 +67,7 @@ export function sheetModel(state: GameState, heroId: HeroId): SheetModel {
     return {
       id, nameKey: a.name, textKey: a.text, kind: a.kind, timings: a.timings, icons: a.icons, cost,
       costNow: abilityCost(state, h.id, id), printedCost: printed && cost && (printed[0] !== cost[0] || printed[1] !== cost[1]) ? printed : null,
-      uses: a.uses, usesLeft: usesLeft(state, h.id, id), usableNow: offers.some((o) => o.heroId === h.id && o.abilityId === id), options: a.options ?? [],
+      uses: a.uses, usesLeft: usesLeft(state, h.id, id), costText: costTextOf(cost, a.uses, usesLeft(state, h.id, id)), usableNow: offers.some((o) => o.heroId === h.id && o.abilityId === id), options: a.options ?? [],
     };
   });
   return {
