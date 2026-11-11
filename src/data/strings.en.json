@@ -200,7 +200,7 @@
   "error.GAME_ENDED": "The game has ended",
   "error.KING_THREATENED_SQUARE": "A King may not be Led into a threatened square",
   "error.LEAD_ALREADY_MADE": "Only one Lead per turn",
-  "error.LEAD_LEAVES_KING_IN_CHECK": "That Lead would leave your King in check",
+  "error.LEAD_LEAVES_KING_IN_CHECK": "That would place your King in check",
   "error.LIGHT_FIRST": "Light chooses its turn order first",
   "error.MOVE_ENDS_ON_UNIT": "A Move may not end on an enemy unit or a King",
   "error.MUST_ATTEMPT_LEAD": "A possible Lead must be attempted",
@@ -534,7 +534,7 @@
   "error.ABILITY_NOT_AS_HERO_UNIT": "Cannot be used while you are a Hero Unit.",
   "error.ABILITY_BAD_TARGET": "That is not a legal target for this ability.",
   "error.ABILITY_ROYALTY": "This ability does not affect royalty.",
-  "error.ABILITY_WOULD_CHECK": "This ability must not check the King.",
+  "error.ABILITY_WOULD_CHECK": "That would place a King in check",
   "error.PUSH_BLOCKED": "It cannot be pushed there.",
   "error.HERO_TAKEN": "In Draft each hero can be picked only once.",
   "setup.pickNamedHero": "Pick a hero",
@@ -717,5 +717,6 @@
   "hint.twoEmptySquaresInRange": "Needs 2 empty squares of the same colour in range",
   "hint.areaInRange": "Needs a 2×2 area fully in your range",
   "hint.pawnOnStartSquare": "Only while Leading a Pawn on a starting square of its type",
-  "hint.successfulLeadNoCheck": "Only after a successful Lead that did not check with that unit"
+  "hint.successfulLeadNoCheck": "Only after a successful Lead that did not check with that unit",
+  "error.NOT_A_LEAD": "That unit cannot be Led there"
 }

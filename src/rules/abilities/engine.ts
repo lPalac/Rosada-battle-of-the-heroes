@@ -26,6 +26,8 @@ export interface AbilityOffer {
   usesLeft: number | null;
   /** Every legal target choice (`[]` inside means "no target"). */
   targets: AbilityTarget[][];
+  /** 006 FR-026: target choices refused for a rule reason (check), with the code `useAbility` refuses them with. */
+  blocked: { targets: AbilityTarget[]; code: string }[];
 }
 
 /** Timing windows open now for the active hero (research R-03). After Lead / End of Turn follow FR-042 blocking. */
@@ -85,26 +87,36 @@ function blocker(s: GameState, h: Hero, def: AbilityDefinition, timings: Timing[
   return null;
 }
 
-/** Run an ability on a copy; true when it is accepted (used for `simulate` abilities and Must not check). */
-function accepted(s: GameState, h: Hero, def: AbilityDefinition, option: string | undefined, targets: AbilityTarget[]): boolean {
+/** Run an ability on a copy: null when it is accepted, else the refusal code (simulate, check tests, blocked targets). */
+function refusalOf(s: GameState, h: Hero, def: AbilityDefinition, option: string | undefined, targets: AbilityTarget[]): string | null {
   const { log, ...rest } = s;
   const copy = clone(rest) as GameState;
   copy.log = [];
   try {
     runEffect({ s: copy, events: [] }, copy.heroes.find((x) => x.id === h.id)!, def, option, targets);
-    return true;
+    return null;
   } catch (e) {
-    if (e instanceof RuleFailure) return false;
+    if (e instanceof RuleFailure) return e.error.code;
     throw e;
   }
 }
 
+const accepted = (s: GameState, h: Hero, def: AbilityDefinition, option: string | undefined, targets: AbilityTarget[]): boolean =>
+  refusalOf(s, h, def, option, targets) === null;
+
+/** Refusals the board shows on a blocked target with their reason (006 FR-026); other refusals just drop the target. */
+const BLOCKED_CODES = ['LEAD_LEAVES_KING_IN_CHECK', 'ABILITY_WOULD_CHECK'];
+
+/** Whether an ability's effect is refused when a unit it touches would itself check a King (FR-014 of 004). */
+const checkTested = (def: AbilityDefinition, im: AbilityImpl): boolean => !im.isLead && !!def.flags.mustNotCheck;
+
 function runEffect(ctx: Ctx, h: Hero, def: AbilityDefinition, option: string | undefined, targets: AbilityTarget[]): void {
   const before = { units: ctx.s.units.map((u) => ({ ...u, pos: { ...u.pos } })) };
-  impl(def.id)!.effect(ctx, call(ctx.s, h, def, option), targets);
-  if (def.flags.mustNotCheck) {
+  const im = impl(def.id)!;
+  im.effect(ctx, call(ctx.s, h, def, option), targets);
+  if (checkTested(def, im)) {
     for (const side of [otherSide(h.side), h.side]) {
-      if (newCheck(before, ctx.s, side)) fail('ABILITY_WOULD_CHECK', 'This ability must not check the King', 'Must Not Check the King');
+      if (newCheck(before, ctx.s, side)) fail('ABILITY_WOULD_CHECK', 'That would place a King in check', 'Must Not Check the King');
     }
   }
 }
@@ -113,8 +125,11 @@ function optionsOf(def: AbilityDefinition): (string | undefined)[] {
   return def.options?.length ? def.options : [undefined];
 }
 
-/** Every ability the active hero can use now, with its target choices (contracts/rules-api-changes.md). */
-export function abilityOffers(s: GameState, opts: { first?: boolean } = {}): AbilityOffer[] {
+/**
+ * Every offer of the abilities the active hero may use now, also those whose every target is blocked (006): the
+ * targets refused for a rule reason the board shows (check) are moved to `blocked` with their code.
+ */
+function scanOffers(s: GameState, opts: { first?: boolean } = {}): AbilityOffer[] {
   const timings = openTimings(s);
   if (!timings.length) return [];
   const h = activeHero(s);
@@ -127,13 +142,28 @@ export function abilityOffers(s: GameState, opts: { first?: boolean } = {}): Abi
       const c = call(s, h, def, option);
       if (im.condition && !im.condition(c)) continue;
       let targets = im.targets ? im.targets(c) : [[]];
-      if (im.simulate || def.flags.mustNotCheck) targets = targets.filter((t) => accepted(s, h, def, option, t));
-      if (!targets.length) continue;
-      out.push({ heroId: h.id, abilityId: id, ...(option ? { option } : {}), cost: abilityCost(s, h.id, id), usesLeft: usesLeft(s, h.id, id), targets });
-      if (opts.first) return out;
+      const blocked: AbilityOffer['blocked'] = [];
+      if (im.simulate || im.isLead || checkTested(def, im)) {
+        const kept: AbilityTarget[][] = [];
+        for (const t of targets) {
+          const code = refusalOf(s, h, def, option, t);
+          if (code === null) kept.push(t);
+          else if (BLOCKED_CODES.includes(code)) blocked.push({ targets: t, code });
+          else if (im.isLead && !im.simulate && !checkTested(def, im)) kept.push(t); // as before 006: refused when used
+        }
+        targets = kept;
+      }
+      if (!targets.length && !blocked.length) continue;
+      out.push({ heroId: h.id, abilityId: id, ...(option ? { option } : {}), cost: abilityCost(s, h.id, id), usesLeft: usesLeft(s, h.id, id), targets, blocked });
+      if (opts.first && targets.length) return out.filter((o) => o.targets.length);
     }
   }
   return out;
+}
+
+/** Every ability the active hero can use now, with its target choices (contracts/rules-api-changes.md). */
+export function abilityOffers(s: GameState, opts: { first?: boolean } = {}): AbilityOffer[] {
+  return scanOffers(s, opts).filter((o) => o.targets.length > 0);
 }
 
 /** 006 FR-004: why an ability of the active hero is or is not usable now. */
@@ -156,7 +186,9 @@ export function abilityStatus(s: GameState): AbilityStatus[] {
   if (s.status !== 'playing' || s.enforcement !== 'rules') return [];
   const h = activeHero(s);
   const timings = openTimings(s);
-  const offered = new Set(abilityOffers(s).map((o) => o.abilityId));
+  const scan = scanOffers(s);
+  const offered = new Set(scan.filter((o) => o.targets.length).map((o) => o.abilityId));
+  const onlyBlocked = new Set(scan.filter((o) => o.blocked.length).map((o) => o.abilityId));
   const out: AbilityStatus[] = [];
   for (const id of heroAbilityIds(h)) {
     const def = abilityDefinition(id);
@@ -168,7 +200,8 @@ export function abilityStatus(s: GameState): AbilityStatus[] {
     // Outside its timing window first: that is the reason a player sees most often.
     const inWindow = def.timings.some((t) => timings.includes(t)) && !h.status.unconscious;
     const code = inWindow ? blocker(s, h, def, timings) : 'ABILITY_WRONG_TIMING';
-    const reason = code ? STATUS_OF_BLOCKER[code] ?? 'timing' : 'noTarget';
+    // Every target refused for check (FR-016, FR-026): "would place a King in check".
+    const reason = code ? STATUS_OF_BLOCKER[code] ?? 'timing' : onlyBlocked.has(id) ? 'wouldCheck' : 'noTarget';
     out.push({ abilityId: id, usable: false, reason, ...(reason === 'noTarget' && def.targetHint ? { hint: def.targetHint } : {}) });
   }
   return out;
@@ -194,8 +227,11 @@ export function useAbility(ctx: Ctx, abilityId: string, targets: AbilityTarget[]
   const problem = blocker(s, h, def, openTimings(s));
   if (problem) fail(problem, problemText[problem], 'Hero Abilities');
   if (def.options?.length && !def.options.includes(option ?? '')) fail('ABILITY_BAD_TARGET', 'Choose one of the options', 'Hero Abilities');
-  const offer = abilityOffers(s).find((o) => o.abilityId === abilityId && o.option === (def.options?.length ? option : undefined));
+  const offer = scanOffers(s).find((o) => o.abilityId === abilityId && o.option === (def.options?.length ? option : undefined));
   if (!offer) fail('ABILITY_BAD_TARGET', 'This ability has no legal target now', 'Hero Abilities');
+  // 006 guarantee 25d: a blocked target is refused with the code listed for it.
+  const blockedHere = offer.blocked.find((b) => sameTargets(b.targets, targets));
+  if (blockedHere) fail(blockedHere.code, problemText[blockedHere.code], RULE_OF[blockedHere.code] ?? 'Hero Abilities');
   if (!offer.targets.some((t) => sameTargets(t, targets))) {
     const royal = targets.some((t) => 'unitId' in t && ['king', 'queen'].includes(s.units.find((u) => u.id === t.unitId)?.type ?? ''));
     const code = royal && def.flags.notRoyalty ? 'ABILITY_ROYALTY' : def.flags.mustNotCheck && !accepted(s, h, def, option, targets) ? 'ABILITY_WOULD_CHECK' : 'ABILITY_BAD_TARGET';
@@ -219,9 +255,12 @@ const problemText: Record<string, string> = {
   ABILITY_USED_THIS_TURN: 'Once per turn',
   ABILITY_BAD_TARGET: 'Not a legal target',
   ABILITY_ROYALTY: 'This ability does not affect royalty',
-  ABILITY_WOULD_CHECK: 'This ability must not check the King',
+  ABILITY_WOULD_CHECK: 'That would place a King in check',
+  LEAD_LEAVES_KING_IN_CHECK: 'That would place your King in check',
   NOT_ENOUGH_DESTINY: 'Not enough Destiny',
 };
+
+const RULE_OF: Record<string, string> = { LEAD_LEAVES_KING_IN_CHECK: 'Check', ABILITY_WOULD_CHECK: 'Must Not Check the King' };
 
 /** Starting uses from data for a hero (setup, Epic form change keeps used counts). */
 export function initialAbilityState(): { uses: Record<string, number>; usedThisTurn: string[] } {

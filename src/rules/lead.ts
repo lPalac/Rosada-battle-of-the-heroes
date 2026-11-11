@@ -1,7 +1,7 @@
 // Lead: choose unit → announce square → roll → place; Battle/Destroy, Destiny, Promotion, Short range advance
 // (FR-030…FR-037, FR-005).
 import { adjacent8, eq } from './board.ts';
-import { allLegalLeads, isDiscoveredCheck, isInCheck, legalLeadsForUnit } from './check.ts';
+import { allLegalLeads, isDiscoveredCheck, isInCheck, leadRefusal, legalLeadsForUnit } from './check.ts';
 import { activeHero, emit, fail, hero, type Ctx } from './ctx.ts';
 import { DATA, RULES } from './data.ts';
 import { DESTINY, gain } from './destiny.ts';
@@ -89,8 +89,10 @@ export function announceLead(ctx: Ctx, unitId: string, to: Coord, promoteTo?: Un
   const basic = legalLeadsForUnit(s, unit);
   const opt = basic.find((o) => eq(o.to, to));
   if (!opt) {
-    fail(unit.type === 'king' ? 'KING_THREATENED_SQUARE' : 'LEAD_LEAVES_KING_IN_CHECK',
-      unit.type === 'king' ? 'A King may not be Led into a threatened square' : 'That Lead is not legal', unit.type === 'king' ? 'Threaten' : 'Check');
+    // 006 FR-014: "only check forbids it" has its own reason; a square the unit cannot move to has another.
+    if (leadRefusal(s, unitId, to) !== 'wouldCheckOwnKing') fail('NOT_A_LEAD', 'That unit cannot be Led there', 'Lead');
+    if (unit.type === 'king') fail('KING_THREATENED_SQUARE', 'A King may not be Led into a threatened square', 'Threaten');
+    fail('LEAD_LEAVES_KING_IN_CHECK', 'That would place your King in check', 'Check');
   }
   if (rammedByTarget(s, h, opt)) {
     fail('RAMMED_BY_TARGET', 'A Hero Unit may not Lead itself into Battle with the unit that Rammed it last turn', 'Ram');

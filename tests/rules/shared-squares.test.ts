@@ -49,7 +49,7 @@ describe('002 US2 – two friendly units on one square', () => {
     const s = board({ a1: 'R', a3: 'P' }, { heroes: { H1: 'b0' }, phase: 'lead' });
     const targets = legalLeadTargets(s, 'L-R@a1').map((t) => name(t.to)).sort();
     expect(targets).toEqual(['a2', 'b1', 'c1', 'd1']);
-    expect(reject(s, { type: 'announceLead', unitId: 'L-R@a1', to: sq('a3') })).toBe('LEAD_LEAVES_KING_IN_CHECK');
+    expect(reject(s, { type: 'announceLead', unitId: 'L-R@a1', to: sq('a3') })).toBe('NOT_A_LEAD');
   });
 
   it('US2-AS7 a Battle on two enemy units destroys both: Leading side +2 D once, losing side +1 D per unit', () => {

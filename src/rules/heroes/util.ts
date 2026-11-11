@@ -1,6 +1,6 @@
 // Helpers the hero modules share: ability movement, marks, ability Leads, values of a hero's ability.
 import { adjacent8, c, chebyshev, eq, inGrid, isBattlefield, sign } from '../board.ts';
-import { leadLeavesKingInCheck, legalLeadsForUnit } from '../check.ts';
+import { leadCandidates, leadLeavesKingInCheck, legalLeadsForUnit } from '../check.ts';
 import { emit, fail, hero, type Ctx } from '../ctx.ts';
 import { abilityDefinition } from '../data.ts';
 import { heroIsBloodied } from '../generation.ts';
@@ -80,9 +80,16 @@ export const leadTargets = (opts: LeadOption[]): AbilityTarget[][] => opts.map((
 
 /** Make the turn's Lead with an ability (Instead of Lead). Refused if it would leave the own King in check. */
 export function abilityLead(ctx: Ctx, c0: AbilityCall, unit: Unit, opt: LeadOption, extra: { auto?: boolean; noRam?: boolean } = {}): void {
-  if (leadLeavesKingInCheck(ctx.s, opt)) fail('LEAD_LEAVES_KING_IN_CHECK', 'That Lead is not legal', 'Check');
+  if (leadLeavesKingInCheck(ctx.s, opt)) fail('LEAD_LEAVES_KING_IN_CHECK', 'That would place your King in check', 'Check');
   startLead(ctx, unit, opt, { ability: c0.def.id, ...extra });
 }
+
+/**
+ * 006 FR-014: Lead options of a unit by its own rules, before the check rule. "Instead of Lead" abilities build their
+ * choices from these, so a Lead that only check forbids reaches `abilityLead` and is refused with its own reason
+ * (the engine lists it as blocked).
+ */
+export const candidatesOf = (s: GameState, u: Unit): LeadOption[] => leadCandidates(s, u);
 
 /** The option a `[unit, square]` target names, among the given options. */
 export function pickOption(opts: LeadOption[], t: AbilityTarget[]): LeadOption {

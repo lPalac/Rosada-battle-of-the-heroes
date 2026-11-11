@@ -106,18 +106,44 @@ export function castlingLeads(state: UnitView, king: Unit): LeadOption[] {
   return out;
 }
 
-/** Leads of one unit that are legal by unit rules (range ignored): never leaving the own King in check. */
-export function legalLeadsForUnit(state: UnitView, unit: Unit, pathOpts: PathOptions = {}): LeadOption[] {
+/** Leads a unit could make by its own rules and the ability effects, before the check rule (006: for refusals). */
+export function leadCandidates(state: UnitView, unit: Unit, pathOpts: PathOptions = {}): LeadOption[] {
   let opts = [...basicLeads(state, unit, pathOpts), ...castlingLeads(state, unit)];
   // 004 hooks: marks, protection, portals … (research R-06). Check and checkmate use the same filters (spec Q-43).
   if (state.effects?.length || state.heroes?.length) {
     for (const { hooks, src } of hookSources(state, 'filterLeads')) opts = hooks.filterLeads(state as GameState, src, unit, opts);
   }
-  return opts.filter((o) => {
-    const destroysKing = state.units.some((u) => o.battleUnitIds.includes(u.id) && u.type === 'king');
-    if (destroysKing) return true; // Destroying the enemy King ends the game at once.
-    return !leadLeavesKingInCheck(state, o);
-  });
+  return opts;
+}
+
+/** The check rule for one Lead: it may not leave the own King in check, unless it Destroys the enemy King. */
+function passesCheck(state: UnitView, o: LeadOption): boolean {
+  const destroysKing = state.units.some((u) => o.battleUnitIds.includes(u.id) && u.type === 'king');
+  if (destroysKing) return true; // Destroying the enemy King ends the game at once.
+  return !leadLeavesKingInCheck(state, o);
+}
+
+/** Leads of one unit that are legal by unit rules (range ignored): never leaving the own King in check. */
+export function legalLeadsForUnit(state: UnitView, unit: Unit, pathOpts: PathOptions = {}): LeadOption[] {
+  return leadCandidates(state, unit, pathOpts).filter((o) => passesCheck(state, o));
+}
+
+/** 006 FR-014: Leads the unit could make by its own rules that are refused only because they leave its King in check. */
+export function blockedLeads(state: UnitView, unitOrId: Unit | string): LeadOption[] {
+  const unit = typeof unitOrId === 'string' ? state.units.find((u) => u.id === unitOrId) : unitOrId;
+  if (!unit) return [];
+  return leadCandidates(state, unit).filter((o) => !passesCheck(state, o));
+}
+
+/** 006: why a Lead of `unitId` to `to` is refused by the unit rules, or null. Range and phase are the caller's. */
+export type LeadRefusal = 'wouldCheckOwnKing' | 'notALead';
+
+export function leadRefusal(state: UnitView, unitId: string, to: Coord): LeadRefusal | null {
+  const unit = state.units.find((u) => u.id === unitId);
+  if (!unit) return 'notALead';
+  const there = leadCandidates(state, unit).filter((o) => eq(o.to, to));
+  if (!there.length) return 'notALead';
+  return there.some((o) => passesCheck(state, o)) ? null : 'wouldCheckOwnKing';
 }
 
 export function allLegalLeads(state: UnitView, side: Side): LeadOption[] {

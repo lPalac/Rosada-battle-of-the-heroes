@@ -1,7 +1,6 @@
 // Cavalier and its Epic forms: Death Knight, Dragon Lord, Holy Paladin (Hero Rules 2_0).
 import { c, chebyshev, eq, isBattlefield } from '../board.ts';
 import { attackSquares } from '../paths.ts';
-import { leadLeavesKingInCheck } from '../check.ts';
 import { fail, hero } from '../ctx.ts';
 import { wound } from '../heroes.ts';
 import type { AbilityTarget } from '../model/actions.ts';
@@ -10,7 +9,7 @@ import { affectable, heroOf, isRoyal, onStartingSquareOfType, squareOf, starting
 import type { AbilityCall, HeroModule } from '../abilities/types.ts';
 import { createSpecial, destroyByAbility, woundUnit } from '../abilities/units.ts';
 import {
-  abilityLead, backDir, heroesAt, jumpOption, leadable, leadTargets, mark, moveHeroTo, movePathSquares, optionsOf, pickOption,
+  abilityLead, backDir, candidatesOf, heroesAt, jumpOption, leadable, leadTargets, mark, moveHeroTo, movePathSquares, optionsOf, pickOption,
   srcHero, stepSquares, targetHeroId, targetUnitId, touchesAdjacent, val,
 } from './util.ts';
 
@@ -22,7 +21,8 @@ const oneSquare = {
 
 /** Friendly Knights in Range and their Lead options, filtered. */
 function knightLeads(c0: AbilityCall, keep: (o: ReturnType<typeof optionsOf>[number]) => boolean) {
-  return leadable(c0.s, c0.h).filter((u) => u.type === 'knight').flatMap((u) => optionsOf(c0.s, u)).filter(keep);
+  // Before the check rule: a Lead only check forbids is refused by abilityLead with its own reason (006 FR-014).
+  return leadable(c0.s, c0.h).filter((u) => u.type === 'knight').flatMap((u) => candidatesOf(c0.s, u)).filter(keep);
 }
 
 /** The turn's successful Lead, if any. */
@@ -270,7 +270,8 @@ function descents(c0: AbilityCall) {
     for (const [dx, dy] of [[2, 2], [2, -2], [-2, 2], [-2, -2]]) {
       const o = jumpOption(c0.s, u, c(u.pos.x + dx, u.pos.y + dy));
       if (!o) continue;
-      if (c0.s.units.some((x) => o.battleUnitIds.includes(x.id) && isRoyal(x)) || leadLeavesKingInCheck(c0.s, o)) continue;
+      // The check rule is applied by abilityLead, which refuses with its own reason (006 FR-014).
+      if (c0.s.units.some((x) => o.battleUnitIds.includes(x.id) && isRoyal(x))) continue;
       out.push(o);
     }
   }

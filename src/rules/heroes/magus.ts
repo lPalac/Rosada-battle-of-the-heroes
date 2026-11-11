@@ -12,7 +12,7 @@ import { effectSquares, effectsOfKind, endOfMyNextTurn, isEmpty, isOccupied, rem
 import { affectable, heroOf, inEnemyRoyalRank, isRoyal, squareOf, startingSquares, unitOf } from '../abilities/targets.ts';
 import type { AbilityCall, HeroModule, HookSrc } from '../abilities/types.ts';
 import { createSpecial, destroyByAbility } from '../abilities/units.ts';
-import { abilityLead, heroesAt, jumpOption, leadable, leadTargets, mark, optionsOf, pickOption, srcHero, targetUnitId, val } from './util.ts';
+import { abilityLead, candidatesOf, heroesAt, jumpOption, leadable, leadTargets, mark, optionsOf, pickOption, srcHero, targetUnitId, val } from './util.ts';
 
 const enemyHeroesInRange = (c0: AbilityCall): AbilityTarget[][] =>
   c0.s.heroes.filter((x) => x.side !== c0.h.side && !x.status.unconscious && chebyshev(x.pos, c0.h.pos) <= c0.h.range).map((x) => [{ heroId: x.id }]);
@@ -74,7 +74,8 @@ function rapidMarchOption(s: GameState, u: Unit) {
 }
 
 /** Certainty & Death: a friendly unit in Range (not a Hero Unit) with any Lead, which succeeds without a roll. */
-const certaintyLeads = (c0: AbilityCall) => leadable(c0.s, c0.h).filter((u) => u.kind !== 'hero').flatMap((u) => optionsOf(c0.s, u));
+// Before the check rule: abilityLead refuses a Lead only check forbids, with its own reason (006 FR-014).
+const certaintyLeads = (c0: AbilityCall) => leadable(c0.s, c0.h).filter((u) => u.kind !== 'hero').flatMap((u) => candidatesOf(c0.s, u));
 
 /** Destroyed friendly units come back on a starting square of their type (Temporal Flux). */
 function fluxReturn(ctx: Ctx, src: HookSrc, unit: Unit): void {

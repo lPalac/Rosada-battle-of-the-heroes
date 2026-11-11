@@ -19,7 +19,7 @@ import { affectable, heroOf, isRoyal, onStartingSquareOfType, squareOf, starting
 import type { AbilityCall, HeroModule, HookSrc, Hooks } from '../abilities/types.ts';
 import { destroyByAbility } from '../abilities/units.ts';
 import {
-  abilityLead, backDir, canPushHero, leadable, leadTargets, mark, markBy, moveHeroTo, optionsOf, pickOption, srcHero, targetUnitId,
+  abilityLead, backDir, canPushHero, candidatesOf, leadable, leadTargets, mark, markBy, moveHeroTo, optionsOf, pickOption, srcHero, targetUnitId,
   touchesAdjacent, val,
 } from './util.ts';
 
@@ -64,7 +64,8 @@ function regicideTargets(c0: AbilityCall): AbilityTarget[][] {
 
 /** Red Carpet: the Queen's Battle options with an enemy unit (not royalty). */
 const redCarpetLeads = (c0: AbilityCall) =>
-  leadable(c0.s, c0.h).filter((u) => u.type === 'queen').flatMap((u) => optionsOf(c0.s, u))
+  // Before the check rule: abilityLead refuses a Lead only check forbids, with its own reason (006 FR-014).
+  leadable(c0.s, c0.h).filter((u) => u.type === 'queen').flatMap((u) => candidatesOf(c0.s, u))
     .filter((o) => o.isBattle && c0.s.units.filter((u) => o.battleUnitIds.includes(u.id)).every((u) => !isRoyal(u)));
 
 /** Counterintelligence: squares the marked unit may escape to, as if Led, not checking the King. */

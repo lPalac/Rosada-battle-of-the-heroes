@@ -189,6 +189,17 @@ export function apply(state: GameState, action: Action): ApplyResult {
   return { ok: true, state: finish(ctx, action), events: ctx.events };
 }
 
+/**
+ * 006 FR-015 (guarantee 25b): would `action`, applied now, leave a unit newly checking the acting side's own King?
+ * Runs on a copy (apply never mutates its input); false when the action would be refused.
+ */
+export function wouldCheckOwnKing(state: GameState, action: Action): boolean {
+  if (state.status !== 'playing' || state.enforcement !== 'rules') return false;
+  const side = activeHero(state).side;
+  const r = apply(state, action);
+  return r.ok && r.events.some((e) => e.type === 'check' && e.side === side);
+}
+
 /** Every action the active player (or the player owning a pendingDecision) may take now. Sandbox placement and
  * editing actions are open-ended and not listed. */
 export function legalActions(state: GameState): Action[] {
@@ -297,7 +308,7 @@ export { heroAbilityIds } from './abilities/hooks.ts';
 export { selectableHeroes, pickableHeroes } from './setup.ts';
 export { awaitingRoll } from './lead.ts';
 export { unitsAt } from "./paths.ts";
-export { isProtected, isCheckmate, threatenedSquares } from './check.ts';
+export { isProtected, isCheckmate, threatenedSquares, checkingUnits, blockedLeads, leadRefusal, type LeadRefusal } from './check.ts';
 export { destinyGeneration, isBloodied } from './generation.ts';
 export { hasPower, unlockedPowers } from './royal-favors.ts';
 export { heroUnitOptions, canLeaveHeroUnit, leadRange } from './hero-unit.ts';
