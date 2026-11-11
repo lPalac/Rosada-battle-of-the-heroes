@@ -50,7 +50,7 @@ describe('US5 – Auxiliary units and Create', () => {
   it('US5-AS4 auxiliary units Lead, Battle, threaten and give check like their type', () => {
     const s = board({ ...PAWNS, h1: 'R' }, { heroes: { H1: 'g0' }, auxiliary: ['h1'], phase: 'lead' });
     const r = act(s, { type: 'announceLead', unitId: 'L-R@h1', to: sq('h8') });
-    expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark' }]);
+    expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark', units: ['L-R@h1'] }]);
     expect(isInCheck(r.state, 'dark')).toBe(true);
   });
 });

@@ -16,10 +16,11 @@ describe('scripted game 04', () => {
       { c3: 'N', e2: 'P', d5: 'p', f6: 'p', c6: 'n', h7: 'p' },
       { heroDefs: { H1: 'cavalier', H2: 'scout', H3: 'magus', H4: 'monk' }, heroes: { H1: 'd3', H2: 'f7', H3: 'f2', H4: 'c7' }, wellRemaining: 1, phase: 'beforeMove' },
     );
-    // Ledger, turn 1 (H1 Cavalier): Demoralise (1 use → 0, no cost).
+    // Ledger, turn 1 (H1 Cavalier): Demoralise (1 use → 0; 1 D from the Cavalier's pool, 006 FR-002).
     expect(pools(s)).toEqual([3, 3, 3, 3]);
     s = use(s, 'cavalier.demoralise').state;
     expect(s.abilityState.H1!.uses['cavalier.demoralise']).toBe(0);
+    expect(pools(s)).toEqual([2, 3, 3, 3]);
     expect(s.effects.map((e) => e.kind)).toEqual(['demoralise']);
     // Lead: Knight c3 takes the Pawn on d5 (Peace side: no roll). +2 D Light common, +1 D Dark common; the Well's last
     // Destiny is taken, so the Epic Stage starts at the next Before Turn.
@@ -42,7 +43,7 @@ describe('scripted game 04', () => {
     expect(s.stage).toBe('epic');
     expect(s.heroes.map((x) => x.form)).toEqual(['deathKnight', 'royalAssassin', 'grandArcanist', 'supremeInquisitor']);
     // Common Pools split: Light 2 → 1 each; Dark 1 stays (odd). Health rises (+10 short, +8 long).
-    expect(pools(s)).toEqual([4, 3, 4, 3]);
+    expect(pools(s)).toEqual([3, 3, 4, 3]);
     expect(s.destiny.common).toEqual({ light: 0, dark: 1 });
     expect(s.heroes.map((x) => x.maxHealth)).toEqual([20, 16, 16, 20]);
     // The Demoralise mark stays until the Cavalier's next turn.

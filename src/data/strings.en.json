@@ -668,5 +668,6 @@
   "save.olderRules": "This save was made with older rules and cannot be continued",
   "mod.named": "{name} {n}",
   "mod.other": "Modifier",
-  "reason.other": "other"
+  "reason.other": "other",
+  "log.checkBy": "{side} King in check by {units}"
 }

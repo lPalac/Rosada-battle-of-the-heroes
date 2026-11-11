@@ -146,7 +146,7 @@ describe('US4 – Legendary Powers and Hero Units', () => {
     expect(targets(dark, 'D-R@e7')).not.toContain('e3');
     let g = board({ ...PAWNS }, { heroes: { H1: 'e4' }, royalFavors: favors(6), heroUnits: { H1: ['knight'] }, phase: 'lead' });
     const r = act(g, { type: 'announceLead', unitId: 'HU-H1', to: sq('f6') });
-    expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark' }]);
+    expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark', units: ['HU-H1'] }]);
     g = r.state;
     expect(isInCheck(g, 'dark')).toBe(true);
   });

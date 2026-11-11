@@ -68,7 +68,10 @@
         "beforeMove",
         "afterLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 1,
       "oncePerTurn": true,
       "flags": {
@@ -89,7 +92,10 @@
       "timings": [
         "insteadOfLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 1,
       "oncePerTurn": true,
       "flags": {
@@ -601,7 +607,10 @@
         "beforeLead",
         "afterLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 2,
       "oncePerTurn": false,
       "flags": {
@@ -623,7 +632,10 @@
       "timings": [
         "beginningOfTurn"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 1,
       "oncePerTurn": true,
       "flags": {},
@@ -1114,7 +1126,10 @@
         "beforeMove",
         "afterLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 1,
       "oncePerTurn": true,
       "flags": {},
@@ -1136,7 +1151,10 @@
         "beforeMove",
         "beforeLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 1,
       "oncePerTurn": true,
       "flags": {
@@ -1598,7 +1616,10 @@
         "beforeMove",
         "afterLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 2,
       "oncePerTurn": true,
       "flags": {},
@@ -1618,7 +1639,10 @@
       "timings": [
         "afterLead"
       ],
-      "cost": null,
+      "cost": {
+        "normal": 1,
+        "bloodied": 1
+      },
       "uses": 1,
       "oncePerTurn": true,
       "flags": {},

@@ -1,10 +1,11 @@
 // Public API of the rules core (contracts/rules-api.md). Pure: same input, same output; never mutates input.
 import { canHeroRetreat, canInspiredLead, heroRetreat, inspiredLead } from './abilities.ts';
 import { eq, taverns } from './board.ts';
-import { isInCheck } from './check.ts';
+import { checkingUnits, isInCheck } from './check.ts';
 import { activeHero, clone, emit, fail, hero, RuleFailure, type Ctx } from './ctx.ts';
 import { DATA, RULES, type StaticData } from './data.ts';
-import { available } from './destiny.ts';
+import { available, DESTINY, gain } from './destiny.ts';
+import { otherSide } from './model/types.ts';
 import { answerDraw, offerDraw } from './endgame.ts';
 import { isForbiddenEndSquare, legalMoveSquares, moveStep, placeHero } from './heroes.ts';
 import {
@@ -46,7 +47,11 @@ function newCtx(state: GameState): Ctx {
 function finish(ctx: Ctx, action: Action | null): GameState {
   const { s } = ctx;
   if (action) s.log.push(toLog(s, 'action', { action }));
-  for (const e of ctx.events) s.log.push(toLog(s, e.type, { ...e }));
+  for (const e of ctx.events) {
+    // 006: the log line of a check names the checking units' types (the event itself carries their ids).
+    const data = e.type === 'check' ? { ...e, types: e.units.map((id) => s.units.find((u) => u.id === id)?.type ?? null) } : { ...e };
+    s.log.push(toLog(s, e.type, data));
+  }
   return s;
 }
 
@@ -145,11 +150,35 @@ function dispatch(ctx: Ctx, action: Action): void {
   }
 }
 
+const inRules = (s: GameState): boolean => s.status === 'playing' && s.enforcement === 'rules';
+
+/**
+ * 006 FR-001 (research R-02): after an action, a unit that checks a King and did not check it before the action is a
+ * new check. The `check` event names the new checking units; the checking side gains `DESTINY.check` unless it already
+ * did this turn, whichever side took the action. Not in sandbox mode; simulations run on copies, not through `apply`.
+ */
+function newChecks(ctx: Ctx, before: GameState): void {
+  const { s } = ctx;
+  if (!inRules(before) || !inRules(s)) return;
+  for (const kingSide of ['light', 'dark'] as const) {
+    const was = new Set(checkingUnits(before, kingSide));
+    const fresh = checkingUnits(s, kingSide).filter((id) => !was.has(id));
+    if (!fresh.length) continue;
+    emit(ctx, { type: 'check', side: kingSide, units: fresh });
+    const maker = otherSide(kingSide);
+    if (!s.turn.checkDestinyClaimed.includes(maker)) {
+      s.turn.checkDestinyClaimed.push(maker);
+      gain(ctx, { side: maker }, DESTINY.check, 'check');
+    }
+  }
+}
+
 /** Apply one action. Never mutates the input. */
 export function apply(state: GameState, action: Action): ApplyResult {
   const ctx = newCtx(state);
   try {
     dispatch(ctx, action);
+    newChecks(ctx, state);
     if (ctx.s.effects?.length) cleanTargets(ctx);
     if (ctx.s.status === 'playing' && ctx.s.enforcement === 'rules') autoAdvance(ctx);
     else settleFavors(ctx);

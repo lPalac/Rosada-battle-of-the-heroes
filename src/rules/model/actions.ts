@@ -103,7 +103,7 @@ export type GameEvent =
   | { type: 'tokenChanged'; token: 'peaceTreaty' | 'revenge'; side?: Side; value: string | number }
   | { type: 'promoted'; unitId: string; to: UnitType }
   /** side: whose King is checked; units (006): the units that newly check it. */
-  | { type: 'check'; side: Side; units?: string[] }
+  | { type: 'check'; side: Side; units: string[] }
   | { type: 'abilityUsed'; heroId: HeroId; ability: string; destiny: number; targets?: AbilityTarget[]; option?: string }
   | { type: 'effectAdded'; effect: import('./state.ts').Effect }
   | { type: 'effectRemoved'; id: number; kind: string; reason: string }

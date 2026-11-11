@@ -37,6 +37,12 @@ export function isInCheck(state: UnitView, side: Side): boolean {
   return !!king && isThreatened(state, king.pos, otherSide(side));
 }
 
+/** 006 FR-001: ids of the units that check `side`'s King now (empty when not in check or without a King). */
+export function checkingUnits(state: UnitView, side: Side): string[] {
+  const king = kingOf(state, side);
+  return king ? attackersOf(state, king.pos, otherSide(side)).map((u) => u.id) : [];
+}
+
 /** A unit is Protected when a friendly unit threatens its square. */
 export function isProtected(state: UnitView, unit: Unit): boolean {
   return isThreatened(state, unit.pos, unit.side);

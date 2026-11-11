@@ -48,6 +48,17 @@ async function step(
   const s = any.state;
   let legal = legalActions(s).filter((a) => a.type !== 'setEnforcement' && a.type !== 'offerDraw');
   if (s.status === 'setup') legal = legal.filter((a) => a.type === 'pickHero' && a.heroDefinitionId === HEROES[heroIndex.i % 4]);
+  if (!legal.length && s.status === 'playing') {
+    // A random walk can spend the last Movement point on a square the Move may not end on (an enemy unit or a King);
+    // End phase is then disabled (001). A player undoes the step; so does the random player (006).
+    const mover = Object.values(t.players).find((p) => p.session.canUndo());
+    if (!mover) return false;
+    const before = serverCore(t.code).seq;
+    mover.session.undo();
+    await until(() => serverCore(t.code).seq < before, 5000, 'undo');
+    await settled(t.all, t.code);
+    return true;
+  }
   if (!legal.length) return false;
   const seat = [...actorFor(any.room!, s)][0];
   const p = t.players[seat];

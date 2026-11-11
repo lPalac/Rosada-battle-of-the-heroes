@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  isCheckmate, isDiscoveredCheck, isInCheck, isProtected, isThreatened, legalLeadsForUnit, threatenedSquares,
+  checkingUnits, isCheckmate, isDiscoveredCheck, isInCheck, isProtected, isThreatened, legalLeadsForUnit, threatenedSquares,
 } from '../../src/rules/check.ts';
 import { basicLeads } from '../../src/rules/paths.ts';
 import { board, name, sq, unitOn } from '../fixtures/position.ts';
@@ -32,6 +32,14 @@ describe('Threaten, Protected, Check (FR-040)', () => {
     const s = board({ e1: 'K', e8: 'r', a8: 'k' });
     expect(isInCheck(s, 'light')).toBe(true);
     expect(isInCheck(s, 'dark')).toBe(false);
+  });
+
+  it('006 checkingUnits lists every unit that checks a King, none when not in check', () => {
+    const s = board({ e1: 'K', e8: 'r', b4: 'b', a8: 'k', a1: 'R' });
+    expect(checkingUnits(s, 'light').sort()).toEqual([unitOn(s, 'b4')!.id, unitOn(s, 'e8')!.id].sort());
+    expect(checkingUnits(s, 'dark')).toEqual([unitOn(s, 'a1')!.id]);
+    expect(checkingUnits(board({ e1: 'K', a8: 'k' }), 'light')).toEqual([]);
+    expect(checkingUnits({ units: [] }, 'light')).toEqual([]);
   });
 
   it('a pinned unit still threatens (rulebook Threaten)', () => {

@@ -9,7 +9,7 @@ describe('US5 – Destiny economy', () => {
   it('US5-AS1 checking the enemy King gives the Common Pool 2 D, once per turn', () => {
     const s = board({ a1: 'R', h1: 'K', e8: 'k' }, { heroes: { H1: 'b0' }, phase: 'lead' });
     const r = act(s, { type: 'announceLead', unitId: 'L-R@a1', to: sq('e1') });
-    expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark' }]);
+    expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark', units: ['L-R@a1'] }]);
     expect(r.state.destiny.common.light).toBe(2);
     expect(r.state.turn.checkDestinyClaimed).toEqual(['light']);
   });

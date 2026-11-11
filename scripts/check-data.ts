@@ -97,6 +97,7 @@ function checkAbilities(data: Record<string, any>): string[] {
     const by = owner.get(a.id) ?? [];
     if (by.length !== 1) errors.push(`abilities.json ${a.id}: belongs to ${by.length} heroes or forms`);
     if (a.cost && a.uses && !starting.has(a.id)) errors.push(`abilities.json ${a.id}: has both cost and uses`);
+    if (a.uses && !a.cost && starting.has(a.id)) errors.push(`abilities.json ${a.id}: a Starting ability with uses needs a cost (1 D per use)`);
     // 006: a target hint has its "why not" text.
     if (a.targetHint && !strings[`hint.${a.targetHint}`]) errors.push(`strings.en.json: missing hint.${a.targetHint}`);
     // Rule 4: values pairs are [normal, bloodied].

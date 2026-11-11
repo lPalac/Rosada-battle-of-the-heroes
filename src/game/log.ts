@@ -43,7 +43,12 @@ export function formatLogEntry(e: LogEntry): string | null {
       if (d.token === 'peaceTreaty') return d.value === 'removed' ? t('log.warRemoved') : t('log.war');
       return t('log.revenge', { side: t(`side.${d.side}`), n: d.value });
     case 'promoted': return t('log.promoted', { unit: d.unitId, to: t(`unit.${d.to}`) });
-    case 'check': return t('log.check', { side: t(`side.${d.side}`) });
+    case 'check': {
+      const types = ((d.types ?? []) as (string | null)[]).filter((x): x is string => !!x);
+      return types.length
+        ? t('log.checkBy', { side: t(`side.${d.side}`), units: types.map((x) => t(`unit.${x}`)).join(', ') })
+        : t('log.check', { side: t(`side.${d.side}`) });
+    }
     case 'abilityUsed':
       return hasString(`log.ability.${d.ability}`)
         ? t(`log.ability.${d.ability}`, { hero: d.heroId, n: d.destiny })

@@ -259,15 +259,9 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
     if (opt.to.y === enemyRoyalRank(side)) complete(ctx, side, 'bloodyTheCastleGates');
     if (unit.kind !== 'hero' && (unit.type === 'king' || unit.type === 'queen')) progress(ctx, side, 'royalsFury', victims.length);
   }
-  const enemy = otherSide(side);
-  if (isInCheck(s, enemy)) {
-    emit(ctx, { type: 'check', side: enemy });
-    if (discovered) complete(ctx, side, 'tacticalGenius');
-    if (!s.turn.checkDestinyClaimed.includes(side)) {
-      s.turn.checkDestinyClaimed.push(side);
-      gain(ctx, { side }, DESTINY.check, 'check');
-    }
-  }
+  // Tactical Genius: a discovered check made by a Lead (003, unchanged). The `check` event and the check Destiny are
+  // given for every new check after the action, in `apply` (006 FR-001).
+  if (discovered && isInCheck(s, otherSide(side))) complete(ctx, side, 'tacticalGenius');
   s.turn.kingInCheckAfterLead = isInCheck(s, side);
   // Promotion, then the Short range advance.
   if (isPromotionSquare(unit, opt.to)) {
