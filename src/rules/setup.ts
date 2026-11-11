@@ -10,8 +10,9 @@ import type { HeroId, RangeType, Side, UnitType } from './model/types.ts';
 import { emptyFavorRecord } from './royal-favors.ts';
 import { freshTurnFlags } from './turn.ts';
 
-/** 2: 003 fields (stage, Royal Favors, Hero Units). Version 1 saves are migrated on load. */
-export const STATE_VERSION = 2;
+/** 2: 003 fields (stage, Royal Favors, Hero Units). 3: 006 (sandbox resume point, Move start, per-side check
+ * Destiny, Epic `appliesTo`; Starting abilities cost Destiny). Older saves are migrated on load. */
+export const STATE_VERSION = 3;
 
 const LETTER: Record<UnitType, string> = { king: 'K', queen: 'Q', rook: 'R', bishop: 'B', knight: 'N', pawn: 'P' };
 const FILES = 'abcdefgh';
@@ -39,7 +40,7 @@ function emptyBoardState(setup: SetupChoices): GameState {
     destiny: { well: { initialRemaining: DATA.rules.destiny.wellInitial, depleted: false, depletedBy: null }, common: { light: 0, dark: 0 }, entries: [] },
     tokens: { peaceTreaty: 'peace', revenge: { light: 0, dark: 0 } },
     stage: 'starting', epicPending: false, royalFavors: { light: emptyFavorRecord(), dark: emptyFavorRecord() },
-    pendingDecision: null, decisionQueue: [], result: null, sandboxMoved: [], log: [],
+    pendingDecision: null, decisionQueue: [], result: null, sandboxMoved: [], sandboxResume: null, log: [],
     effects: [], abilityState: {}, nextEffectId: 1,
   };
 }

@@ -263,8 +263,8 @@ function resolve(ctx: Ctx, opt: LeadOption, success: boolean): void {
   if (isInCheck(s, enemy)) {
     emit(ctx, { type: 'check', side: enemy });
     if (discovered) complete(ctx, side, 'tacticalGenius');
-    if (!s.turn.checkBonusClaimed) {
-      s.turn.checkBonusClaimed = true;
+    if (!s.turn.checkDestinyClaimed.includes(side)) {
+      s.turn.checkDestinyClaimed.push(side);
       gain(ctx, { side }, DESTINY.check, 'check');
     }
   }

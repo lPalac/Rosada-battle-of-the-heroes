@@ -395,3 +395,15 @@ Not included: reasons for squares a unit can never reach by its own movement (th
 - `both` spends two uses and 2 D in one action and applies the stronger effect.
 - *Preaching* becomes once per turn like every Starting ability (Basic Rules *Hero abilities*; spec A-13), so the old path of using it twice in a turn goes away.
 - The interface shows the choice as two buttons in the ability's row or prompt before the target is picked.
+
+---
+
+## Baseline (T001, 2026-11-11)
+
+Run on Node 24.22.2 on the branch `006-fixes-improvements` at `7032356` (code identical to `main` `0ccd441`), before any code change:
+
+- `npm test`: type checks pass, 9 data files valid, Vitest 65 files, 504 tests, all passed.
+- `npm run test:e2e`: 42 passed in 6.1 min (Chromium and the `gpu` project); perf: first load 1.8 s, median frame 16.7 ms, p95 16.8 ms.
+- A first browser run made while source files were being edited had 6 failures, because the test server serves the files live; the run on an untouched copy of the branch is the baseline above.
+- Research R-02 replayed on this code: the reported case (Lead check, then *Souls Clash*) gains `check` once plus `destroyEnemy`; a King left in check gains `check` again on an unrelated Lead; a promotion that gives check gains nothing. As described in R-02.
+- `scripts/check-data.ts` refused an ability with both `cost` and `uses` (not noted in R-04); T003 allows both on Starting Hero abilities.

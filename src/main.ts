@@ -731,6 +731,13 @@ if (import.meta.env.DEV || isE2E) {
       if (onlineSession()) online.conn?.send({ t: 'forceNextRoll', value: n });
       else forcedRoll = n;
     },
+    // 006 (contracts/ui-interactions.md): planned Move path, flashes shown so far, HUD panel rectangles, the board's
+    // corners on screen and the camera's side. Filled by the tasks that build them.
+    plan: (): { path: string[]; left: number } | null => null,
+    flashes: (): { kind: string; text: string; tone: string }[] => [],
+    panelRects: (): Record<string, { x: number; y: number; w: number; h: number }> => ({}),
+    boardRect: (): { x: number; y: number }[] => [],
+    viewSide: (): 'light' | 'dark' | null => null,
     /** 005: the online view of this window (seat, room, whether it may act). */
     online: () => {
       const net = onlineSession();

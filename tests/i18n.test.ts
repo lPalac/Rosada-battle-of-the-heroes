@@ -3,6 +3,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import strings from '../src/data/strings.en.json';
+import abilities from '../src/data/abilities.json';
+import { markLabel, modifierLabel, reasonLabel } from '../src/game/labels.ts';
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((f) => {
@@ -15,7 +17,9 @@ const src = files('src').map((f) => ({ f, text: readFileSync(f, 'utf8') }));
 const keys = new Set(Object.keys(strings));
 /** Position problem codes come with their own message text (FR-103); they are not shown via error.* keys. */
 const PROBLEM_CODES = ['OPPOSING_UNITS_SHARE', 'TOO_MANY_UNITS', 'UNIT_OFF_BATTLEFIELD', 'UNPROMOTED_PAWN', 'KING_COUNT', 'KING_SHARES', 'NEGATIVE_POOL',
-  'REVENGE_COUNT', 'HERO_OFF_BOARD', 'BAD_HEALTH'];
+  'REVENGE_COUNT', 'HERO_OFF_BOARD', 'BAD_HEALTH',
+  // 006 FR-009: a position warning, shown by the checkmate alert's own strings (dialog.checkmate.*).
+  'CHECKMATE'];
 
 describe('UI strings (A-02)', () => {
   it('has a message for every RuleError code', () => {
@@ -52,5 +56,15 @@ describe('UI strings (A-02)', () => {
       'log.enforcement.sandbox', 'log.enforcement.rules', 'setup.mode.draft', 'setup.mode.mirror',
     ];
     expect(needed.filter((k) => !keys.has(k))).toEqual([]);
+  });
+
+  it('006 X-01, X-02: every ability id used as a modifier source, Destiny reason or heal reason resolves to a name', () => {
+    const raw: string[] = [];
+    for (const a of abilities.abilities) {
+      for (const label of [modifierLabel(a.id, 2), reasonLabel(a.id), markLabel(a.id)]) {
+        if (label.includes(a.id) || /\b(mod|reason|effect)\./.test(label)) raw.push(`${a.id}: ${label}`);
+      }
+    }
+    expect(raw).toEqual([]);
   });
 });

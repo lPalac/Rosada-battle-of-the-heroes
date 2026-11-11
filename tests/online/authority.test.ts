@@ -67,7 +67,7 @@ describe('US2 authority', () => {
   it('US2-AS6 a decision belongs to the seat of the hero that owns it', () => {
     const s = board({}, {});
     expect(who(roomAt({ ...s, pendingDecision: { type: 'promotion', unitId: 'x', chooserHeroId: 'H2' } }))).toEqual(['P2']);
-    expect(who(roomAt({ ...s, pendingDecision: { type: 'epicDestiny', heroId: 'H3', options: ['fanatic'] } }))).toEqual(['P3']);
+    expect(who(roomAt({ ...s, pendingDecision: { type: 'epicDestiny', heroId: 'H3', options: ['fanatic'], appliesTo: ['H3'] } }))).toEqual(['P3']);
     expect(who(roomAt({ ...s, pendingDecision: { type: 'unconsciousTavern', heroId: 'H4', options: [] } }))).toEqual(['P4']);
     const reaction = roomAt({ ...s, pendingDecision: { type: 'abilityChoice', heroId: 'H2', abilityId: 'x', choices: ['a'] } });
     expect(who(reaction)).toEqual(['P2']);

@@ -66,6 +66,12 @@
       },
       "flipY": {
         "type": "boolean"
+      },
+      "yaw": {
+        "type": "number"
+      },
+      "offsetY": {
+        "type": "number"
       }
     },
     "additionalProperties": false

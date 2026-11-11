@@ -4,6 +4,15 @@ export async function hook<T>(page: Page, fn: string, ...args: unknown[]): Promi
   return page.evaluate(([f, a]) => (window as any).__rosada[f as string](...(a as unknown[])), [fn, args] as const) as Promise<T>;
 }
 
+// 006 test hook (contracts/ui-interactions.md).
+export type Rect = { x: number; y: number; w: number; h: number };
+export type Flash = { kind: string; text: string; tone: string };
+export const planOf = (page: Page) => hook<{ path: string[]; left: number } | null>(page, 'plan');
+export const flashesOf = (page: Page) => hook<Flash[]>(page, 'flashes');
+export const panelRectsOf = (page: Page) => hook<Record<string, Rect>>(page, 'panelRects');
+export const boardRectOf = (page: Page) => hook<{ x: number; y: number }[]>(page, 'boardRect');
+export const viewSideOf = (page: Page) => hook<'light' | 'dark' | null>(page, 'viewSide');
+
 /** Click the centre of a board square with the real mouse (goes through raycast picking). */
 export async function clickSquare(page: Page, square: string): Promise<void> {
   const p = await hook<{ x: number; y: number }>(page, 'screenOf', square);

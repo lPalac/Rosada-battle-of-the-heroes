@@ -1,5 +1,6 @@
 // Save files: the starting state plus the action log (FR-200, FR-201). Replaying the log restores the game exactly,
 // including what can still be undone; no seed is needed (FR-037). Storage itself lives in the UI layer.
+import { t } from '../i18n/strings.ts';
 import { STATE_VERSION } from '../rules/setup.ts';
 import { DATA, type Action, type GameState } from '../rules/index.ts';
 import { replay } from './session.ts';
@@ -22,9 +23,16 @@ export function parseSaveFile(text: string): SaveFile {
   if (typeof data.version !== 'number' || data.version < 1 || data.version > STATE_VERSION) {
     throw new Error(`Save file version ${data.version} is not supported`);
   }
+  const older = data.version < STATE_VERSION;
   data.initial = migrateState(data.initial);
   data.version = STATE_VERSION;
-  replay(data.initial, data.actions); // throws if the log does not replay
+  try {
+    replay(data.initial, data.actions); // throws if the log does not replay
+  } catch (e) {
+    // 006 research R-04: a log played under older rules (free Starting abilities) may not replay any more.
+    if (older) throw new Error(t('save.olderRules'));
+    throw e;
+  }
   return data as SaveFile;
 }
 
@@ -47,6 +55,18 @@ export function migrateState(state: GameState): GameState {
   s.effects ??= [];
   s.abilityState ??= {};
   s.nextEffectId ??= 1;
+  // 006: sandbox resume point, Move start, per-side check Destiny, Epic `appliesTo`.
+  s.sandboxResume ??= null;
+  s.turn.moveStart ??= null;
+  const turn = s.turn as GameState['turn'] & { checkBonusClaimed?: boolean };
+  if (!turn.checkDestinyClaimed) {
+    const active = s.heroes.find((h) => h.id === s.activeHeroId);
+    turn.checkDestinyClaimed = turn.checkBonusClaimed && active ? [active.side] : [];
+  }
+  delete turn.checkBonusClaimed;
+  for (const d of [s.pendingDecision, ...(s.decisionQueue ?? [])]) {
+    if (d?.type === 'epicDestiny') d.appliesTo ??= [d.heroId];
+  }
   for (const h of s.heroes) {
     const def = DATA.heroes.find((d) => d.id === h.definitionId);
     h.epic ??= null;

@@ -11,7 +11,7 @@ describe('US5 – Destiny economy', () => {
     const r = act(s, { type: 'announceLead', unitId: 'L-R@a1', to: sq('e1') });
     expect(eventsOf(r.events, 'check')).toEqual([{ type: 'check', side: 'dark' }]);
     expect(r.state.destiny.common.light).toBe(2);
-    expect(r.state.turn.checkBonusClaimed).toBe(true);
+    expect(r.state.turn.checkDestinyClaimed).toEqual(['light']);
   });
 
   it('US5-AS2 destroying an enemy unit gives 2 D; the side that lost it gains 1 D per unit', () => {

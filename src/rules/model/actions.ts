@@ -36,7 +36,8 @@ export type Action =
   // game
   | { type: 'offerDraw' }
   | { type: 'answerDraw'; accept: boolean }
-  | { type: 'setEnforcement'; mode: 'rules' | 'sandbox' }
+  /** 006: `restart` always begins at Before Turn (position editor, test fixtures). */
+  | { type: 'setEnforcement'; mode: 'rules' | 'sandbox'; restart?: boolean }
   // sandbox only
   | { type: 'sandboxPlace'; target: { unitId?: string; heroId?: string }; to: Coord | 'graveyard' }
   | {
@@ -59,7 +60,8 @@ export type PendingDecision =
   | { type: 'unconsciousTavern'; heroId: HeroId; options: Coord[] }
   | { type: 'advanceSquare'; heroId: HeroId; options: Coord[] }
   | { type: 'drawOffer'; fromSide: Side }
-  | { type: 'epicDestiny'; heroId: HeroId; options: EpicDestiny[] }
+  /** `appliesTo`: the heroes that take the chosen destiny (006: the chooser; in Mirror also its twin). */
+  | { type: 'epicDestiny'; heroId: HeroId; options: EpicDestiny[]; appliesTo: HeroId[] }
   /** 004: a "During Enemy Lead" ability may be used now by its owner (research R-03). */
   | { type: 'reaction'; heroId: HeroId; abilityId: string; key: string; at: 'battle'; cost: number; options: AbilityTarget[][] }
   /** 004: a choice inside an ability (Converge Timelines: which copy stays; No Time to Lose; Evasive). */
@@ -100,7 +102,8 @@ export type GameEvent =
   | { type: 'wellDepleted' }
   | { type: 'tokenChanged'; token: 'peaceTreaty' | 'revenge'; side?: Side; value: string | number }
   | { type: 'promoted'; unitId: string; to: UnitType }
-  | { type: 'check'; side: Side }
+  /** side: whose King is checked; units (006): the units that newly check it. */
+  | { type: 'check'; side: Side; units?: string[] }
   | { type: 'abilityUsed'; heroId: HeroId; ability: string; destiny: number; targets?: AbilityTarget[]; option?: string }
   | { type: 'effectAdded'; effect: import('./state.ts').Effect }
   | { type: 'effectRemoved'; id: number; kind: string; reason: string }
@@ -125,6 +128,12 @@ export type GameEvent =
 export const REVEAL_EVENTS: readonly GameEvent['type'][] = [
   'rolled', 'unitDestroyed', 'heroRammed', 'heroWounded',
 ];
+
+/** 006 FR-009: something the players should know before rules come back on; never blocks. */
+export interface PositionWarning {
+  code: 'CHECKMATE';
+  side: Side;
+}
 
 export interface PositionProblem {
   code: string;

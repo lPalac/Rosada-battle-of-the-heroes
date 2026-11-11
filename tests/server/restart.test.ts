@@ -1,5 +1,5 @@
 // 005 US4 over the wire: rejoin with a seat token, and rooms surviving a server restart (FR-040, FR-044).
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join as joinPath } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -88,6 +88,32 @@ describe('US4 reconnect and resume', () => {
     await until(() => a2.session.seq === 2, 5000, 'play continues');
     await a2.conn.leave();
     await b2.conn.leave();
+    await again.close();
+  }, 30_000);
+
+  it('006 R-04: a room file that no longer replays is skipped at start and the server keeps running', async () => {
+    const srv = await testServer();
+    const a = await create(srv.url, { playerCount: 2 });
+    const b = await join(srv.url, a.conn.code);
+    await sit(b, 'P2', 'Ana');
+    a.session.start();
+    await until(() => a.session.room!.status === 'setup');
+    a.session.dispatch({ type: 'pickHero', side: 'light', heroDefinitionId: 'monk' });
+    await until(() => b.session.seq === 1);
+    const code = a.conn.code;
+    const token = a.tokens[0].token;
+    await srv.close(true);
+    // A log made under other rules: the next action is not legal any more.
+    const path = joinPath(srv.dir, `${code}.json`);
+    const file = JSON.parse(readFileSync(path, 'utf8'));
+    file.room.save.actions.push({ type: 'pickHero', side: 'light', heroDefinitionId: 'monk' });
+    file.room.actors.push('P1');
+    writeFileSync(path, JSON.stringify(file));
+
+    const again = await testServer(srv.dir);
+    const health = await (await fetch(`${again.url.replace(/^ws/, 'http')}/api/health`)).json();
+    expect(health).toMatchObject({ ok: true, rooms: 0 });
+    await expect(join(again.url, code, { seatToken: token })).rejects.toBeTruthy();
     await again.close();
   }, 30_000);
 });

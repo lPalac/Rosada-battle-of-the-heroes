@@ -21,7 +21,7 @@ import { hasAbilityOffer } from './abilities/engine.ts';
 export function freshTurnFlags(): TurnFlags {
   return {
     movementLeft: 0, movePath: [], tavernShopOpen: null, leftTaverns: [], leadAttempted: false,
-    leadPossible: false, kingInCheckAfterLead: false, checkBonusClaimed: false, abilitiesUsed: [],
+    leadPossible: false, kingInCheckAfterLead: false, checkDestinyClaimed: [], moveStart: null, abilitiesUsed: [],
     inspiredLeadBonus: 0, lead: null, bothKingsInCheckAtBeginning: false, doubleStepUnitId: null,
     heroUnitChanges: [], kingsForcesUsed: false,
   };

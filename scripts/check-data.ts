@@ -91,10 +91,14 @@ function checkAbilities(data: Record<string, any>): string[] {
   }
   // Rule 1: every hero / form ability exists, and every ability belongs to exactly one owner.
   for (const [id, by] of owner) if (!abilities.has(id)) errors.push(`heroes.json ${by.join(',')}: unknown ability ${id}`);
+  // 006 FR-002: a Starting Hero's limited ability costs 1 D per use, so it has both; nothing else may.
+  const starting = new Set<string>((data.heroes.heroes ?? []).flatMap((h: any) => h.abilities));
   for (const a of abilities.values()) {
     const by = owner.get(a.id) ?? [];
     if (by.length !== 1) errors.push(`abilities.json ${a.id}: belongs to ${by.length} heroes or forms`);
-    if (a.cost && a.uses) errors.push(`abilities.json ${a.id}: has both cost and uses`);
+    if (a.cost && a.uses && !starting.has(a.id)) errors.push(`abilities.json ${a.id}: has both cost and uses`);
+    // 006: a target hint has its "why not" text.
+    if (a.targetHint && !strings[`hint.${a.targetHint}`]) errors.push(`strings.en.json: missing hint.${a.targetHint}`);
     // Rule 4: values pairs are [normal, bloodied].
     for (const [k, v] of Object.entries<any>(a.values)) if (Array.isArray(v) && v.length !== 2) errors.push(`abilities.json ${a.id}: value ${k} must be [normal, bloodied]`);
     // Rule 5: strings and icons.

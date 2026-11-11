@@ -72,6 +72,34 @@ describe('003 – older saves load (T008)', () => {
     expect(s.heroes.map((h) => h.heroUnitType)).toEqual(['knight', 'bishop', 'bishop', 'knight']);
   });
 
+  it('006: a version 2 save gets the sandbox resume point, the Move start, the per-side check mark and appliesTo', () => {
+    const old = JSON.parse(JSON.stringify(newGame())) as Record<string, any>;
+    delete old.sandboxResume;
+    delete old.turn.moveStart;
+    delete old.turn.checkDestinyClaimed;
+    old.turn.checkBonusClaimed = true;
+    old.pendingDecision = { type: 'epicDestiny', heroId: 'H2', options: ['fanatic'] };
+    old.decisionQueue = [{ type: 'epicDestiny', heroId: 'H3', options: [] }];
+    old.version = 2;
+    const m = migrateState(old as never);
+    expect(m.version).toBe(3);
+    expect(m.sandboxResume).toBeNull();
+    expect(m.turn.moveStart).toBeNull();
+    expect(m.turn.checkDestinyClaimed).toEqual(['light']);
+    expect('checkBonusClaimed' in m.turn).toBe(false);
+    expect(m.pendingDecision).toMatchObject({ appliesTo: ['H2'] });
+    expect(m.decisionQueue[0]).toMatchObject({ appliesTo: ['H3'] });
+    const unclaimed = migrateState({ ...old, turn: { ...old.turn, checkBonusClaimed: false } } as never);
+    expect(unclaimed.turn.checkDestinyClaimed).toEqual([]);
+  });
+
+  it('006: a version 2 save loads; one that no longer replays says it was made with older rules', () => {
+    const initial = createSetup({ mode: 'draft', playerCount: 4 });
+    expect(parseSaveFile(JSON.stringify({ ...toSaveFile(initial, setupActions), version: 2 })).version).toBe(3);
+    const bad = JSON.stringify({ ...toSaveFile(initial, [{ type: 'startGame' }]), version: 2 });
+    expect(() => parseSaveFile(bad)).toThrow('This save was made with older rules and cannot be continued');
+  });
+
   it('004: a 003 save gets empty effects, ability uses and no Epic forms', () => {
     const old = JSON.parse(JSON.stringify(newGame())) as Record<string, unknown> & { heroes: Record<string, unknown>[] };
     delete old.effects;

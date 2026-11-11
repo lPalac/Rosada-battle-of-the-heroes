@@ -29,7 +29,7 @@ export function maybeStartEpic(ctx: Ctx): void {
   const { s } = ctx;
   if (s.status !== 'playing' || !s.epicPending || s.stage !== 'starting') return;
   if (s.pendingDecision?.type === 'epicDestiny') return;
-  const queue: PendingDecision[] = choiceOrder(s).map((heroId) => ({ type: 'epicDestiny', heroId, options: [] }));
+  const queue: PendingDecision[] = choiceOrder(s).map((heroId) => ({ type: 'epicDestiny', heroId, options: [], appliesTo: [heroId] }));
   const first = queue.shift()!;
   if (first.type === 'epicDestiny') first.options = destinyOptions(s, first.heroId);
   s.decisionQueue = [...queue, ...s.decisionQueue];

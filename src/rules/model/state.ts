@@ -120,7 +120,10 @@ export interface TurnFlags {
   leadAttempted: boolean;
   leadPossible: boolean;
   kingInCheckAfterLead: boolean;
-  checkBonusClaimed: boolean;
+  /** 006 FR-001: sides that gained the 2 D for a new check this turn (at most once per turn per side). */
+  checkDestinyClaimed: Side[];
+  /** 006 FR-003: the active hero's square when the Move phase began (part of the Move's path). */
+  moveStart: Coord | null;
   abilitiesUsed: ('inspiredLead' | 'heroRetreat')[];
   /** +2 per D spent; used by this turn's Lead only, lost if no Lead is made. */
   inspiredLeadBonus: number;
@@ -185,6 +188,16 @@ export interface RoyalFavorRecord {
   kingsForces: number;
 }
 
+/** 006 FR-006: the turn as it was when rules were turned off, so turning them back on continues it. */
+export interface SandboxResume {
+  turnNumber: number;
+  activeHeroId: HeroId;
+  phase: Phase;
+  turn: TurnFlags;
+  pendingDecision: PendingDecision | null;
+  decisionQueue: PendingDecision[];
+}
+
 export interface GameState {
   version: number;
   setup: SetupChoices;
@@ -209,6 +222,8 @@ export interface GameState {
   result: GameResult | null;
   /** Unit ids moved by hand in sandbox; count as Led when rules resume (FR-104). */
   sandboxMoved: string[];
+  /** 006 FR-006: set while rules are off during play; null otherwise. */
+  sandboxResume: SandboxResume | null;
   log: LogEntry[];
   /** 004: ability effects, ability uses, stable effect ids. */
   effects: Effect[];

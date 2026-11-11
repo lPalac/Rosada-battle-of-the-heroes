@@ -110,8 +110,18 @@
               },
               "noRoll": {
                 "type": "boolean"
+              },
+              "noUnitEffect": {
+                "type": "boolean"
+              },
+              "bothUses": {
+                "type": "boolean"
               }
             }
+          },
+          "targetHint": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z]*$"
           },
           "values": {
             "type": "object",
