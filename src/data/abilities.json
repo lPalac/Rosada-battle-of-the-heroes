@@ -644,10 +644,11 @@
         "bloodied": 1
       },
       "uses": 2,
-      "oncePerTurn": false,
+      "oncePerTurn": true,
       "flags": {
         "notRoyalty": true,
-        "noUnitEffect": true
+        "noUnitEffect": true,
+        "bothUses": true
       },
       "targetHint": "adjacentEnemyUnit",
       "values": {

@@ -66,9 +66,9 @@ describe('US4 shared mechanisms', () => {
 
   it('US4-AS5 effects are logged, and replay rebuilds them (guarantee 17)', () => {
     const start = board({ c3: 'N', d4: 'p', h7: 'p' }, { heroDefs: { H1: 'monk' }, heroes: { H1: 'd3' }, phase: 'beforeMove' });
-    const r = use(start, 'monk.preaching', [unitT(start, 'd4')]);
+    const r = use(start, 'monk.preaching', [unitT(start, 'd4')], 'one');
     expect(r.events.some((e) => e.type === 'effectAdded')).toBe(true);
-    const again = replay(start, [{ type: 'useAbility', abilityId: 'monk.preaching', targets: [unitT(start, 'd4')] }]);
+    const again = replay(start, [{ type: 'useAbility', abilityId: 'monk.preaching', targets: [unitT(start, 'd4')], option: 'one' }]);
     expect(again.effects).toEqual(r.state.effects);
     expect(again.abilityState).toEqual(r.state.abilityState);
   });

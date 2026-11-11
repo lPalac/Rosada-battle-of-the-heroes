@@ -69,7 +69,8 @@ describe('US1 – Starting abilities cost Destiny (B-09)', () => {
     const r = use(s, 'magus.flamingBolt', [{ heroId: 'H2' }]).state;
     expect(h(r, 'H1').pool).toBe(h(s, 'H1').pool - 1);
     const p = board({ c3: 'N', d5: 'n', h7: 'p' }, { heroDefs: { H1: 'monk' }, heroes: { H1: 'd4' }, phase: 'beforeMove' });
-    expect(abilityOffers(p).filter((o) => o.abilityId === 'monk.preaching').every((o) => o.cost === 1)).toBe(true);
+    // One use 1 D; both uses at once 2 D (FR-017).
+    expect(abilityOffers(p).filter((o) => o.abilityId === 'monk.preaching').map((o) => [o.option, o.cost])).toEqual([['one', 1], ['both', 2]]);
   });
 
   it('US1-AS11 Destiny paid on Starting sheets is not returned when the Epic Stage starts', () => {

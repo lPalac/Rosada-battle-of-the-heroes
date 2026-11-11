@@ -718,5 +718,9 @@
   "hint.areaInRange": "Needs a 2×2 area fully in your range",
   "hint.pawnOnStartSquare": "Only while Leading a Pawn on a starting square of its type",
   "hint.successfulLeadNoCheck": "Only after a successful Lead that did not check with that unit",
-  "error.NOT_A_LEAD": "That unit cannot be Led there"
+  "error.NOT_A_LEAD": "That unit cannot be Led there",
+  "option.one": "One use",
+  "option.both": "Both uses",
+  "option.monk.preaching.one": "One use: −4 to Lead on the next turn ({cost} D)",
+  "option.monk.preaching.both": "Both uses: cannot be Led on the next turn ({cost} D)"
 }

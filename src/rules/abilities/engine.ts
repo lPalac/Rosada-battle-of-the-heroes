@@ -127,9 +127,18 @@ function runEffect(ctx: Ctx, h: Hero, def: AbilityDefinition, option: string | u
   }
 }
 
+/** 006 FR-017: an ability with a different effect for both uses is offered as `one` or `both`. */
+export const BOTH_USES_OPTIONS = ['one', 'both'] as const;
+
 function optionsOf(def: AbilityDefinition): (string | undefined)[] {
+  if (def.flags.bothUses) return [...BOTH_USES_OPTIONS];
   return def.options?.length ? def.options : [undefined];
 }
+
+const hasOptions = (def: AbilityDefinition): boolean => !!def.options?.length || !!def.flags.bothUses;
+
+/** Uses an option spends: 2 for `both`, else 1. */
+const usesSpent = (def: AbilityDefinition, option: string | undefined): number => (def.flags.bothUses && option === 'both' ? 2 : 1);
 
 /**
  * Every offer of the abilities the active hero may use now, also those whose every target is blocked (006): the
@@ -145,6 +154,10 @@ function scanOffers(s: GameState, opts: { first?: boolean } = {}): AbilityOffer[
     const im = impl(id);
     if (!im || blocker(s, h, def, timings)) continue;
     for (const option of optionsOf(def)) {
+      // `both` needs two uses left and the Destiny for both (FR-017).
+      const times = usesSpent(def, option);
+      const cost = abilityCost(s, h.id, id) * times;
+      if (times > 1 && ((usesLeft(s, h.id, id) ?? 0) < times || available({ s, events: [] }, h) < cost)) continue;
       const c = call(s, h, def, option);
       if (im.condition && !im.condition(c)) continue;
       let targets = im.targets ? im.targets(c) : [[]];
@@ -160,7 +173,7 @@ function scanOffers(s: GameState, opts: { first?: boolean } = {}): AbilityOffer[
         targets = kept;
       }
       if (!targets.length && !blocked.length) continue;
-      out.push({ heroId: h.id, abilityId: id, ...(option ? { option } : {}), cost: abilityCost(s, h.id, id), usesLeft: usesLeft(s, h.id, id), targets, blocked });
+      out.push({ heroId: h.id, abilityId: id, ...(option ? { option } : {}), cost, usesLeft: usesLeft(s, h.id, id), targets, blocked });
       if (opts.first && targets.length) return out.filter((o) => o.targets.length);
     }
   }
@@ -232,8 +245,8 @@ export function useAbility(ctx: Ctx, abilityId: string, targets: AbilityTarget[]
   if (!heroAbilityIds(h).includes(abilityId) || !impl(abilityId)) fail('ABILITY_UNKNOWN', 'This hero does not have that ability', 'Hero Abilities');
   const problem = blocker(s, h, def, openTimings(s));
   if (problem) fail(problem, problemText[problem], 'Hero Abilities');
-  if (def.options?.length && !def.options.includes(option ?? '')) fail('ABILITY_BAD_TARGET', 'Choose one of the options', 'Hero Abilities');
-  const offer = scanOffers(s).find((o) => o.abilityId === abilityId && o.option === (def.options?.length ? option : undefined));
+  if (hasOptions(def) && !optionsOf(def).includes(option ?? '')) fail('ABILITY_BAD_TARGET', 'Choose one of the options', 'Hero Abilities');
+  const offer = scanOffers(s).find((o) => o.abilityId === abilityId && o.option === (hasOptions(def) ? option : undefined));
   if (!offer) fail('ABILITY_BAD_TARGET', 'This ability has no legal target now', 'Hero Abilities');
   // 006 guarantee 25d: a blocked target is refused with the code listed for it.
   const blockedHere = offer.blocked.find((b) => sameTargets(b.targets, targets));
@@ -246,7 +259,7 @@ export function useAbility(ctx: Ctx, abilityId: string, targets: AbilityTarget[]
   const cost = offer.cost;
   spend(ctx, h, cost, abilityId, pay);
   const st = (s.abilityState[h.id] ??= { uses: {}, usedThisTurn: [] });
-  if (def.uses !== null) st.uses[abilityId] = (usesLeft(s, h.id, abilityId) ?? def.uses) - 1;
+  if (def.uses !== null) st.uses[abilityId] = (usesLeft(s, h.id, abilityId) ?? def.uses) - usesSpent(def, option);
   st.usedThisTurn.push(abilityId);
   emit(ctx, { type: 'abilityUsed', heroId: h.id, ability: abilityId, destiny: cost, targets, ...(option ? { option } : {}) });
   // Peace Treaty: an ability affecting an enemy unit flips it to War (Basic Rules *Other tokens*).

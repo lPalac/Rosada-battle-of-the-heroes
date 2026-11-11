@@ -80,8 +80,8 @@
 
 ### One use or both (FR-017, R-21)
 
-- [ ] T029 [US1] Write failing test `US1-AS19` in tests/rules/both-uses.test.ts: *Preaching* with 2 uses and 2 D offers options `one` and `both`; `both` spends 2 uses and 2 D in one action and marks the unit `cannotLead` for the next turn; with 1 use or 1 D only `one` is offered; a second use in the same turn is refused (`ABILITY_USED`); a single use on a later turn still works
-- [ ] T030 [US1] Set `"bothUses": true` in the `flags` of `monk.preaching` and its `"oncePerTurn"` to true (false today) in src/data/abilities.json; let the engine offer the options `one` / `both` for a `bothUses` ability and charge uses and cost twice for `both` (src/rules/abilities/engine.ts); replace the "again" branch of the effect in src/rules/heroes/monk.ts:73 with the option; add the option labels to src/data/strings.en.json; update tests/rules/heroes/monk.test.ts
+- [X] T029 [US1] Write failing test `US1-AS19` in tests/rules/both-uses.test.ts: *Preaching* with 2 uses and 2 D offers options `one` and `both`; `both` spends 2 uses and 2 D in one action and marks the unit `cannotLead` for the next turn; with 1 use or 1 D only `one` is offered; a second use in the same turn is refused (`ABILITY_USED`); a single use on a later turn still works
+- [X] T030 [US1] Set `"bothUses": true` in the `flags` of `monk.preaching` and its `"oncePerTurn"` to true (false today) in src/data/abilities.json; let the engine offer the options `one` / `both` for a `bothUses` ability and charge uses and cost twice for `both` (src/rules/abilities/engine.ts); replace the "again" branch of the effect in src/rules/heroes/monk.ts:73 with the option; add the option labels to src/data/strings.en.json; update tests/rules/heroes/monk.test.ts
 
 **Checkpoint**: US1 complete. `npx vitest run tests/rules tests/game tests/online` is green.
 

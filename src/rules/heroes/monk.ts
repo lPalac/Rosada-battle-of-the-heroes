@@ -77,11 +77,11 @@ export const MONK: HeroModule = {
     },
     'monk.preaching': {
       targets: (c0) => enemyUnits(c0, (u) => adjacentTo(c0, u)),
+      // 006 FR-017: one use (−4 to Lead on the next turn) or both uses at once (cannot be Led on the next turn).
       effect: (ctx, c0, t) => {
         const u = unitOf(ctx.s, t[0]);
-        const again = effectsOnUnit(ctx.s, u.id, 'leadModifier').some((e) => e.source.abilityId === c0.def.id && e.source.heroId === c0.h.id);
         mark(ctx, c0, 'leadModifier', { unitId: u.id }, nextTurn(ctx.s), { value: c0.v('penalty') });
-        if (again) mark(ctx, c0, 'cannotLead', { unitId: u.id }, nextTurn(ctx.s));
+        if (c0.option === 'both') mark(ctx, c0, 'cannotLead', { unitId: u.id }, nextTurn(ctx.s));
       },
     },
     'monk.makePeaceNotWar': {

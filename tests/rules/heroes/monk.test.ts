@@ -22,12 +22,14 @@ describe('Monk (US2)', () => {
   });
 
   it('US2-AS5 Preaching: −4 next turn; both uses on one unit → it cannot be Led', () => {
-    let s = board({ c3: 'N', d4: 'p', h7: 'p' }, { ...MONK, heroes: { H1: 'd3' }, phase: 'beforeMove' });
-    s = use(s, 'monk.preaching', [unitT(s, 'd4')]).state;
+    // 006 FR-017: one use or both uses in one action, once per turn (replaces 004 Q-50's two uses in one turn).
+    const start = board({ c3: 'N', d4: 'p', h7: 'p' }, { ...MONK, heroes: { H1: 'd3' }, phase: 'beforeMove' });
+    let s = use(start, 'monk.preaching', [unitT(start, 'd4')], 'one').state;
     expect(kinds(s, 'leadModifier')[0].data.value).toBe(-4);
-    s = use(s, 'monk.preaching', [unitT(s, 'd4')]).state;
+    expect(refuse(s, 'monk.preaching', [unitT(s, 'd4')], 'one')).toBe('ABILITY_USED_THIS_TURN');
+    s = use(start, 'monk.preaching', [unitT(start, 'd4')], 'both').state;
     expect(kinds(s, 'cannotLead')).toHaveLength(1);
-    expect(refuse(s, 'monk.preaching', [unitT(s, 'd4')])).toBe('ABILITY_NO_USES');
+    expect(refuse(s, 'monk.preaching', [unitT(s, 'd4')], 'one')).toBe('ABILITY_NO_USES');
     const q = board({ c3: 'N', d4: 'q', e2: 'P', h7: 'p' }, { ...MONK, heroes: { H1: 'd3' } });
     expect(refuse(q, 'monk.preaching', [unitT(q, 'd4')])).toMatch(/ABILITY_(ROYALTY|BAD_TARGET|WRONG_TIMING)/);
   });

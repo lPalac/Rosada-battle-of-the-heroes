@@ -95,7 +95,9 @@ describe('004 guarantees (named heroes, random playouts)', () => {
       for (const h of Object.values(st.after.abilityState)) for (const n of Object.values(h?.uses ?? {})) expect(n).toBeGreaterThanOrEqual(0);
       if (st.action.type !== 'useAbility') continue;
       const used = st.events.find((e) => e.type === 'abilityUsed')!;
-      expect(used.destiny).toBe(abilityCost(st.before, st.before.activeHeroId, st.action.abilityId));
+      // 006 FR-017: spending both uses at once pays the cost twice.
+      const times = st.action.option === 'both' ? 2 : 1;
+      expect(used.destiny).toBe(abilityCost(st.before, st.before.activeHeroId, st.action.abilityId) * times);
     }
   });
 
