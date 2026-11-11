@@ -51,7 +51,9 @@
       "cost": null,
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "freeSquareNearby",
       "values": {
         "squares": 1
@@ -76,7 +78,8 @@
       "uses": 1,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "values": {},
       "icons": [
@@ -165,7 +168,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notAsHeroUnit": true
+        "notAsHeroUnit": true,
+        "noUnitEffect": true
       },
       "targetHint": "freeSquareNearby",
       "values": {
@@ -281,7 +285,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notAsHeroUnit": true
+        "notAsHeroUnit": true,
+        "noUnitEffect": true
       },
       "targetHint": "freeSquareNearby",
       "values": {
@@ -306,7 +311,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "enemyHeroOnPath",
       "values": {
         "squareWounds": 2,
@@ -448,7 +455,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notAsHeroUnit": true
+        "notAsHeroUnit": true,
+        "noUnitEffect": true
       },
       "targetHint": "freeSquareNearby",
       "values": {
@@ -473,7 +481,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "friendlyHero",
       "values": {},
       "icons": [
@@ -496,7 +506,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "friendlyQueen",
       "values": {
         "swapCost": 2
@@ -606,7 +618,9 @@
       "cost": null,
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "friendlyHeroOnPath",
       "values": {
         "heal": 1
@@ -632,7 +646,8 @@
       "uses": 2,
       "oncePerTurn": false,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "adjacentEnemyUnit",
       "values": {
@@ -657,7 +672,9 @@
       },
       "uses": 1,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "warAndKingSafe",
       "values": {},
       "icons": [
@@ -698,7 +715,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "values": {
         "heal": 1,
         "perAux": 1
@@ -765,7 +784,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "friendlyPawn",
       "values": {
         "wounds": 3,
@@ -815,7 +836,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "values": {
         "wounds": 4
@@ -839,7 +861,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "friendlyHeroOnPath",
       "values": {
         "heal": 2
@@ -863,7 +887,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "friendlyHeroNearBishop",
       "values": {
         "heal": 4
@@ -921,7 +947,8 @@
       "oncePerTurn": true,
       "flags": {
         "notAsHeroUnit": true,
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "adjacentEnemyUnit",
       "values": {
@@ -1002,7 +1029,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notAsHeroUnit": true
+        "notAsHeroUnit": true,
+        "noUnitEffect": true
       },
       "targetHint": "notMovedThisTurn",
       "values": {
@@ -1057,7 +1085,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "destroyedInBattle",
       "values": {
@@ -1165,7 +1194,9 @@
       },
       "uses": 1,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "ownSquareUnoccupied",
       "values": {
         "penalty": -3,
@@ -1192,7 +1223,8 @@
       "uses": 1,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "enemyUnitInYourSquare",
       "values": {
@@ -1238,7 +1270,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "adjacentEnemyHero",
       "values": {
         "wounds": [
@@ -1393,7 +1427,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "enemyHeroInRange",
       "values": {},
       "icons": [
@@ -1439,7 +1475,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "enemyUnitInRange",
       "values": {},
@@ -1463,7 +1500,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "friendlyUnitInRange",
       "values": {},
@@ -1506,7 +1544,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "enemyUnitInRange",
       "values": {},
@@ -1564,7 +1603,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "bloodiedEnemyHeroHere",
       "values": {},
       "icons": [
@@ -1645,7 +1686,9 @@
       "cost": null,
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "values": {
         "wounds": 1,
         "bonus": 2
@@ -1670,7 +1713,9 @@
       },
       "uses": 2,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "enemyHeroInRange",
       "values": {
         "wounds": 2
@@ -1759,7 +1804,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "values": {
         "wounds": 2,
         "bonus": [
@@ -1929,7 +1976,8 @@
       "uses": null,
       "oncePerTurn": true,
       "flags": {
-        "notRoyalty": true
+        "notRoyalty": true,
+        "noUnitEffect": true
       },
       "targetHint": "enemyUnitInRange",
       "values": {},
@@ -1958,7 +2006,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "twoEmptySquaresInRange",
       "values": {},
       "icons": [
@@ -2016,7 +2066,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "targetHint": "areaInRange",
       "values": {
         "wounds": 5
@@ -2115,7 +2167,9 @@
       },
       "uses": null,
       "oncePerTurn": true,
-      "flags": {},
+      "flags": {
+        "noUnitEffect": true
+      },
       "values": {},
       "icons": [
         "hero"

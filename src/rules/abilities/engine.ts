@@ -107,8 +107,14 @@ const accepted = (s: GameState, h: Hero, def: AbilityDefinition, option: string 
 /** Refusals the board shows on a blocked target with their reason (006 FR-026); other refusals just drop the target. */
 const BLOCKED_CODES = ['LEAD_LEAVES_KING_IN_CHECK', 'ABILITY_WOULD_CHECK'];
 
-/** Whether an ability's effect is refused when a unit it touches would itself check a King (FR-014 of 004). */
-const checkTested = (def: AbilityDefinition, im: AbilityImpl): boolean => !im.isLead && !!def.flags.mustNotCheck;
+/**
+ * Whether an ability's effect is refused when a unit it creates, moves, places or changes would itself check a King
+ * (006 FR-016, research R-19): every ability with the "Must not check the King" symbol (Infiltrate included, which is
+ * not a Lead), and every other ability that can change units, except those that make the turn's Lead (the Lead rules
+ * apply to them). `flags.noUnitEffect` marks abilities whose effect cannot add, move, retype or remove a unit.
+ */
+const checkTested = (def: AbilityDefinition, im: AbilityImpl): boolean =>
+  !!def.flags.mustNotCheck || (!im.isLead && !def.flags.noUnitEffect);
 
 function runEffect(ctx: Ctx, h: Hero, def: AbilityDefinition, option: string | undefined, targets: AbilityTarget[]): void {
   const before = { units: ctx.s.units.map((u) => ({ ...u, pos: { ...u.pos } })) };
