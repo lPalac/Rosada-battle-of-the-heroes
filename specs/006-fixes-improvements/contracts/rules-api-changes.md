@@ -24,8 +24,8 @@ Everything here is in `src/rules` (engine-free). The online protocol (005 `contr
 ### `pickHero` in Mirror (B-01, FR-013, decided 2026-11-11)
 
 - Unchanged order: Light picks a hero for both sides, then Dark picks a hero for both sides.
-- New: Dark's pick of the hero Light picked (same `heroDefinitionId`; for generic heroes the same `rangeType`) fails with `HERO_TAKEN` ("That hero is already on this side"). `pickableHeroes` leaves that hero out for Dark's pick.
-- Draft is unchanged.
+- New: Dark's pick of the named hero Light picked (same `heroDefinitionId`) fails with `HERO_TAKEN` ("That hero is already on this side"). `pickableHeroes` leaves that hero out for Dark's pick.
+- Draft, and picks of the generic test heroes (by `rangeType` only), are unchanged.
 
 ### `inspiredLead` (B-07)
 
@@ -117,7 +117,7 @@ An ability with the flag `bothUses` (*Preaching*) is offered with the options `o
 ```
 
 - `setup.mode === 'draft'`: four decisions as in 003, each with `appliesTo: [heroId]`.
-- `setup.mode === 'mirror'`: two decisions. The first is for `choiceOrder(state)[0]`; the second is for the hero of the other definition on the other side. `appliesTo` holds the chooser and its twin (same `definitionId`, other side).
+- `setup.mode === 'mirror'` with named heroes: two decisions (with the generic test heroes, four as in 003). The first is for `choiceOrder(state)[0]`; the second is for the hero of the other definition on the other side. `appliesTo` holds the chooser and its twin (same `definitionId`, other side).
 - `decide { destiny }` applies the destiny and the form to every hero in `appliesTo` and emits one `destinyChosen` per hero. Options and errors are those of the chooser (`destinyOptions`, `BAD_DESTINY`).
 - The Epic Stage applies when every hero has a destiny, as in 003.
 
@@ -184,7 +184,7 @@ The caller (the UI) reads `positionWarnings` before it sends `setEnforcement { m
 25b. `wouldCheckOwnKing(state, a)` is true exactly when applying `a` succeeds and emits a `check` event for the acting side's own King. It never changes `state`.
 26. `positionWarnings(state)` contains `CHECKMATE` for a side exactly when `isCheckmate(state, side)` holds, and never changes the state.
 27. In a Mirror game, after the Epic Stage has applied, the two heroes with the same definition have the same destiny and form. In a Draft game the 003 guarantees are unchanged.
-28. In a Mirror game no side ever holds two heroes of the same definition: every `pickHero` that would cause it fails with `HERO_TAKEN`.
+28. In a Mirror game no side ever holds two of the same named hero: every `pickHero` that would cause it fails with `HERO_TAKEN`.
 
 ## Not changed
 

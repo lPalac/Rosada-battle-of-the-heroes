@@ -78,7 +78,8 @@
 
 ### Session 2026-11-11, seventh round (Vice, after `/speckit-analyze`)
 
-- Q (Q-79): In Mirror the game lets a side pick the same hero twice (two Cavaliers per side, 004 Q-41), so the second Epic choice has no "other class". How does that work? → A: **The same hero cannot be on the same side. One choice per side: first one side chooses one hero for both sides, then the other side chooses a different hero for both sides.** This is the Mirror pick order of 001 and 004 (Light picks hero 1 for both sides, Dark picks hero 2 for both sides) with one new refusal: hero 2 may not be hero 1. The Epic choice in Mirror then always has two classes, as in Q-64 and Q-75. With the generic heroes, "the same hero" is the same definition, so a Mirror game with them has one Short range and one Long range hero per side.
+- Q (Q-79): In Mirror the game lets a side pick the same hero twice (two Cavaliers per side, 004 Q-41), so the second Epic choice has no "other class". How does that work? → A: **The same hero cannot be on the same side. One choice per side: first one side chooses one hero for both sides, then the other side chooses a different hero for both sides.** This is the Mirror pick order of 001 and 004 (Light picks hero 1 for both sides, Dark picks hero 2 for both sides) with one new refusal: hero 2 may not be hero 1. The Epic choice in Mirror then always has two classes, as in Q-64 and Q-75.
+- Added (Vice, before `/speckit-implement`): **the generic Short range / Long range heroes are not heroes of the game.** They were made only to test the basics before the named heroes existed. They stay exactly as they are, because the existing tests use them, and nothing new is built for them: no Mirror pick rule, no Mirror Epic choice, no new HUD or setup work. Where a task touches code they pass through, the existing behaviour and tests must keep working.
 
 ---
 
@@ -175,7 +176,7 @@ When the Epic Stage starts, each hero's choice shows that hero's own three Epic 
 5. **Given** the last hero has chosen, **Then** every hero sheet on the table shows its Epic sheet, and the hero cards in the HUD show the form names.
 6. **Given** a Mirror game, **When** the Epic Stage starts, **Then** there are two choices instead of four: the first chooser picks a destiny for its hero class, and both heroes of that class (one on each side) take that form.
 7. **Given** the first Mirror choice was made, **Then** a hero of the other side chooses for the other class and both heroes of that class take it. The Fanatic / Dominant limit applies to this second choice. The dialog says "choice n of 2" and names both heroes the choice is for.
-8. **Given** a Mirror game in setup where Light has picked a hero for both sides, **When** Dark picks its hero, **Then** Light's hero is not offered, and a pick of it is refused with "That hero is already on this side"; Dark's different hero goes to both sides. With the generic heroes, Dark picks the other range type. Draft is unchanged (seventh round).
+8. **Given** a Mirror game in setup where Light has picked a hero for both sides, **When** Dark picks its hero, **Then** Light's hero is not offered, and a pick of it is refused with "That hero is already on this side"; Dark's different hero goes to both sides. Draft, and picks of the generic test heroes, are unchanged (seventh round).
 
 ---
 
@@ -275,8 +276,7 @@ Targets are picked on the battlefield, not from a list of coordinates. The Move 
 - A check made by the side that is not on turn (a reaction during the enemy's Lead): it gains its 2 D, once in that turn.
 - The checking unit moves and still checks from another square: not a new check.
 - Both Kings checkmated in a sandbox position: the alert names both sides.
-- Mirror game with generic heroes: one Short range and one Long range hero per side (FR-013), and the same two-choice rule, by hero definition.
-- Draft game with the generic heroes, where both sides hold the same two definitions: four separate choices, as in 003 (only Mirror mode pairs the heroes).
+- The generic Short range / Long range test heroes, in any mode: unchanged. Picks, the Epic choice (four separate choices, as in 003), the HUD and the setup cards behave for them exactly as today; the Mirror rules of FR-012 and FR-013 are for the named heroes.
 - A Starting Hero pays for an ability from the Common Pool when its own pool is empty (001 payment rules).
 - An old save or online room whose log used a starting ability for free may not replay under the new cost; the game refuses it with a clear message and does not crash (research R-04).
 - Planned path and a square that becomes illegal after a step: the walk stops and the rest of the plan is dropped.
@@ -312,8 +312,8 @@ Targets are picked on the battlefield, not from a list of coordinates. The Move 
 
 - **FR-010** (B-01): The destiny dialog MUST show the choosing hero's name, side, player and position in the choice order, and for each destiny that hero's Epic form name and portrait from `heroes.json` / `assets.json`.
 - **FR-011** (B-01): The dialog MUST list the destinies already chosen.
-- **FR-012** (B-01): In Mirror mode the Epic Stage MUST ask for two choices: the first chooser's destiny applies to both heroes of its class, then a hero of the other side chooses for both heroes of the other class (replaces the 003 edge case "each side's heroes still choose separately"; decided 2026-11-11).
-- **FR-013** (B-01, Q-79, decided 2026-11-11, seventh round): In Mirror mode the two heroes of a side MUST differ. Light picks a hero for both sides, then Dark picks a different hero for both sides; a pick of the hero already chosen MUST be refused (`HERO_TAKEN`, "That hero is already on this side") and MUST NOT be offered. For the generic heroes "the same hero" is the same definition. Draft is unchanged (replaces 004 Q-41 "yes in Mirror" as far as one side is concerned; both sides still have the same two heroes).
+- **FR-012** (B-01): In Mirror mode the Epic Stage MUST ask for two choices: the first chooser's destiny applies to both heroes of its class, then a hero of the other side chooses for both heroes of the other class (replaces the 003 edge case "each side's heroes still choose separately"; decided 2026-11-11). Games with the generic test heroes keep the 003 behaviour.
+- **FR-013** (B-01, Q-79, decided 2026-11-11, seventh round): In Mirror mode the two heroes of a side MUST differ. Light picks a hero for both sides, then Dark picks a different hero for both sides; a pick of the hero already chosen MUST be refused (`HERO_TAKEN`, "That hero is already on this side") and MUST NOT be offered. Draft and the generic test heroes are unchanged (replaces 004 Q-41 "yes in Mirror" as far as one side is concerned; both sides still have the same two heroes).
 
 **Board interaction**
 

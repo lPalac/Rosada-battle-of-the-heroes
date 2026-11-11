@@ -45,9 +45,9 @@ Rules:
 
 `appliesTo` lists the heroes that take the chosen destiny: the chooser alone in Draft; the chooser and its twin (same `definitionId`, other side) in Mirror. `migrateState` fills `[heroId]` for a decision saved without it.
 
-Mirror picks (FR-013): the setup's two picks may not name the same hero (same `heroDefinitionId`, or for generic heroes the same `rangeType`), so the two heroes of a side always differ. No field changes.
+Mirror picks (FR-013): the setup's two picks may not name the same named hero (same `heroDefinitionId`), so the two heroes of a side always differ. Picks of the generic test heroes are unchanged. No field changes.
 
-Mirror queue (`setup.mode === 'mirror'`): two decisions instead of four. The first is for the first hero of `choiceOrder`; the second is for the hero of the other definition on the other side.
+Mirror queue (`setup.mode === 'mirror'` and named heroes): two decisions instead of four. With the generic test heroes the 003 queue stays. The first is for the first hero of `choiceOrder`; the second is for the hero of the other definition on the other side.
 
 ### Event (changed)
 
@@ -162,14 +162,14 @@ Rules: `extendPlan` appends the shortest path from the plan's end to the clicked
 | `heroId`, `heroName`, `side`, `playerId` | | The chooser |
 | `appliesTo` | `{ heroId; side }[]` | Mirror: both heroes of the class; Draft: the chooser |
 | `step`, `of` | number | "choice 2 of 4"; in Mirror "of 2" |
-| `cards` | `{ destiny; formName; portraitKey; allowed; blockedBy }[]` | Three cards, from `heroes.json` forms; generic heroes fall back to `epicArt` columns |
+| `cards` | `{ destiny; formName; portraitKey; allowed; blockedBy }[]` | Three cards, from `heroes.json` forms; for the generic test heroes the cards show what the dialog shows today (destiny name, `epicArt` picture), nothing new |
 | `chosen` | `{ heroId; heroName; formName; destiny }[]` | Choices made so far |
 
 ### HudModel (changed) — `hud-model.ts`
 
 | Field | Change |
 | --- | --- |
-| `heroes[].name` | Always filled: the named hero or Epic form; a generic hero's definition name |
+| `heroes[].name` | Always filled for named heroes: the hero or Epic form name. The generic test heroes keep today's text |
 | `heroes[].heroUnitIcons` | NEW `{ types: UnitType[]; unlocked: boolean }` (B-21) |
 | `lead.auto` | NEW `'king' \| 'peace' \| 'ability' \| 'cannotFail' \| null`: why no roll is needed (B-04) |
 | `lead.modifierLabels` | NEW string per modifier, from `labels.ts` (X-01) |
