@@ -21,6 +21,12 @@ Everything here is in `src/rules` (engine-free). The online protocol (005 `contr
 - `sandboxResume` is `null` after either path.
 - `restart: true` is used by the position editor and by test fixtures.
 
+### `pickHero` in Mirror (B-01, FR-013, decided 2026-11-11)
+
+- Unchanged order: Light picks a hero for both sides, then Dark picks a hero for both sides.
+- New: Dark's pick of the hero Light picked (same `heroDefinitionId`; for generic heroes the same `rangeType`) fails with `HERO_TAKEN` ("That hero is already on this side"). `pickableHeroes` leaves that hero out for Dark's pick.
+- Draft is unchanged.
+
 ### `inspiredLead` (B-07)
 
 Legal when all hold:
@@ -58,7 +64,7 @@ for each King side K:
 ```
 
 - The gain does not depend on who took the action: a side that uncovers a check on its own King gives the other side its 2 D (decided 2026-11-11, third round).
-- This covers a Lead, a promotion chosen by decision, an ability effect and a created unit. The Lead's own resolution no longer gains check Destiny or emits `check`.
+- This covers a Lead, a promotion chosen by decision and an ability effect (a created unit can never give check, Basic Rules *Create*). The Lead's own resolution no longer gains check Destiny or emits `check`.
 - Not evaluated in sandbox mode, and never inside simulations (`simulate` abilities, the checkmate search, `leadPreview`).
 - The Lead modifier for an own King in check (+4) and `turn.kingInCheckAfterLead` / `abilitiesBlocked` are unchanged.
 - *Tactical Genius* is unchanged (a discovered check by a Lead).
@@ -88,7 +94,7 @@ function wouldCheckOwnKing(state: GameState, action: Action): boolean;
 
 - Derived and optional: the core accepts such an ability. The UI asks before sending `useAbility` and other non-Lead actions of the player, and shows the Continue / Undo warning.
 
-Which abilities may place a King in check (decided 2026-11-11, fifth round). For every ability whose effect can change units, except those that make the turn's Lead, the engine applies the test it has for `mustNotCheck` abilities today:
+Which abilities may place a King in check (decided 2026-11-11, fifth round). For every ability whose effect can change units (no `flags.noUnitEffect` in the data), except those that make the turn's Lead, the engine applies the test it has for `mustNotCheck` abilities today:
 
 ```text
 for each King side K:
@@ -102,7 +108,7 @@ for each King side K:
 
 ### One use or both (Q-62a, decided 2026-11-11)
 
-An ability with `bothUses` (*Preaching*) is offered with the options `one` and `both`. `both` is offered only with 2 uses left and the Destiny for both; it spends both in one `useAbility { option: 'both' }` and applies the both-uses effect. The ability is once per turn.
+An ability with the flag `bothUses` (*Preaching*) is offered with the options `one` and `both`. `both` is offered only with 2 uses left and the Destiny for both; it spends both in one `useAbility { option: 'both' }` and applies the both-uses effect. The ability is once per turn.
 
 ### Epic destinies in Mirror mode (B-01, decided 2026-11-11)
 
@@ -178,6 +184,7 @@ The caller (the UI) reads `positionWarnings` before it sends `setEnforcement { m
 25b. `wouldCheckOwnKing(state, a)` is true exactly when applying `a` succeeds and emits a `check` event for the acting side's own King. It never changes `state`.
 26. `positionWarnings(state)` contains `CHECKMATE` for a side exactly when `isCheckmate(state, side)` holds, and never changes the state.
 27. In a Mirror game, after the Epic Stage has applied, the two heroes with the same definition have the same destiny and form. In a Draft game the 003 guarantees are unchanged.
+28. In a Mirror game no side ever holds two heroes of the same definition: every `pickHero` that would cause it fails with `HERO_TAKEN`.
 
 ## Not changed
 

@@ -53,7 +53,7 @@ A square that can be passed but not ended on (`canEnd: false`) is drawn lighter.
 | Settings | `settings` | Buttons in order: sandbox toggle, Save, Export, Import, New game, `offer-draw`, `settings-resume`. Online: Download, `offer-draw`, Leave, `settings-resume` |
 | Destiny dialog | `dialog` | `destiny-hero` (name), `destiny-step` ("2 of 4"; in Mirror "1 of 2"), cards `destiny-<destiny>` with `destiny-<destiny>-form` (form name) and an `img` whose `src` is that form's portrait; `destiny-chosen` list. Mirror: `destiny-applies` names both heroes the choice is for |
 | Checkmate alert | `checkmate-alert` | Shown instead of turning rules on when `positionWarnings` has a checkmate (Settings "Turn rules back on" and the position editor's start). Names the checkmated side(s) and what continuing means. Buttons `checkmate-continue` (rules come back on) and `checkmate-back` (stay in sandbox, nothing changed). Esc = back. A position with problems shows the 001 problem list first, not this alert |
-| Hero pick card | `pick-<heroId>` | First click: `data-pending="true"` and `pick-confirm-hint`. Second click on it: the pick |
+| Hero pick card | `pick-<heroId>` | First click: `data-pending="true"` and `pick-confirm-hint`. Second click on it: the pick. In Mirror, Dark's pick has no card for the hero Light already picked (FR-013) |
 | Royal Favor menu | `tracker` | `tracker-shared` row with 11 slots, `data-light`, `data-dark` counts; the lists `tracker-light`, `tracker-dark` unchanged |
 
 **Removed**: `settings-close` (now `settings-resume`); `offer-draw` in the action bar (same id, now in Settings); `tracker-<side>` slot rows of 16.

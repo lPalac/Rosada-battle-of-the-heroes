@@ -32,6 +32,7 @@ npx vitest run tests/rules/move-path-abilities.test.ts # B-10, B-11
 npx vitest run tests/rules/sandbox-resume.test.ts     # B-06
 npx vitest run tests/rules/position-warnings.test.ts  # B-06: checkmate alert
 npx vitest run tests/rules/epic-mirror.test.ts        # B-01: Mirror destinies
+npx vitest run tests/rules/setup.test.ts              # B-01: Mirror picks, no hero twice on a side
 npx vitest run tests/rules/inspired-lead.test.ts      # B-07
 npx vitest run tests/rules/move-reach.test.ts         # B-16
 npx vitest run tests/game                             # models: labels, move plan, targets, flashes, destiny, favors, HUD
@@ -73,7 +74,7 @@ Start a Draft game with Cavalier, Monk, Scout, Magus. For positions that are slo
 | 16 | B-14 | Complete a Royal Favor (sandbox: set favors for both sides) | One vertical track between the board and the Graveyard with a gold and a purple marker; the Graveyard is fully in view; `A` opens the menu with the same shared row and both lists |
 | 17 | B-24, B-23 | Look at the table | Units face the enemy; the TTS table with legs is under the board; `?placeholders` shows the slab |
 | 18 | B-01 | Empty the Well (sandbox: set the Well to 1, then gain Destiny) and start the next turn | Four choices in turn order, each with the hero's name, "choice n of 4", its three forms by name and portrait, and the list of choices so far |
-| 18a | B-01 | The same in a Mirror game | Two choices. The first names both heroes of one class and gives both the chosen form; then the other side chooses for the other class. Both sides end with the same two forms |
+| 18a | B-01 | The same in a Mirror game (in setup, try to pick Light's hero again for Dark) | In setup, Light's hero is not offered for Dark's pick. Two choices. The first names both heroes of one class and gives both the chosen form; then the other side chooses for the other class. Both sides end with the same two forms |
 | 19 | B-10, B-11 | As the Dragon Lord, walk through an enemy hero's square and two squares on; as the Saint, the same through a friendly hero. Also start a Move on such a hero's square | *Breath* and *Saintly Inspiration* are usable until the Move ends. On a square with the wrong kind of hero the row says what it needs |
 | 20 | B-13 | Online, two windows (`npm run dev:server`), one seat per side | Each window keeps its own side's view on every turn; orbiting is not undone; Reset camera returns to the own side |
 

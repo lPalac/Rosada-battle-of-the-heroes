@@ -92,7 +92,7 @@ Basic Rules *Hero abilities*: "Starting Heroes can use each of their abilities o
 - 004 A-03 is corrected in the 004 spec with a pointer to this feature.
 
 **Effects on existing things**:
-- Tests: the 004 `US2-AS*` tests, `tests/games/scripted-game-03/04` and their ledgers, and `tests/e2e/heroes.spec.ts` change where they assert pools. Each is updated by first adding the failing expectation.
+- Tests: the 004 `US2-AS*` tests, `tests/games/scripted-game-04.test.ts` (its ledger is kept inside the file; `scripted-game-03.test.ts` uses no Starting ability), and the other files that use the eight abilities (tasks T014) change where they assert pools. Each is updated by first adding the failing expectation.
 - Old saves and online rooms: a save is the starting state plus the action log, replayed with today's rules. A log that used a starting ability for free replays with other Destiny numbers and may stop at a later action. This is already safe: `parseSaveFile` throws on a failed replay, `loadLocal` then offers no Resume button, and the server logs and skips a room it cannot restore (`server/index.ts:78`). What is added: an imported file that fails shows a clear message ("made with older rules") instead of the raw replay error, and `STATE_VERSION` goes up by one so such files can be told apart. Tests cover the three paths.
 
 **Alternatives**: Keep the paid Destiny on the sheet as state and return it to the Well at the Epic Stage (rejected: no rule reads it; VI). A rules flag to play old saves with old costs (rejected: two rule sets to test).
@@ -283,7 +283,8 @@ These numbers are starting values; the browser screenshots decide the final ones
 | --- | --- |
 | `tests/rules/destiny*.test.ts`, `lead.test.ts`, `hero-unit.test.ts`, `royal-favors.test.ts`, `create.test.ts` | B-05: the `check` event gets its units and is emitted only for a new check; new cases: the reported one, a King left in check, a promotion with check, an ability-only check |
 | `tests/rules/epic*.test.ts`, `tests/e2e/epic.spec.ts` | Mirror: two choices (new tests; no test covers Mirror destinies today) |
-| `tests/rules/heroes/*.test.ts`, `named-heroes.test.ts`, `games/scripted-game-03/04` | B-09: pools after starting abilities; B-10/11: path-based heals |
+| `tests/rules/heroes/*.test.ts`, `named-heroes.test.ts`, `tests/rules/abilities/*.test.ts`, `sandbox.test.ts`, `tests/game/sheet-model.test.ts`, `tests/e2e/sheets.spec.ts`, `tests/games/scripted-game-04.test.ts` | B-09: pools after starting abilities; B-10/11: path-based heals |
+| `tests/rules/setup.test.ts`, `named-heroes.test.ts` | Mirror: the second pick may not repeat the first (FR-013); the 004 test name that says Mirror allows any hero changes |
 | `tests/rules/sandbox.test.ts`, `tests/fixtures/position.ts` | B-06: `restart: true` in the fixture; new resume cases |
 | `tests/rules/undo.test.ts`, `tests/online/room-undo.test.ts` | B-03: the screenshot case |
 | `tests/game/favor-model.test.ts`, `sheet-model.test.ts` | B-14, B-09 |
@@ -310,6 +311,8 @@ These numbers are starting values; the browser screenshots decide the final ones
 - The 003 spec's edge case is corrected with a pointer to this feature, and the rule goes into the rulebook corrections file.
 
 The order was confirmed on 2026-11-11 (Q-75): the first hero in the 003 choice order chooses first.
+
+**Two of the same hero on a side (found by `/speckit-analyze`, decided 2026-11-11, seventh round, Q-79)**: `setup.ts` lets a Mirror side pick the same hero twice (`pickableHeroes` offers every hero in Mirror, after 004 Q-41), and then there would be no "other class" for the second choice. The designer's rule: the same hero cannot be on the same side. Light picks a hero for both sides, then Dark picks a different hero for both sides. `pickHero` refuses a repeat with `HERO_TAKEN` and `pickableHeroes` leaves it out; for the generic heroes the repeat is the same `rangeType`. With that, every Mirror game has two classes and the two-choice rule above always applies (FR-013).
 
 **Alternatives**: Keep four decisions and restrict the twin's options to one (rejected: two dialogs with nothing to choose). Pair heroes by definition in every mode (rejected: it would change Draft games with the generic heroes, which 003 tests rely on).
 
@@ -362,7 +365,7 @@ The final rule is the Symbol Legend's rule, applied to all abilities. The one th
 - The own-King warning (R-18) shows for any ability that opens a line to the own King.
 - The check Destiny rule (R-02) is unchanged: an allowed check gains its 2 D.
 
-**Cost**: every offered target of an ability with unit effects is run on a copy, as flagged and `simulate` abilities already are. Abilities that cannot change units (wounds, heals, hero moves, bonuses) are skipped by a data flag (`changesUnits: false`).
+**Cost**: every offered target of an ability with unit effects is run on a copy, as flagged and `simulate` abilities already are. Abilities that cannot change units (wounds, heals, hero moves, bonuses) are skipped by a data flag (`flags.noUnitEffect: true`, beside the existing `mustNotCheck` flag).
 
 **Alternatives**: Only a line opened by a Destroyed unit (the fourth-round wording; withdrawn by the designer). The rule only for symbol abilities (the rulebook as printed; rejected by the designer: abilities without the symbol follow it too).
 
@@ -388,7 +391,7 @@ Not included: reasons for squares a unit can never reach by its own movement (th
 **Found (Read)**: *Preaching*: "Mark an adjacent enemy unit with the Preaching token. That unit has a -4 penalty to Lead on the next turn. If you spend both uses on it, that unit cannot be Led on the next turn." 004 (Q-50) built this as two separate uses on the same unit in one turn (`heroes/monk.ts:73`); the player has to know to use it twice. It is the only ability with such a text; *Flaming Bolt* also has two uses but no both-uses effect.
 
 **Decision**: the designer's rule: an ability with a different effect for both uses gives the choice to spend both, if both are available.
-- Data: `bothUses: true` on `monk.preaching`, with the both-uses effect's values. The engine offers the options `one` and `both`; `both` needs 2 uses left and, with B-09, 2 D.
+- Data: the flag `bothUses: true` in the `flags` of `monk.preaching`, with the both-uses effect's values. The engine offers the options `one` and `both`; `both` needs 2 uses left and, with B-09, 2 D.
 - `both` spends two uses and 2 D in one action and applies the stronger effect.
 - *Preaching* becomes once per turn like every Starting ability (Basic Rules *Hero abilities*; spec A-13), so the old path of using it twice in a turn goes away.
 - The interface shows the choice as two buttons in the ability's row or prompt before the target is picked.

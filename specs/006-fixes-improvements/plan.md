@@ -4,7 +4,7 @@
 
 **Input**: `Fixes & Improvements.xlsx` (24 rows, kept in [backlog.md](./backlog.md)) and the feature specification in `/specs/006-fixes-improvements/spec.md`, which this command wrote from the spreadsheet because no spec existed.
 
-**Note**: Filled in by `/speckit-plan`. `setup-plan.ps1` could not be run here (no PowerShell), so the branch name and folder were set by hand to what the script would produce. No `before_plan` hook was run (the only one is the optional git commit).
+**Note**: Written by hand in the `/speckit-plan` format, in a chat session that could not run the Spec Kit scripts (`setup-plan.ps1`), so the branch name and folder were set by hand to what the script would produce. No `before_plan` hook was run (the only one is the optional git commit). Checked with `/speckit-analyze` on 2026-11-11 and corrected after it (seventh clarification round: Mirror picks, FR-013).
 
 ## Summary
 
@@ -12,7 +12,7 @@
 
 **What was found** (details in [research.md](./research.md)):
 
-- **B-01 Epic choice**: the dialog shows the Cavalier's Epic pictures for the Monk and the Magus's for the Scout, and never names the hero or the forms. Fix in the view, from data that already exists (R-01). **Decided**: in Mirror mode there are two choices, each for both heroes of a class (R-17).
+- **B-01 Epic choice**: the dialog shows the Cavalier's Epic pictures for the Monk and the Magus's for the Scout, and never names the hero or the forms. Fix in the view, from data that already exists (R-01). **Decided**: in Mirror mode there are two choices, each for both heroes of a class (R-17), and the two heroes of a side must differ, so the second Mirror pick may not repeat the first (FR-013, seventh round).
 - **B-05 check Destiny**: **decided**: 2 D for a new check from any kind of action, at most once per turn per side. The reported case (Lead check, then an ability uncovers the Queen's check) already gains once; its second +2 D is the Destiny for Destroying an enemy unit. Three other cases are wrong today and are fixed by one rule evaluated after every action: a King left in check makes every later Lead gain again; a promotion that gives check gains nothing; an ability-only check gains nothing. A check a side uncovers on its own King gives the other side its 2 D. New: the "CHECK" notice above the King (three blinks of one second) and the "In check" pop-up with the rule on hover (R-02).
 - **Own King (decided)**: Leads that would leave the own King in check are already refused, also for the seven "Instead of Lead" abilities that Lead a unit; what is missing is the reason on screen, and the error code is also used for plain illegal moves. Fix: blocked squares are shown and say "That would place your King in check". Other abilities can expose the own King silently today; they get a warning with Continue and Undo before they take effect (R-18).
 - **Abilities and check (decided, fifth round)**: an ability is refused when the unit it affects would itself check a King; every discovered check is allowed. That is the "Must not check the King" symbol's rule from the rulebook, now for all abilities; the code already has it for the 17 flagged ones, so the change is to apply the same test to the rest (R-19).
@@ -63,17 +63,17 @@ All questions are answered; none is open.
 
 **Constraints**:
 - `src/rules`, `src/game` and `src/online` stay engine-free; new modules there must pass `tests/boundaries.test.ts`.
-- Rules behaviour changes only at FR-001, FR-002, FR-003, FR-006, FR-007, FR-012, FR-016, FR-017. Everything else in `src/rules` is additive (helpers).
+- Rules behaviour changes only at FR-001, FR-002, FR-003, FR-006, FR-007, FR-012, FR-013, FR-016, FR-017. Everything else in `src/rules` is additive (helpers).
 - The *Check* rule about the end of the Lead (`turn.kingInCheckAfterLead`, `abilitiesBlocked`) must behave exactly as today, also after a sandbox return.
 - Online: the server keeps checking every action; no new message type. Client and server must be deployed together, as `dataHash` changes with `abilities.json`.
 - Old saves that used a starting ability may not replay (R-04); an imported one must fail with a clear message.
 - No panel may cover a board square at the default camera (SC-004).
 
 **Scale/Scope**:
-- 7 user stories, 74 acceptance scenarios, 39 functional requirements, no open questions, 19 resolved.
+- 7 user stories, 75 acceptance scenarios, 40 functional requirements, no open questions, 20 resolved.
 - New engine-free modules: 6 in `src/game`; none in `src/rules`, where about 12 existing files change.
 - New UI modules: 3 (`ui/hud/flashes.ts`, `ui/hud/badges.ts`, `ui/hud/check.ts`); about 14 UI and table files changed.
-- Data: `abilities.json` (a cost on 8 abilities, `targetHint` where an ability has targets), `assets.json` (`yaw` on the 12 unit model entries, 3 fields on `tts.table`), `strings.en.json` (about 60 new strings), 2 schemas.
+- Data: `abilities.json` (a cost on 8 abilities, `targetHint` where an ability has targets, the flags `noUnitEffect` and `bothUses`), `assets.json` (`yaw` on the 12 unit model entries, 3 fields on `tts.table`), `strings.en.json` (about 60 new strings), 2 schemas.
 
 ## Constitution Check
 
@@ -84,7 +84,7 @@ All questions are answered; none is open.
 | I. Rulebook is the source of truth | B-05 and B-09 are traced to Basic Rules *Destiny* and *Hero abilities* (quoted in R-02, R-04). The designer decided Q-61, Q-62, Q-64, Q-65, Q-66 on 2026-11-11; the decisions are in the spec's Clarifications and Resolved table and go into the rulebook corrections file. The designer also decided Q-73, Q-74 and Q-75 and confirmed the reading of "Continue the game". In the third round the designer confirmed A-10 (a new check is a newly checking unit), overruled A-09 (the other side does gain when a side uncovers its own King) and added the own-King warning and the Lead message, both traced to Basic Rules *Check* and *Lead* (R-18). One reading is recorded for the designer (A-12: the warning comes before the ability takes effect). The rule for abilities and check (FR-016) was checked against the rulebook; the designer then settled it as the Symbol Legend's rule for all abilities, and confirmed A-12. The remaining questions were answered in the fifth round. The sixth round confirmed A-14 and settled Q-77; A-13 (*Preaching* once per turn) was asked back and confirmed. No rule waits for an answer | ✅ Pass |
 | II. Engine-free rules core | Rule changes are in `src/rules`; new view logic is in `src/game`. Neither imports Three.js, Rapier, Colyseus or the DOM. The sandbox resume point is part of the serialisable state. The UI still only sends actions | ✅ Pass |
 | III. Data-driven content | Ability costs in `abilities.json`; `targetHint` per ability in data; model turn and table scale in `assets.json`; Hero Unit icons from `heroes.json`; texts in `strings.en.json`. No hero is named in core code | ✅ Pass |
-| IV. Rules tested first | Each rule bug has a reproduced case (research) that becomes the failing test. Every acceptance scenario gets a `US<n>-AS<m>` test. Rolls in tests are fixed values | ✅ Pass |
+| IV. Rules tested first | Each rule bug has a reproduced case (research) that becomes the failing test. Every acceptance scenario gets a `US<n>-AS<m>` test. Rolls in tests are fixed values. The principle asks for a test "against the headless rules core" for every scenario; scenarios that only exist on screen (panel layout, table model, camera, clicks, flashes) are tested in the browser with the same name, and their model parts headless, as 004 and 005 did. Accepted by the designer for this build on 2026-11-11 (see Complexity Tracking) | ✅ Pass, with one recorded exception |
 | V. Verifiable without a human | All models are headless. Layout, flashes, the track, the table and the camera are checked by Playwright through the test hook and screenshots. The quickstart lists commands and a manual check | ✅ Pass |
 | VI. Keep it simple | No new dependency. No new action type except one optional flag (`restart`) and one widened timing (`inspiredLead`). Walking reuses `moveStep`. No state for "Destiny on the sheet". The checkmate alert is a derived helper plus a dialog, not a new action. Mirror reuses the `epicDestiny` decision. The table collider is not imported | ✅ Pass |
 | Technology Constraints | Unchanged stack. Desktop browsers. The sandbox core stays separate from the game module | ✅ Pass |
@@ -94,7 +94,7 @@ All questions are answered; none is open.
 - The contracts add four derived helpers, change two actions and extend one decision in `src/rules`; everything else is in `src/game` and the UI.
 - The data model adds one optional state field and one field on a decision, and no new stored entity.
 - Re-checked on 2026-11-11 after all five clarification rounds: still ✅ Pass. FR-016 reuses the existing `newCheck` test. The own-King warning is a derived helper and a dialog; the core refuses nothing new. The check rule moved from `lead.ts` to one place in `apply`, which is simpler than three special cases; the warnings are a view of state and events.
-- No Complexity Tracking entries.
+- One Complexity Tracking entry (IV: screen-only scenarios tested in the browser), accepted on 2026-11-11.
 
 ## Project Structure
 
@@ -104,9 +104,9 @@ All questions are answered; none is open.
 specs/006-fixes-improvements/
 ├── backlog.md            # The 24 spreadsheet rows as written, ids B-01…B-24, plus X-01, X-02
 ├── screenshots/          # The 10 screenshots from the spreadsheet (downscaled)
-├── spec.md               # Feature spec (written by /speckit-plan; clarified 2026-11-11; questions Q-61…Q-75)
+├── spec.md               # Feature spec (written by hand in the Spec Kit format; clarified 2026-11-11 in seven rounds; questions Q-61…Q-79)
 ├── plan.md               # This file
-├── research.md           # Phase 0: R-01…R-16
+├── research.md           # Phase 0: R-01…R-21
 ├── data-model.md         # Phase 1: state, data and view-model changes
 ├── quickstart.md         # Phase 1: run, tests, manual check per backlog item
 ├── contracts/
@@ -122,7 +122,7 @@ src/
 ├── rules/
 │   ├── lead.ts               # B-05: the check gain and event move out; B-07: recompute an announced Lead
 │   ├── check.ts              # B-05: checkingUnits, blockedLeads, leadRefusal
-│   ├── destiny.ts            # B-05: new-check gain, once per turn per side
+│   ├── destiny.ts            # unchanged: `gain` is called by the new-check rule in index.ts
 │   ├── epic.ts               # B-01: Mirror mode queues two choices, each for both heroes of a class
 │   ├── abilities.ts          # B-07: inspiredLead also in the Lead phase until the roll
 │   ├── abilities/engine.ts   # B-10/11: abilityStatus (why not usable); B-05: the newCheck test for every ability, blocked targets with reasons (FR-016, FR-026); both-uses option (FR-017)
@@ -131,7 +131,7 @@ src/
 │   ├── heroes/cavalier.ts, monk.ts   # B-10/11: use the path helper; Preaching one use or both
 │   ├── turn.ts               # B-10/11: turn.moveStart set when the Move phase begins
 │   ├── sandbox.ts            # B-06: resume point, restart flag, positionWarnings (checkmate)
-│   ├── setup.ts              # STATE_VERSION + 1
+│   ├── setup.ts              # STATE_VERSION + 1; B-01: Mirror's second pick may not repeat the first (FR-013)
 │   ├── index.ts              # apply: new-check evaluation after every action; wouldCheckOwnKing; legalActions (inspiredLead in lead); exports
 │   └── model/state.ts, actions.ts    # sandboxResume; checkDestinyClaimed; setEnforcement.restart; epicDestiny.appliesTo; check event units; PositionWarning
 ├── game/
@@ -192,7 +192,7 @@ tests/
 
 | Id | Pri | Story | Requirement | Research | Main files | Waits for |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-01 | 1 | US3 | FR-010, FR-011, FR-012 | R-01, R-17 | `game/destiny-model.ts`, `ui/dialogs.ts`, `rules/epic.ts` | — |
+| B-01 | 1 | US3 | FR-010, FR-011, FR-012, FR-013 | R-01, R-17 | `game/destiny-model.ts`, `ui/dialogs.ts`, `rules/epic.ts`, `rules/setup.ts` | — |
 | B-03 | 1 | US2 | FR-005 | R-03 | tests only | — |
 | B-05 | 2 | US1, US4, US6 | FR-001, FR-014, FR-015, FR-016, FR-024, FR-025, FR-026, FR-039 | R-02, R-18, R-19, R-20 | `rules/index.ts`, `check.ts`, `destiny.ts`, `lead.ts`, `heroes/util.ts`, `game/hud-model.ts`, `flash-model.ts`, `ui/hud/check.ts`, `flashes.ts`, `ui/dialogs.ts`, `table/highlights.ts` | — |
 | B-09 | 2 | US1 | FR-002 | R-04 | `data/abilities.json`, `game/sheet-model.ts`, `table/sheets.ts`, `game/save.ts` | — |
@@ -272,4 +272,8 @@ Phases 4–8 touch different files except `main.ts`, `style.css`, `hud-model.ts`
 
 ## Complexity Tracking
 
-No constitution violations to justify.
+| Principle | Exception | Why | Simpler option rejected |
+| --- | --- | --- | --- |
+| IV. "Every acceptance scenario … MUST have an automated test against the headless rules core" | Scenarios that exist only on screen (US4 clicks and keys, US6 layout and flashes, US7 table and camera, the dialog parts of US2 and US3) are tested with Playwright tests named `US<n>-AS<m>`; their rule and model parts are tested headless with Vitest | There is no rules-core behaviour to test for a panel position or a table model; 004 and 005 already test such scenarios in the browser. Decided by the designer for this build on 2026-11-11 | Moving screen logic into the rules core to make it headless-testable (breaks principle II) |
+
+Follow-up for the team (Luka owns the constitution): reword IV to "an automated test, headless where the scenario has rules behaviour", so the 004–006 practice is written down.

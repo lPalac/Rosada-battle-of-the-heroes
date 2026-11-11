@@ -4,13 +4,13 @@
 
 **Created**: 2026-11-10
 
-**Status**: Clarified 2026-11-11 (see Clarifications). No open questions. Written by `/speckit-plan` from the playtest spreadsheet, because the plan needs a spec to trace to; `/speckit-specify` was not run.
+**Status**: Clarified 2026-11-11 (see Clarifications, seven rounds). No open questions. Written by hand in the Spec Kit format from the playtest spreadsheet, in a chat session that could not run the Spec Kit scripts; `/speckit-specify` was not run. Checked with `/speckit-analyze` on 2026-11-11.
 
 **Input**: `Fixes & Improvements.xlsx` (Vice, 2026-11-10): 24 rows with problem, idea, wanted solution, screenshot and priority. The rows are kept as written in [backlog.md](./backlog.md) with ids `B-01`…`B-24`; the screenshots are in `screenshots/`.
 
 **Builds on**: `specs/001-standard-rules-game` … `specs/005-online-multiplayer` (all built). This branch starts from `main` at `0ccd441` (005 merged).
 
-**Source rules**: `Basic Rules 2_5.docx` and its corrections file. `Hero Rules 2_0.docx` is not in the repository, so hero ability texts were taken from `src/data/abilities.json` and `strings.en.json`, which 004 built from it. Rule changes in this feature: B-09 (back to the rulebook), B-06 and B-07 (earlier decisions changed by the designer on 2026-11-11), Mirror-mode Epic destinies (a rulebook gap decided on 2026-11-11), and check Destiny (only new checks, from any source, once per turn; decided 2026-11-11).
+**Source rules**: `Basic Rules 2_5.docx` and its corrections file. `Hero Rules 2_0.docx` is not in the repository, so hero ability texts were taken from `src/data/abilities.json` and `strings.en.json`, which 004 built from it. Rule changes in this feature: B-09 (back to the rulebook), B-06 and B-07 (earlier decisions changed by the designer on 2026-11-11), Mirror-mode Epic destinies and Mirror picks with two different heroes per side (a rulebook gap decided on 2026-11-11), and check Destiny (only new checks, from any source, once per turn; decided 2026-11-11).
 
 ---
 
@@ -76,11 +76,15 @@
 - Q (Q-77): do Before Turn, Beginning of Turn and Before Move also get a "skipped" message every turn? → A: **Leave them out for heroes that have no abilities that use those phases.**
 - Added: **a small light green box in the abilities box that shows the current phase.**
 
+### Session 2026-11-11, seventh round (Vice, after `/speckit-analyze`)
+
+- Q (Q-79): In Mirror the game lets a side pick the same hero twice (two Cavaliers per side, 004 Q-41), so the second Epic choice has no "other class". How does that work? → A: **The same hero cannot be on the same side. One choice per side: first one side chooses one hero for both sides, then the other side chooses a different hero for both sides.** This is the Mirror pick order of 001 and 004 (Light picks hero 1 for both sides, Dark picks hero 2 for both sides) with one new refusal: hero 2 may not be hero 1. The Epic choice in Mirror then always has two classes, as in Q-64 and Q-75. With the generic heroes, "the same hero" is the same definition, so a Mirror game with them has one Short range and one Long range hero per side.
+
 ---
 
 ## Scope
 
-**In:** the 24 backlog rows, grouped into seven user stories; two small text bugs seen in the screenshots (X-01, X-02); and things decided on 2026-11-11: the checkmate alert when leaving the sandbox, Epic destinies in Mirror mode, the check warnings ("CHECK" flash and "In check" pop-up), the warning before an ability that puts the own King in check, and the message for a Lead that would.
+**In:** the 24 backlog rows, grouped into seven user stories; two small text bugs seen in the screenshots (X-01, X-02); and things decided on 2026-11-11: the checkmate alert when leaving the sandbox, Epic destinies in Mirror mode, no hero twice on one side in Mirror (seventh round), the check warnings ("CHECK" flash and "In check" pop-up), the warning before an ability that puts the own King in check, and the message for a Lead that would.
 
 **Out:**
 - New heroes, abilities or rules beyond the rule points above.
@@ -160,7 +164,7 @@ When the Epic Stage starts, each hero's choice shows that hero's own three Epic 
 
 **Why this priority**: Today all four choices look the same, so players cannot tell what they are choosing (see research R-01).
 
-**Independent Test**: Browser test with four named heroes: open each of the four choices and compare header and card images.
+**Independent Test**: Browser test with four named heroes: open each of the four choices and compare header and card images. Headless tests for the Mirror picks and the Mirror choice queue.
 
 **Acceptance Scenarios**:
 
@@ -171,6 +175,7 @@ When the Epic Stage starts, each hero's choice shows that hero's own three Epic 
 5. **Given** the last hero has chosen, **Then** every hero sheet on the table shows its Epic sheet, and the hero cards in the HUD show the form names.
 6. **Given** a Mirror game, **When** the Epic Stage starts, **Then** there are two choices instead of four: the first chooser picks a destiny for its hero class, and both heroes of that class (one on each side) take that form.
 7. **Given** the first Mirror choice was made, **Then** a hero of the other side chooses for the other class and both heroes of that class take it. The Fanatic / Dominant limit applies to this second choice. The dialog says "choice n of 2" and names both heroes the choice is for.
+8. **Given** a Mirror game in setup where Light has picked a hero for both sides, **When** Dark picks its hero, **Then** Light's hero is not offered, and a pick of it is refused with "That hero is already on this side"; Dark's different hero goes to both sides. With the generic heroes, Dark picks the other range type. Draft is unchanged (seventh round).
 
 ---
 
@@ -270,7 +275,7 @@ Targets are picked on the battlefield, not from a list of coordinates. The Move 
 - A check made by the side that is not on turn (a reaction during the enemy's Lead): it gains its 2 D, once in that turn.
 - The checking unit moves and still checks from another square: not a new check.
 - Both Kings checkmated in a sandbox position: the alert names both sides.
-- Mirror game with generic heroes: the same two-choice rule, by hero definition.
+- Mirror game with generic heroes: one Short range and one Long range hero per side (FR-013), and the same two-choice rule, by hero definition.
 - Draft game with the generic heroes, where both sides hold the same two definitions: four separate choices, as in 003 (only Mirror mode pairs the heroes).
 - A Starting Hero pays for an ability from the Common Pool when its own pool is empty (001 payment rules).
 - An old save or online room whose log used a starting ability for free may not replay under the new cost; the game refuses it with a clear message and does not crash (research R-04).
@@ -289,7 +294,7 @@ Targets are picked on the battlefield, not from a list of coordinates. The Move 
 
 **Rules (engine-free core)**
 
-- **FR-001** (B-05): A side MUST gain 2 D for a **new check**: after an action, a unit of that side checks the enemy King that did not check it before the action. This holds for every kind of action (a Lead, a promotion, an ability effect, a created unit) and whichever side took the action, so also when a side uncovers a check on its own King. A side MUST gain it at most once per turn. An action after which no further unit checks MUST NOT gain it, even while the King stays in check (Basic Rules *Destiny*: "2 D when you Check an enemy King … only once per turn"; decided 2026-11-11).
+- **FR-001** (B-05): A side MUST gain 2 D for a **new check**: after an action, a unit of that side checks the enemy King that did not check it before the action. This holds for every kind of action (a Lead, a promotion, an ability effect; a created unit can never give check, Basic Rules *Create*) and whichever side took the action, so also when a side uncovers a check on its own King. A side MUST gain it at most once per turn. An action after which no further unit checks MUST NOT gain it, even while the King stays in check (Basic Rules *Destiny*: "2 D when you Check an enemy King … only once per turn"; decided 2026-11-11).
 - **FR-002** (B-09): Each use of a Starting Hero ability that has uses MUST cost 1 Destiny, paid by the 001 payment rules; abilities without uses stay free (Basic Rules *Hero abilities*: "Starting Heroes place a Destiny on the Destiny symbol by the ability used"; FAQ 10; decided 2026-11-11). The cost MUST be data in `abilities.json`.
 - **FR-003** (B-10, B-11): "During Move" abilities that act on a hero's square (*Breath of Fiery Destruction*, *Rejuvenating Stroll*, *Saintly Inspiration*) MUST offer the square the Move started on and every square entered during it, including the current one, until the Move ends (decided 2026-11-11).
 - **FR-004** (B-10, B-11): For every ability of the active hero that is in its timing window but not offered, the core MUST give the reason (no uses, used this turn, not enough Destiny, no legal target with the target kind).
@@ -308,6 +313,7 @@ Targets are picked on the battlefield, not from a list of coordinates. The Move 
 - **FR-010** (B-01): The destiny dialog MUST show the choosing hero's name, side, player and position in the choice order, and for each destiny that hero's Epic form name and portrait from `heroes.json` / `assets.json`.
 - **FR-011** (B-01): The dialog MUST list the destinies already chosen.
 - **FR-012** (B-01): In Mirror mode the Epic Stage MUST ask for two choices: the first chooser's destiny applies to both heroes of its class, then a hero of the other side chooses for both heroes of the other class (replaces the 003 edge case "each side's heroes still choose separately"; decided 2026-11-11).
+- **FR-013** (B-01, Q-79, decided 2026-11-11, seventh round): In Mirror mode the two heroes of a side MUST differ. Light picks a hero for both sides, then Dark picks a different hero for both sides; a pick of the hero already chosen MUST be refused (`HERO_TAKEN`, "That hero is already on this side") and MUST NOT be offered. For the generic heroes "the same hero" is the same definition. Draft is unchanged (replaces 004 Q-41 "yes in Mirror" as far as one side is concerned; both sides still have the same two heroes).
 
 **Board interaction**
 
@@ -393,6 +399,7 @@ None. Every question was answered on 2026-11-11.
 | Q-78 | ***Preaching* is once per turn**, with the choice of one use or both in that use (2026-11-11). | FR-017, US1-AS19 |
 | Q-77 | **Start-of-turn phases**: a skipped Before Turn, Beginning of Turn or Before Move is announced only for a hero with an ability timed in that phase (2026-11-11). | FR-035, US6-AS4 |
 | Q-75 | **Mirror order**: the first hero in the 003 choice order chooses for its class, then the other side's hero of the other class (2026-11-11). | FR-012, US3-AS6, AS7 |
+| Q-79 | **Mirror picks**: the same hero cannot be on the same side. Light picks one hero for both sides, then Dark picks a different hero for both sides (2026-11-11, seventh round). Narrows 004 Q-41. | FR-013, US3-AS8 |
 
 ---
 

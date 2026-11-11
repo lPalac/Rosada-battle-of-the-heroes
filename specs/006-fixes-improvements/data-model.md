@@ -45,6 +45,8 @@ Rules:
 
 `appliesTo` lists the heroes that take the chosen destiny: the chooser alone in Draft; the chooser and its twin (same `definitionId`, other side) in Mirror. `migrateState` fills `[heroId]` for a decision saved without it.
 
+Mirror picks (FR-013): the setup's two picks may not name the same hero (same `heroDefinitionId`, or for generic heroes the same `rangeType`), so the two heroes of a side always differ. No field changes.
+
 Mirror queue (`setup.mode === 'mirror'`): two decisions instead of four. The first is for the first hero of `choiceOrder`; the second is for the hero of the other definition on the other side.
 
 ### Event (changed)
@@ -91,8 +93,8 @@ Epic Stage starts, Mirror ──▶ 2 epicDestiny decisions, each applied to bot
 | Field | Change |
 | --- | --- |
 | `cost` | `{ "normal": 1, "bloodied": 1 }` on `cavalier.demoralise`, `cavalier.tightFormation`, `monk.preaching`, `monk.makePeaceNotWar`, `scout.bearTraps`, `scout.poisonWater`, `magus.flamingBolt`, `magus.soulsClash`. `uses` stays |
-| `changesUnits` | NEW, optional boolean, default true: false for abilities whose effect cannot add, move, retype or remove a unit (wounds, heals, hero moves, bonuses), so the check test of FR-016 is skipped for them |
-| `bothUses` | NEW, optional: on `monk.preaching`. The engine then offers the options `one` and `both`; `both` spends two uses and their Destiny and applies the both-uses effect. `oncePerTurn` becomes true for it |
+| `flags.noUnitEffect` | NEW flag in the existing `flags` object (beside `mustNotCheck`, `notRoyalty`, `notAsHeroUnit`; absent = false): true for abilities whose effect cannot add, move, retype or remove a unit (wounds, heals, hero moves, bonuses), so the check test of FR-016 is skipped for them |
+| `flags.bothUses` | NEW flag, on `monk.preaching`. The engine then offers the options `one` and `both`; `both` spends two uses and their Destiny and applies the both-uses effect. `oncePerTurn` becomes true for it (false today) |
 | `targetHint` | NEW, optional string key: what the ability needs as a target, for the "why not" line: `enemyHeroOnPath`, `friendlyHeroOnPath`, `enemyHeroInRange`, `adjacentEnemyUnit`, … One string `hint.<key>` each |
 
 Validation (schema and `scripts/check-data.ts`): `targetHint` must have a string; an ability with `uses` on a Starting Hero must have a cost (so a new starting ability cannot be free by accident).
