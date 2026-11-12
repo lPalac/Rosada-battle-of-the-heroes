@@ -13,10 +13,25 @@ export const panelRectsOf = (page: Page) => hook<Record<string, Rect>>(page, 'pa
 export const boardRectOf = (page: Page) => hook<{ x: number; y: number }[]>(page, 'boardRect');
 export const viewSideOf = (page: Page) => hook<'light' | 'dark' | null>(page, 'viewSide');
 
+/** 006 FR-022: pick a named hero: the first click highlights the card, the second click picks it. */
+export async function pickNamed(page: Page, id: string): Promise<void> {
+  const card = page.getByTestId(`pick-${id}`);
+  await card.click();
+  await expect(card).toHaveAttribute('data-pending', 'true');
+  await card.click();
+}
+
 /** Click the centre of a board square with the real mouse (goes through raycast picking). */
 export async function clickSquare(page: Page, square: string): Promise<void> {
   const p = await hook<{ x: number; y: number }>(page, 'screenOf', square);
   await page.mouse.click(p.x, p.y);
+}
+
+/** 006 FR-021: move the hero to a square: the first click plans the shortest path, the second walks it. */
+export async function walkTo(page: Page, square: string): Promise<void> {
+  await clickSquare(page, square);
+  await clickSquare(page, square);
+  await expect.poll(() => hook<boolean>(page, 'walking')).toBe(false);
 }
 
 /** 4-player Draft setup through the UI with the suggested order; returns when the table shows. */

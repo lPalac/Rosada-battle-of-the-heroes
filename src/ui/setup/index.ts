@@ -22,10 +22,13 @@ export class SetupWizard {
   private draft: PlayersDraft = { count: 4, singleSide: 'light', names: [] };
   private orders: Partial<Record<Side, OrderChoice>> = {};
   private orderDone: Record<Side, boolean> = { light: false, dark: false };
+  /** 006 FR-022: the hero card clicked once, waiting for the confirming click. */
+  private pendingPick: string | null = null;
 
   constructor(private root: HTMLElement, private host: SetupHost) {}
 
   reset(): void {
+    this.pendingPick = null;
     this.step = 'players';
     this.orders = {};
     this.orderDone = { light: false, dark: false };
@@ -54,7 +57,7 @@ export class SetupWizard {
       body = renderPicks(state.setup, (side, choice) => {
         this.host.dispatch({ type: 'pickHero', side, ...choice });
         this.render();
-      });
+      }, { id: this.pendingPick, set: (id) => { this.pendingPick = id; this.render(); } });
     } else if (state && (!this.orderDone.light || !this.orderDone.dark)) {
       index = 3;
       const side: Side = this.orderDone.light ? 'dark' : 'light';

@@ -160,3 +160,13 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .seat { gap: 10px; align-items: center; }
 .error { color: #ff8a80; }
 .destiny-portrait { width: 100%; object-fit: cover; object-position: top; display: block; }
+/* 006: the board tooltip (FR-026), the target prompt help line (FR-020), the own-King warning (FR-024). */
+.board-tooltip { position: fixed; z-index: 50; pointer-events: none; max-width: 280px; padding: 6px 10px; border-radius: 6px; background: rgba(20, 14, 8, .92); color: #ffe082; border: 1px solid #ffb300; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.target-help { display: flex; gap: 8px; align-items: center; }
+/* 006 FR-022: a hero card clicked once waits for the confirming click. */
+.hero-card.pending { outline: 3px solid #ffd54f; }
+.pick-confirm { margin-top: 4px; font-weight: bold; color: #ffd54f; }
+/* 006 FR-004, FR-026: the reason an ability cannot be used now, shown on hover and keyboard focus of its row. */
+.ability-row.has-status { position: relative; }
+.ability-row .ability-status { display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 20; padding: 4px 8px; border-radius: 6px; background: rgba(20, 14, 8, .95); color: #ffe082; border: 1px solid #ffb300; font-size: 12px; }
+.ability-row.has-status:hover .ability-status, .ability-row.has-status:focus .ability-status, .ability-row.has-status:focus-within .ability-status { display: block; }

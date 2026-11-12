@@ -12,6 +12,8 @@ export type Pick =
 
 export interface PickHandlers {
   onClick(pick: Pick): void;
+  /** 006 FR-026: the pick under the pointer (null when none), for hover warnings. */
+  onHover?(pick: Pick | null, clientX: number, clientY: number): void;
   /** Drag from one pick to another (sandbox drag and drop without physics). */
   onDrag?(from: Pick, to: Pick): void;
   /** Carrying a piece with physics (002 US1): return true from start to take the gesture. */
@@ -74,10 +76,14 @@ export class Picker {
       down = { x: e.clientX, y: e.clientY, pick, carrying };
     });
     this.canvas.addEventListener('pointermove', (e) => {
-      if (!down?.carrying) return;
+      if (!down?.carrying) {
+        if (!down && handlers.onHover) handlers.onHover(this.pickAt(e.clientX, e.clientY), e.clientX, e.clientY);
+        return;
+      }
       const g = this.groundAt(e.clientX, e.clientY);
       if (g) handlers.carry!.move(g);
     });
+    this.canvas.addEventListener('pointerleave', (e) => handlers.onHover?.(null, e.clientX, e.clientY));
     this.canvas.addEventListener('pointerup', (e) => {
       if (!down || e.button !== 0) return;
       const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);

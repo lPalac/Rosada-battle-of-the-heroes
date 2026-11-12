@@ -1,7 +1,7 @@
 // quickstart.md manual check, steps 2–5, run in the browser (T109). Steps 1 and 6 are setup.spec.ts and
 // sandbox.spec.ts. Positions for steps 3–5 are arranged in sandbox through the test hook, then played with the mouse.
 import { expect, test, type Page } from '@playwright/test';
-import { clickSquare, hook, quickSetup } from './helpers.ts';
+import { clickSquare, hook, quickSetup, walkTo } from './helpers.ts';
 
 const at = (x: number, y: number) => ({ x, y });
 
@@ -13,7 +13,7 @@ async function arrange(page: Page, actions: unknown[]): Promise<void> {
 
 test('step 2: Turn 1, move the hero, Lead e2–e4: no Roll button while the Peace side is up', async ({ page }) => {
   await quickSetup(page);
-  await clickSquare(page, 'd1');
+  await walkTo(page, 'd1');
   await page.getByTestId('end-phase').click();
   await page.getByTestId('end-phase').click();
   await clickSquare(page, 'e2');
@@ -63,19 +63,19 @@ test('step 4: Ram an enemy hero with a Rook: lands past the Rook, −3 health, R
 test('step 5: pause in a tavern, buy a Drink, continue; no buying after leaving', async ({ page }) => {
   await quickSetup(page);
   await arrange(page, [{ type: 'sandboxSet', path: 'health', target: 'H1', value: 6 }]);
-  for (const sq of ['b0', 'a0']) await clickSquare(page, sq);
-  await clickSquare(page, '<0');
+  for (const sq of ['b0', 'a0']) await walkTo(page, sq);
+  await walkTo(page, '<0');
   await expect(page.getByTestId('tavern')).toBeVisible();
   await page.getByTestId('buy-drink').click();
   await expect(page.getByTestId('hero-H1-health')).toHaveText('Health 7/10');
-  await clickSquare(page, '<1');
+  await walkTo(page, '<1');
   await expect(page.getByTestId('tavern')).toHaveCount(0);
   await expect(page.getByTestId('active-movement')).toHaveText('Movement 1/5');
 });
 
 test('FR-200: a refresh keeps the game; Resume saved game restores it', async ({ page }) => {
   await quickSetup(page);
-  await clickSquare(page, 'd1');
+  await walkTo(page, 'd1');
   await page.reload();
   await page.getByTestId('resume-saved').click();
   await expect(page.getByTestId('active-movement')).toHaveText('Movement 4/5');

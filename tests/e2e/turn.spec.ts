@@ -1,6 +1,6 @@
 // US7 in the browser: one full turn with the mouse; highlights, the Roll button and the result (T060).
 import { expect, test } from '@playwright/test';
-import { clickSquare, hook, quickSetup } from './helpers.ts';
+import { clickSquare, hook, quickSetup, walkTo } from './helpers.ts';
 
 test('US7-AS1 selecting a unit highlights its legal destinations', async ({ page }) => {
   await quickSetup(page);
@@ -40,7 +40,7 @@ test('US7-AS3 active hero, phase, health, Movement and Range are visible without
   await expect(page.getByTestId('hero-H1-health')).toHaveText('Health 10/10');
   await expect(page.getByTestId('active-movement')).toHaveText('Movement 5/5');
   await expect(page.getByTestId('active-range')).toHaveText('Range 1');
-  await clickSquare(page, 'd1');
+  await walkTo(page, 'd1');
   await expect(page.getByTestId('active-movement')).toHaveText('Movement 4/5');
   await page.waitForTimeout(600);
   await page.screenshot({ path: 'test-results/default-camera.png' });
@@ -48,7 +48,7 @@ test('US7-AS3 active hero, phase, health, Movement and Range are visible without
 
 test('a full turn with the mouse only: Move, Lead, advance, hand-off', async ({ page }) => {
   await quickSetup(page);
-  await clickSquare(page, 'd1');
+  await walkTo(page, 'd1');
   await page.getByTestId('end-phase').click();
   await page.getByTestId('end-phase').click();
   await clickSquare(page, 'd2');

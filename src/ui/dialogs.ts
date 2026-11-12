@@ -175,6 +175,32 @@ export class Dialogs {
     });
   }
 
+  /**
+   * 006 FR-024 (spec A-12): this action would put the player's own King in check. True for "Continue"; false for
+   * "Undo" (also Esc): nothing is sent and nothing is paid.
+   */
+  ownCheckWarning(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const done = (go: boolean) => {
+        window.removeEventListener('keydown', onKey, true);
+        this.close();
+        resolve(go);
+      };
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation();
+        done(false);
+      };
+      window.addEventListener('keydown', onKey, true);
+      this.show(el('div', { class: 'col', 'data-testid': 'own-check-warning' },
+        el('h3', {}, t('dialog.ownCheck.title')),
+        el('div', {}, t('dialog.ownCheck.text')),
+        el('div', { class: 'row' },
+          button(t('dialog.ownCheck.continue'), () => done(true), { kind: 'primary', testid: 'own-check-continue' }),
+          button(t('dialog.ownCheck.undo'), () => done(false), { testid: 'own-check-undo' }))));
+    });
+  }
+
   problems(list: PositionProblem[]): void {
     this.show(el('h3', {}, t('dialog.problems')), el('div', { class: 'muted' }, t('dialog.problemsHelp')),
       el('ul', { class: 'problems', 'data-testid': 'problems' }, ...list.map((p) => el('li', {}, p.message))),

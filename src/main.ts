@@ -7,16 +7,19 @@ import type { OnlineSession } from './net/online-session.ts';
 import { throwDie, throwDieTo } from './physics/roll.ts';
 import { createDiceWorld, type DiceWorld } from './physics/world.ts';
 import {
-  createGame, createSetup, RULES, parseSquare, positionWarnings, squareName, taverns, validatePosition,
-  type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
+  abilityOffers, createGame, createSetup, RULES, parseSquare, positionWarnings, squareName, taverns, validatePosition, wouldCheckOwnKing,
+  type AbilityOffer, type AbilityTarget, type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
 } from './rules/index.ts';
+import { extendPlan, type MovePlan } from './game/move-plan.ts';
+import { completedChoice, nextPicks, targetPrompt } from './game/target-model.ts';
+import { BoardTooltip } from './ui/hud/tooltip.ts';
 import { onAssetLoaded } from './table/assets.ts';
 import { EffectsView } from './table/effects.ts';
 import { createBoard } from './table/board.ts';
 import { SQUARE, toWorld, ZONES } from './table/coords.ts';
 import { createCamera } from './table/camera.ts';
 import { DiceView } from './table/dice.ts';
-import { HighlightView } from './table/highlights.ts';
+import { HighlightView, type Overlay } from './table/highlights.ts';
 import { Picker, type Pick } from './table/picking.ts';
 import { PiecesView } from './table/pieces.ts';
 import { createScene } from './table/scene.ts';
@@ -85,7 +88,18 @@ const toasts = new Toasts();
 const dialogs = new Dialogs(dialogRoot);
 let session: SessionLike | null = null;
 let selected: string | null = null;
-let targeting: { kind: 'retreat'; options: Coord[] } | null = null;
+/**
+ * 006 FR-020: board targeting. An ability prompt picks its targets on the board step by step; Hero Retreat picks a
+ * tavern the same way.
+ */
+type Targeting =
+  | { kind: 'retreat'; options: Coord[] }
+  | { kind: 'ability'; abilityId: string; option?: string; offer: AbilityOffer; chosen: AbilityTarget[]; length: number };
+let targeting: Targeting | null = null;
+/** 006 FR-021: the planned Move path, and whether a walk is running (other input waits). */
+let plan: MovePlan | null = null;
+let walking = false;
+const tooltip = new BoardTooltip();
 let held: Pick | null = null;
 let carriedMoved = false;
 let rolling = false;
@@ -211,6 +225,9 @@ function onChange(s: GameState, events: GameEvent[]): void {
   if (events.some((e) => e.type === 'wellDepleted')) toasts.wellDepleted();
   if (events.some((e) => e.type === 'epicStageStarted')) toasts.show(t('log.epicStageStarted'), { testid: 'epic-notice' });
   if (events.some((e) => e.type === 'phaseChanged' || e.type === 'unitLed' || e.type === 'leadAnnounced')) selected = null;
+  // 006: a plan is cleared by any change that is not its own walk; a target prompt by a phase change.
+  if (!walking) plan = null;
+  if (events.some((e) => e.type === 'phaseChanged')) targeting = null;
   if (s.status === 'playing') {
     const active = s.heroes.find((h) => h.id === s.activeHeroId);
     if (active) camera.setSide(active.side);
@@ -233,6 +250,7 @@ function startSession(initial: GameState, actions: Action[] = []): void {
   unsubscribe = session.onChange(onChange);
   selected = null;
   targeting = null;
+  plan = null;
   held = null;
   if (session.state.status !== 'setup') pieces.sync(session.state, [], false);
   syncTable(session.state);
@@ -322,24 +340,94 @@ async function inspiredLead(): Promise<void> {
   if (pay) dispatch({ type: 'inspiredLead', destiny: n, pay });
 }
 
-/** 004: use a hero ability from the HUD panel; several target choices open a dialog (T060). */
-async function useAbilityFromPanel(abilityId: string): Promise<void> {
+/** An ability option's label ("One use: −4 to Lead on the next turn (1 D)"), or the plain option name. */
+function optionLabel(abilityId: string, option: string, cost: number): string {
+  return hasString(`option.${abilityId}.${option}`) ? t(`option.${abilityId}.${option}`, { cost }) : t(`option.${option}`);
+}
+
+/**
+ * 006 FR-024: before an action that would put the player's own King in check, warn and let them Continue or Undo.
+ * Undo sends nothing (spec A-12). Returns true when the action may be sent.
+ */
+async function ownKingOk(action: Action): Promise<boolean> {
+  const s = state();
+  if (!s || !wouldCheckOwnKing(s, action)) return true;
+  modal = true;
+  const go = await dialogs.ownCheckWarning();
+  modal = false;
+  render();
+  return go;
+}
+
+/** Send an action after the own-King warning (Legendary Powers and other non-Lead actions). */
+async function guarded(action: Action): Promise<void> {
+  if (await ownKingOk(action)) dispatch(action);
+}
+
+/** Use an ability with its chosen targets: the own-King warning, then payment, then the action. */
+async function finishAbility(abilityId: string, option: string | undefined, targets: AbilityTarget[], cost: number): Promise<void> {
+  targeting = null;
+  const action: Action = { type: 'useAbility', abilityId, targets, ...(option ? { option } : {}) };
+  if (!(await ownKingOk(action))) return render();
+  const pay = cost > 0 ? await payFor(cost) : undefined;
+  if (cost > 0 && !pay) return render();
+  dispatch({ ...action, ...(pay ? { pay } : {}) } as Action);
+  render();
+}
+
+/**
+ * Use a hero ability from the HUD panel. 006 FR-020: targets on the board are picked on the board (B-02); a choice
+ * of options (Preaching one use or both, Breath square or Knight) comes first; targets that are not on the board keep
+ * the dialog; a single choice is used at once.
+ */
+async function useAbilityFromPanel(abilityId: string, option?: string): Promise<void> {
   const s = state()!;
-  const choices = offersOf(s, abilityId).flatMap((o) => o.targets.map((targets) => ({ option: o.option, targets, cost: o.cost })));
-  if (!choices.length) return;
-  let pick = choices[0];
-  if (choices.length > 1) {
+  const offers = offersOf(s, abilityId).filter((o) => option === undefined || o.option === option);
+  if (!offers.length) return;
+  let offer = offers[0];
+  if (offers.length > 1) {
     modal = true;
-    const chosen = await dialogs.choose(t(`ability.${abilityId}.name`), choices.map((c) => ({
-      label: (c.option ? `${t(`option.${c.option}`)}: ` : '') + targetLabel(s, c.targets), value: c,
-    })));
+    const chosen = await dialogs.choose(t(`ability.${abilityId}.name`), offers.map((o) => ({ label: optionLabel(abilityId, o.option ?? '', o.cost), value: o })));
     modal = false;
     if (!chosen) return render();
-    pick = chosen;
+    offer = chosen;
   }
-  const pay = pick.cost > 0 ? await payFor(pick.cost) : undefined;
-  if (pick.cost > 0 && !pay) return;
-  dispatch({ type: 'useAbility', abilityId, targets: pick.targets, ...(pick.option ? { option: pick.option } : {}), ...(pay ? { pay } : {}) });
+  const prompt = targetPrompt(s, offer);
+  if (offer.targets.length === 1 && !offer.blocked.length) return finishAbility(abilityId, offer.option, offer.targets[0], offer.cost);
+  if (prompt.fallback === 'dialog') {
+    modal = true;
+    const chosen = await dialogs.choose(t(`ability.${abilityId}.name`), offer.targets.map((targets) => ({ label: targetLabel(s, targets), value: targets })));
+    modal = false;
+    if (!chosen) return render();
+    return finishAbility(abilityId, offer.option, chosen, offer.cost);
+  }
+  plan = null;
+  selected = null;
+  targeting = { kind: 'ability', abilityId, ...(offer.option ? { option: offer.option } : {}), offer, chosen: [], length: prompt.length };
+  render();
+}
+
+/** A board click while an ability's target prompt is open. */
+function pickTarget(t0: Extract<Targeting, { kind: 'ability' }>, coord: Coord, clientX?: number, clientY?: number): void {
+  const s = state()!;
+  const step = nextPicks(s, t0.offer, t0.chosen);
+  const pick = step.picks.find((p) => eqC(p.coord, coord));
+  if (pick) {
+    t0.chosen = [...t0.chosen, pick.target];
+    const done = t0.chosen.length >= t0.length ? completedChoice(t0.offer, t0.chosen) : null;
+    if (done) void finishAbility(t0.abilityId, t0.option, done, t0.offer.cost);
+    else render();
+    return;
+  }
+  const blocked = step.blocked.find((b) => eqC(b.coord, coord));
+  if (blocked) showBlockedReason(blocked.code, clientX, clientY);
+}
+
+/** 006 FR-026: the reason a square or target is blocked, at the pointer (or as a toast without one). */
+function showBlockedReason(code: string, clientX?: number, clientY?: number): void {
+  const text = errorText({ code, message: code, rule: '' });
+  if (clientX !== undefined && clientY !== undefined) tooltip.show(text, clientX, clientY, 2500);
+  else toasts.show(text, { error: true });
 }
 
 function heroRetreat(): void {
@@ -437,7 +525,7 @@ function sandboxDrop(from: Pick, to: Pick): void {
 
 function onPick(p: Pick): void {
   const s = state();
-  if (!s || s.status === 'setup' || rolling || modal || !myMove()) return;
+  if (!s || s.status === 'setup' || rolling || modal || walking || !myMove()) return;
   if (s.enforcement === 'sandbox') {
     if (!held) {
       if (p.kind === 'unit' || p.kind === 'hero' || p.kind === 'graveUnit') held = p;
@@ -446,13 +534,21 @@ function onPick(p: Pick): void {
     return;
   }
   if (s.status !== 'playing') return;
-  const coord = 'coord' in p ? p.coord : null;
+  // A click on a piece means the piece's square (the ray may hit the side of a tall piece over a neighbouring square).
+  const coord = p.kind === 'unit' ? s.units.find((u) => u.id === p.id)?.pos ?? p.coord
+    : p.kind === 'hero' ? s.heroes.find((h) => h.id === p.id)?.pos ?? p.coord
+    : 'coord' in p ? p.coord : null;
   const d = s.pendingDecision;
   if (d && (d.type === 'advanceSquare' || d.type === 'unconsciousTavern')) {
     if (coord && d.options.some((o) => eqC(o, coord))) dispatch({ type: 'decide', decision: { type: 'square', to: coord } });
     return;
   }
-  if (targeting && coord) {
+  if (targeting?.kind === 'ability') {
+    // Anything that is not a pick leaves the prompt open; Esc or Cancel ends it (contracts/ui-interactions.md).
+    if (coord) pickTarget(targeting, coord, pointer.x, pointer.y);
+    return;
+  }
+  if (targeting?.kind === 'retreat' && coord) {
     if (targeting.options.some((o) => eqC(o, coord))) void doRetreat(coord);
     else {
       targeting = null;
@@ -461,8 +557,15 @@ function onPick(p: Pick): void {
     return;
   }
   const h = highlights(s, selected);
-  if (s.phase === 'move' && coord && h.moves.some((m) => eqC(m, coord))) {
-    dispatch({ type: 'moveStep', to: coord });
+  if (s.phase === 'move' && coord) {
+    // 006 FR-021: a click plans the shortest path; a click on the plan's last square walks it; any other square
+    // (or Esc) clears the plan. A double click is plan + walk.
+    if (plan && eqC(plan.path[plan.path.length - 1], coord)) {
+      void walk(plan.path);
+      return;
+    }
+    plan = extendPlan(s, plan, coord);
+    render();
     return;
   }
   if (s.phase === 'lead') {
@@ -475,13 +578,82 @@ function onPick(p: Pick): void {
       dispatch({ type: 'announceLead', unitId: selected, to: coord });
       return;
     }
+    // 006 FR-025: a square only check forbids says why and announces nothing.
+    const blocked = selected && coord ? h.blocked.find((b) => eqC(b.to, coord)) : undefined;
+    if (blocked) {
+      showBlockedReason(blocked.code, pointer.x, pointer.y);
+      return;
+    }
     selected = null;
     render();
   }
 }
 
+/** Wait until `done` holds (online changes arrive asynchronously), or give up after `ms`. */
+function waitFor(done: () => boolean, ms = 4000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const tick = () => {
+      if (done()) return resolve(true);
+      if (performance.now() - start > ms) return resolve(false);
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
+}
+
+/**
+ * 006 FR-021 (research R-09): walk a planned path as ordinary moveStep actions, one after another, each after the
+ * previous one arrived and its move animation ended (none in e2e builds). It stops on a refused step, an open decision,
+ * a wound, or a change of phase. Hot-seat and online use the same loop.
+ */
+async function walk(path: Coord[]): Promise<void> {
+  if (walking) return;
+  walking = true;
+  plan = null;
+  render();
+  try {
+    for (const to of path) {
+      const before = state();
+      if (!before || before.phase !== 'move' || before.pendingDecision) break;
+      const h0 = activeHero(before);
+      const health = h0.health;
+      if (!dispatch({ type: 'moveStep', to })) break;
+      const arrived = await waitFor(() => {
+        const s = state();
+        return !!s && (eqC(activeHero(s).pos, to) || s.phase !== 'move' || !!s.pendingDecision);
+      });
+      const s = state();
+      if (!arrived || !s || s.pendingDecision || s.phase !== 'move' || activeHero(s).health < health) break;
+      if (!isE2E) await new Promise((r) => setTimeout(r, 150));
+    }
+  } finally {
+    walking = false;
+    render();
+  }
+}
+
+/** The last pointer position over the table (for tooltips on click). */
+const pointer = { x: 0, y: 0 };
+
+/** 006 FR-026: hovering a blocked Lead square or a blocked ability target shows its reason at the pointer. */
+function onHover(p: Pick | null, x: number, y: number): void {
+  pointer.x = x;
+  pointer.y = y;
+  const s = state();
+  const coord = p && 'coord' in p ? p.coord : null;
+  let code: string | null = null;
+  if (s && coord && s.status === 'playing' && s.enforcement === 'rules') {
+    if (targeting?.kind === 'ability') code = nextPicks(s, targeting.offer, targeting.chosen).blocked.find((b) => eqC(b.coord, coord))?.code ?? null;
+    else if (s.phase === 'lead' && selected) code = highlights(s, selected).blocked.find((b) => eqC(b.to, coord))?.code ?? null;
+  }
+  if (code) tooltip.show(errorText({ code, message: code, rule: '' }), x, y);
+  else if (tooltip.visible) tooltip.hide();
+}
+
 picker.listen({
   onClick: onPick,
+  onHover,
   onDrag: (a, b) => { if (state()?.enforcement === 'sandbox') sandboxDrop(a, b); },
   carry: {
     start: (p) => { carriedMoved = false; return physics.startCarry(p); },
@@ -502,8 +674,13 @@ function helpText(s: GameState): string | null {
   const d = s.pendingDecision;
   if (d && (d.type === 'advanceSquare')) return t('dialog.advance');
   if (d && d.type === 'unconsciousTavern') return t('hud.chooseSquare');
-  if (targeting) return t('dialog.retreatTavern');
-  if (s.phase === 'move') return t('hud.moveHelp', { left: s.turn.movementLeft });
+  if (targeting?.kind === 'retreat') return t('dialog.retreatTavern');
+  if (targeting?.kind === 'ability') return null; // the target prompt has its own help line
+  if (s.phase === 'move') {
+    // 006 FR-021: the plan's Movement left; why the Move cannot end here.
+    if (plan) return t('hud.planHelp', { left: plan.left });
+    return t('hud.moveHelp', { left: s.turn.movementLeft }) + (hudModel(s).can.endPhase ? '' : ` ${t('hud.cannotEndHere')}`);
+  }
   if (s.phase === 'lead' && !s.turn.leadAttempted) return t('hud.selectUnit');
   return null;
 }
@@ -512,12 +689,16 @@ function playerName(id: string): string {
   return state()?.setup.players.find((p) => p.id === id)?.name ?? id;
 }
 
+/** 006 FR-022: the hero card clicked once in the online picks. */
+let onlinePendingPick: string | null = null;
+
 /** 005: online picks: the seat whose pick it is chooses; the others wait (US2-AS1). */
 function renderOnlinePicks(net: OnlineSession): void {
   const s = net.state;
   hudRoot.replaceChildren(toasts.root);
   hl.group.clear();
-  const picks = renderPicks(s.setup, (side, choice) => dispatch({ type: 'pickHero', side, ...choice }));
+  const picks = renderPicks(s.setup, (side, choice) => dispatch({ type: 'pickHero', side, ...choice }),
+    { id: onlinePendingPick, set: (id) => { onlinePendingPick = id; render(); } });
   if (net.canAct()) {
     mount(overlay, el('div', { class: 'panel setup', 'data-testid': 'setup' }, el('h2', {}, t('online.yourTurn')), picks,
       el('div', { class: 'muted' }, t('online.autoSetup'))));
@@ -601,7 +782,7 @@ function render(): void {
   }
 
   const m = hudModel(s, selected);
-  const busy = rolling || modal;
+  const busy = rolling || modal || walking;
   const waiting = net && !mine
     ? el('div', { class: 'panel muted', 'data-testid': 'online-not-your-turn' },
         t('online.waitingFor', { name: net.waitingFor().map((id) => net.room?.seats.find((x) => x.id === id)?.name ?? id).join(', ') }))
@@ -619,6 +800,11 @@ function render(): void {
     waiting ?? el('div', { class: 'actions' },
       renderRulePanel(lastError),
       renderHelp(helpText(s)),
+      targeting?.kind === 'ability'
+        ? el('div', { class: 'panel target-help', 'data-testid': 'target-help' },
+            el('span', {}, t('hud.targetHelp', { ability: t(`ability.${targeting.abilityId}.name`) })),
+            button(t('action.cancel'), cancelTargeting, { testid: 'target-cancel' }))
+        : null,
       s.enforcement === 'rules' ? renderLeadPanel(m, rolling, () => void roll(), () => dispatch({ type: 'useRevenge' })) : null,
       s.enforcement === 'rules' ? renderTavern(m, (item) => void buy(item)) : null,
       s.enforcement === 'rules' && s.status === 'playing' ? renderAbilities(m, busy, (id) => void useAbilityFromPanel(id)) : null,
@@ -629,9 +815,10 @@ function render(): void {
             offerDraw: () => dispatch({ type: 'offerDraw' }),
             inspiredLead: () => void inspiredLead(),
             heroRetreat,
-            becomeHeroUnit: (types) => dispatch({ type: 'becomeHeroUnit', types }),
-            leaveHeroUnit: () => dispatch({ type: 'leaveHeroUnit' }),
-            kingsForces: () => dispatch({ type: 'kingsForces' }),
+            // 006 FR-024: Legendary Power actions get the own-King warning too.
+            becomeHeroUnit: (types) => void guarded({ type: 'becomeHeroUnit', types }),
+            leaveHeroUnit: () => void guarded({ type: 'leaveHeroUnit' }),
+            kingsForces: () => void guarded({ type: 'kingsForces' }),
           })
         : null,
     ),
@@ -644,11 +831,24 @@ function render(): void {
     toasts.root,
   );
 
-  const extra = targeting
-    ? { coords: targeting.options, kind: 'decision' as const }
-    : held && s.enforcement === 'sandbox' && 'coord' in held ? { coords: [held.coord], kind: 'place' as const } : null;
-  hl.show(highlights(s, selected), selected, pieces, extra);
+  const extra: Overlay[] = [];
+  if (targeting?.kind === 'retreat') extra.push({ coords: targeting.options, kind: 'decision' });
+  if (targeting?.kind === 'ability') {
+    const step = nextPicks(s, targeting.offer, targeting.chosen);
+    extra.push({ coords: step.picks.map((p) => p.coord), kind: 'target' }, { coords: step.blocked.map((b) => b.coord), kind: 'blocked' });
+  }
+  if (held && s.enforcement === 'sandbox' && 'coord' in held) extra.push({ coords: [held.coord], kind: 'place' });
+  // While a target prompt is open, the Move and Lead highlights step back.
+  const base = highlights(s, selected);
+  const shown = targeting ? { ...base, reach: [], moves: [], leads: [], blocked: [], selectable: [] } : base;
+  hl.show(shown, selected, pieces, extra, plan?.path ?? []);
   ts.requestRender();
+}
+
+function cancelTargeting(): void {
+  targeting = null;
+  tooltip.hide();
+  render();
 }
 
 function toggleTracker(): void {
@@ -656,13 +856,39 @@ function toggleTracker(): void {
   render();
 }
 
-// `A` opens and closes the Royal Favor tracker (research R-10).
+/**
+ * 006 FR-023 (contracts/ui-interactions.md): Space ends the phase when End phase is enabled, it is this seat's move,
+ * no dialog, Settings or tracker is open, no walk or roll is running, focus is not in a field and the key is not
+ * held. A shown plan is dropped first.
+ */
+function spaceEndsPhase(e: KeyboardEvent): boolean {
+  const s = state();
+  if (!s || s.status !== 'playing' || s.enforcement !== 'rules' || e.repeat) return false;
+  if (dialogs.open || settingsOpen || trackerOpen || modal || walking || rolling || !myMove()) return false;
+  if (!hudModel(s, selected).can.endPhase) return false;
+  plan = null;
+  targeting = null;
+  dispatch({ type: 'endPhase' });
+  return true;
+}
+
+// `A` opens and closes the Royal Favor tracker (research R-10); Space ends the phase; Esc clears a plan or a prompt.
 window.addEventListener('keydown', (e) => {
   const tag = (e.target as HTMLElement | null)?.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'a' || e.key === 'A') {
     if (state() && state()!.status !== 'setup') toggleTracker();
-  } else if (e.key === 'Escape' && trackerOpen) toggleTracker();
+  } else if (e.key === 'Escape') {
+    if (trackerOpen) toggleTracker();
+    else if (targeting) cancelTargeting();
+    else if (plan) {
+      plan = null;
+      render();
+    }
+  } else if (e.key === ' ' || e.code === 'Space') {
+    if (tag === 'BUTTON') e.preventDefault(); // a focused button would otherwise be clicked by Space
+    if (spaceEndsPhase(e)) e.preventDefault();
+  }
 });
 
 function lastErrorProblemsOpen(): boolean {
@@ -752,7 +978,13 @@ if (import.meta.env.DEV || isE2E) {
     },
     // 006 (contracts/ui-interactions.md): planned Move path, flashes shown so far, HUD panel rectangles, the board's
     // corners on screen and the camera's side. Filled by the tasks that build them.
-    plan: (): { path: string[]; left: number } | null => null,
+    plan: (): { path: string[]; left: number } | null => (plan ? { path: plan.path.map(squareName), left: plan.left } : null),
+    walking: () => walking,
+    /** What a click at a screen point picks (unit, hero, square …). */
+    pickAt: (x: number, y: number) => picker.pickAt(x, y),
+    targeting: () => (targeting?.kind === 'ability' ? { abilityId: targeting.abilityId, chosen: targeting.chosen, length: targeting.length } : targeting),
+    /** 006 tests: play on from a prepared game state (hot-seat), e.g. one with ability tokens on the board. */
+    startPosition: (s: GameState) => startSession(s),
     flashes: (): { kind: string; text: string; tone: string }[] => [],
     panelRects: (): Record<string, { x: number; y: number; w: number; h: number }> => ({}),
     boardRect: (): { x: number; y: number }[] => [],

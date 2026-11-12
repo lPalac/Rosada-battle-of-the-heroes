@@ -733,5 +733,13 @@
   "dialog.destinyPlayer": "Player: {player}",
   "dialog.destinyChosen": "Chosen so far: {list}",
   "dialog.destinyBoth": "This choice is for both {heroes}",
-  "dialog.and": " and "
+  "dialog.and": " and ",
+  "hud.planHelp": "Movement left after this path: {left}. Click the last square again to walk, Esc to clear.",
+  "hud.cannotEndHere": "Your Move cannot end on this square.",
+  "hud.targetHelp": "{ability}: click a highlighted square, unit or hero on the board.",
+  "dialog.ownCheck.title": "Your King",
+  "dialog.ownCheck.text": "This will put your King in check.",
+  "dialog.ownCheck.continue": "Continue",
+  "dialog.ownCheck.undo": "Undo",
+  "setup.confirmPick": "Click again to confirm"
 }

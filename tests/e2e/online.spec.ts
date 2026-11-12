@@ -1,5 +1,6 @@
 // 005 T037–T039, T045, T046: online play in several browser contexts (each its own player and storage).
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { pickNamed } from './helpers.ts';
 
 /** A 2-player game played headless (in the page, with the rules core) until a Lead waits for a roll. */
 function saveAtRoll(page: Page): Promise<{ actions: unknown[] }> {
@@ -66,11 +67,11 @@ async function twoPlayerGame(browser: Browser): Promise<{ a: Page; b: Page; code
   await joinByLink(b, code, 'Ana', 'P2');
   await a.getByTestId('online-start').click();
   // Draft: Light (Luka) picks, Dark (Ana) picks twice, Light picks.
-  await a.getByTestId('pick-cavalier').click();
+  await pickNamed(a, 'cavalier');
   await expect(b.getByTestId('pick-monk')).toBeEnabled();
-  await b.getByTestId('pick-monk').click();
-  await b.getByTestId('pick-scout').click();
-  await a.getByTestId('pick-magus').click();
+  await pickNamed(b, 'monk');
+  await pickNamed(b, 'scout');
+  await pickNamed(a, 'magus');
   for (const p of [a, b]) await expect(p.getByTestId('phase-bar')).toBeVisible();
   return { a, b, code };
 }

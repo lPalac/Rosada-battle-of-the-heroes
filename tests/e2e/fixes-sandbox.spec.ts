@@ -1,6 +1,6 @@
 // 006 US2 in the browser: Undo after End phase (B-03), the sandbox keeps the turn (B-06), the checkmate alert.
 import { expect, test, type Page } from '@playwright/test';
-import { hook, quickSetup } from './helpers.ts';
+import { hook, pickNamed, quickSetup } from './helpers.ts';
 
 type State = { phase: string; activeHeroId: string; status: string; enforcement: string; result: unknown; turn: { movementLeft: number }; pendingDecision: { type: string; options?: unknown[] } | null };
 const state = (page: Page) => hook<State>(page, 'state');
@@ -10,7 +10,7 @@ async function namedSetup(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByTestId('setup-next').click();
   await page.getByTestId('mode-draft').click();
-  for (const id of ['cavalier', 'scout', 'magus', 'monk']) await page.getByTestId(`pick-${id}`).click();
+  for (const id of ['cavalier', 'scout', 'magus', 'monk']) await pickNamed(page, id);
   await page.getByTestId('order-confirm-light').click();
   await page.getByTestId('order-confirm-dark').click();
   await page.getByTestId('start-game').click();

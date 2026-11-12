@@ -22,20 +22,36 @@ function pickLabel(p: SetupChoices['picks'][number]): string {
   return p.heroDefinitionId ? t(`hero.${p.heroDefinitionId}.name`) : t(`range.${p.rangeType}`);
 }
 
-export function renderPicks(setup: SetupChoices, onPick: (side: Side, choice: PickChoice) => void): HTMLElement {
+/** 006 FR-022: the hero card clicked once and waiting for the confirming second click. */
+export interface PendingPick {
+  id: string | null;
+  set(id: string | null): void;
+}
+
+export function renderPicks(setup: SetupChoices, onPick: (side: Side, choice: PickChoice) => void, pending?: PendingPick): HTMLElement {
   const side = nextPicker(setup)!;
   const free = new Set(pickableHeroes(setup).map((h) => h.id));
   const named = DATA.heroes.filter((h) => h.selectable).map((def) => {
     const taken = !free.has(def.id);
     const portrait = imageUrl(def.portrait);
+    const isPending = !taken && pending?.id === def.id;
     return el('button', {
-      class: `card hero-card${taken ? ' taken' : ''}`, 'data-testid': `pick-${def.id}`, ...(taken ? { disabled: 'true' } : {}),
-      onclick: () => !taken && onPick(side, { heroDefinitionId: def.id }),
+      class: `card hero-card${taken ? ' taken' : ''}${isPending ? ' pending' : ''}`, 'data-testid': `pick-${def.id}`,
+      ...(taken ? { disabled: 'true' } : {}), ...(isPending ? { 'data-pending': 'true' } : {}),
+      // A first click highlights the card; a second click on the same card picks it (B-12).
+      onclick: () => {
+        if (taken) return;
+        if (!pending || pending.id === def.id) {
+          pending?.set(null);
+          onPick(side, { heroDefinitionId: def.id });
+        } else pending.set(def.id);
+      },
     },
       portrait ? el('img', { class: 'hero-portrait', src: portrait, alt: '' }) : el('div', { class: 'hero-portrait' }),
       el('h3', {}, t(`hero.${def.id}.name`)),
       el('div', { class: 'muted' }, `${t(`range.${def.rangeType}`)} · ${t('setup.heroUnitType')}: ${t(`unit.${def.heroUnitType}`)}`),
       el('div', { class: 'muted' }, t('setup.heroStats', { movement: def.movement, range: def.range, health: def.maxHealth })),
+      isPending ? el('div', { class: 'pick-confirm', 'data-testid': 'pick-confirm-hint' }, t('setup.confirmPick')) : null,
     );
   });
   const generic = genericAllowed()

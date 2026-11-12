@@ -1,7 +1,7 @@
 // 006 US3 in the browser (B-01): each Epic choice names the hero and shows its own forms; Mirror asks two choices and
 // does not offer Light's hero for Dark's pick.
 import { expect, test, type Page } from '@playwright/test';
-import { hook } from './helpers.ts';
+import { hook, pickNamed } from './helpers.ts';
 
 const at = (x: number, y: number) => ({ x, y });
 type State = { stage: string; activeHeroId: string; phase: string; pendingDecision: { type: string; options?: unknown[] } | null; heroes: { id: string; form: string | null; definitionId: string }[] };
@@ -12,11 +12,11 @@ async function setup(page: Page, mode: 'draft' | 'mirror'): Promise<void> {
   await page.getByTestId('setup-next').click();
   await page.getByTestId(`mode-${mode}`).click();
   if (mode === 'draft') {
-    for (const id of ['cavalier', 'scout', 'magus', 'monk']) await page.getByTestId(`pick-${id}`).click();
+    for (const id of ['cavalier', 'scout', 'magus', 'monk']) await pickNamed(page, id);
   } else {
-    await page.getByTestId('pick-cavalier').click(); // Light: the Cavalier for both sides
+    await pickNamed(page, 'cavalier'); // Light: the Cavalier for both sides
     await expect(page.getByTestId('pick-cavalier')).toBeDisabled(); // US3-AS8: not offered for Dark's pick
-    await page.getByTestId('pick-monk').click(); // Dark: the Monk for both sides
+    await pickNamed(page, 'monk'); // Dark: the Monk for both sides
   }
   await page.getByTestId('order-confirm-light').click();
   await page.getByTestId('order-confirm-dark').click();

@@ -1,6 +1,6 @@
 // Hero sheets like the Tabletop Simulator version and the ability panel (004 T056, US5).
 import { expect, test } from '@playwright/test';
-import { hook } from './helpers.ts';
+import { hook, pickNamed } from './helpers.ts';
 
 interface SheetInfo { heroId: string; name: string; sheetKey: string; healthMarker: number; pool: number; uses: Record<string, number>; crystals: Record<string, number>; badges: string[] }
 
@@ -8,7 +8,7 @@ async function namedSetup(page: import('@playwright/test').Page): Promise<void> 
   await page.goto('/');
   await page.getByTestId('setup-next').click();
   await page.getByTestId('mode-draft').click();
-  for (const id of ['cavalier', 'scout', 'magus', 'monk']) await page.getByTestId(`pick-${id}`).click();
+  for (const id of ['cavalier', 'scout', 'magus', 'monk']) await pickNamed(page, id);
   await page.getByTestId('order-confirm-light').click();
   await page.getByTestId('order-confirm-dark').click();
   await page.getByTestId('start-game').click();
