@@ -722,5 +722,11 @@
   "option.one": "One use",
   "option.both": "Both uses",
   "option.monk.preaching.one": "One use: −4 to Lead on the next turn ({cost} D)",
-  "option.monk.preaching.both": "Both uses: cannot be Led on the next turn ({cost} D)"
+  "option.monk.preaching.both": "Both uses: cannot be Led on the next turn ({cost} D)",
+  "dialog.checkmate.title": "Checkmate in this position",
+  "dialog.checkmate.one": "{side}'s King is checkmated. If you continue, {winner} wins when the next turn begins.",
+  "dialog.checkmate.oneAtOnce": "{side}'s King is checkmated. If you continue, {winner} wins at once.",
+  "dialog.checkmate.both": "Both Kings are checkmated. If you continue, the checkmate is ruled when the next turn begins.",
+  "dialog.checkmate.continue": "Continue the game",
+  "dialog.checkmate.back": "Back to sandbox"
 }

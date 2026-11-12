@@ -7,7 +7,7 @@ import type { OnlineSession } from './net/online-session.ts';
 import { throwDie, throwDieTo } from './physics/roll.ts';
 import { createDiceWorld, type DiceWorld } from './physics/world.ts';
 import {
-  createGame, createSetup, RULES, parseSquare, squareName, taverns,
+  createGame, createSetup, RULES, parseSquare, positionWarnings, squareName, taverns, validatePosition,
   type Action, type Coord, type GameEvent, type GameState, type Payment, type RuleError,
 } from './rules/index.ts';
 import { onAssetLoaded } from './table/assets.ts';
@@ -404,6 +404,19 @@ async function sandboxOff(): Promise<void> {
     await physics.settle(3000);
     physics.dispose();
     pieces.sync(state()!, [], false);
+  }
+  // 006 FR-009: a checkmate in a legal position is pointed out first; a position with problems shows the 001 list.
+  const s = state()!;
+  const warnings = validatePosition(s).length ? [] : positionWarnings(s);
+  if (warnings.length) {
+    modal = true;
+    const go = await dialogs.checkmateAlert(warnings.map((w) => w.side), editorSession);
+    modal = false;
+    if (!go) {
+      syncPhysics(state()!);
+      render();
+      return;
+    }
   }
   if (!dispatch({ type: 'setEnforcement', mode: 'rules', ...(editorSession ? { restart: true } : {}) })) syncPhysics(state()!);
   else editorSession = false;

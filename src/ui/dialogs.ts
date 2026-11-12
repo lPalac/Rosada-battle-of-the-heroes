@@ -2,7 +2,7 @@
 // and the position problems list (FR-103).
 import { t } from '../i18n/strings.ts';
 import {
-  DATA, EPIC_DESTINIES, squareName, type Action, type GameState, type Payment, type PositionProblem,
+  DATA, EPIC_DESTINIES, otherSide, squareName, type Action, type GameState, type Payment, type PositionProblem, type Side,
 } from '../rules/index.ts';
 import { epicArtStyle, heroArtKeys } from './art.ts';
 import { button, el, mount } from './dom.ts';
@@ -121,6 +121,36 @@ export class Dialogs {
         el('div', { class: 'row' },
           button(t('action.confirm'), () => { this.close(); resolve(true); }, { kind: 'primary', testid: 'confirm-yes' }),
           button(t('action.cancel'), () => { this.close(); resolve(false); }, { testid: 'confirm-no' })));
+    });
+  }
+
+  /**
+   * 006 FR-009: a checkmate in the position, before rules come back on. Resolves true for "Continue the game", false for
+   * "Back to sandbox" (also Esc). `atOnce`: play restarts at Before Turn (position editor), so the game ends at once.
+   */
+  checkmateAlert(sides: Side[], atOnce: boolean): Promise<boolean> {
+    return new Promise((resolve) => {
+      const done = (go: boolean) => {
+        window.removeEventListener('keydown', onKey, true);
+        this.close();
+        resolve(go);
+      };
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation();
+        done(false);
+      };
+      window.addEventListener('keydown', onKey, true);
+      const name = (side: Side) => t(`side.${side}`);
+      const text = sides.length === 1
+        ? t(atOnce ? 'dialog.checkmate.oneAtOnce' : 'dialog.checkmate.one', { side: name(sides[0]), winner: name(otherSide(sides[0])) })
+        : t('dialog.checkmate.both');
+      this.show(el('div', { class: 'col', 'data-testid': 'checkmate-alert' },
+        el('h3', {}, t('dialog.checkmate.title')),
+        el('div', {}, text),
+        el('div', { class: 'row' },
+          button(t('dialog.checkmate.continue'), () => done(true), { kind: 'primary', testid: 'checkmate-continue' }),
+          button(t('dialog.checkmate.back'), () => done(false), { testid: 'checkmate-back' }))));
     });
   }
 

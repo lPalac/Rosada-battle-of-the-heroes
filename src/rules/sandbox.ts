@@ -2,8 +2,8 @@
 import { eq, inGrid, isBattlefield, squareName } from './board.ts';
 import { clone, emit, fail, hero, RuleFailure, type Ctx } from './ctx.ts';
 import { FAVORS, heroDefinition, RULES } from './data.ts';
-import type { PendingDecision, PositionProblem, SandboxPath } from './model/actions.ts';
-import { legalLeadsForUnit } from './check.ts';
+import type { PendingDecision, PositionProblem, PositionWarning, SandboxPath } from './model/actions.ts';
+import { isCheckmate, legalLeadsForUnit } from './check.ts';
 import { isForbiddenEndSquare } from './heroes.ts';
 import { leadOptionsForActiveHero } from './lead.ts';
 import type { GameState } from './model/state.ts';
@@ -80,6 +80,14 @@ export function validatePosition(state: GameState): PositionProblem[] {
     if (h.pool < 0) problems.push({ code: 'NEGATIVE_POOL', message: `${h.id} pool is negative` });
   }
   return problems;
+}
+
+/**
+ * 006 FR-009 (guarantee 26): what the players should know before rules come back on; never blocks. One `CHECKMATE`
+ * per checkmated King: rules accept the position, and the checkmate is ruled at the next Before Turn.
+ */
+export function positionWarnings(state: GameState): PositionWarning[] {
+  return (['light', 'dark'] as const).filter((side) => isCheckmate(state, side)).map((side) => ({ code: 'CHECKMATE' as const, side }));
 }
 
 export function setEnforcement(ctx: Ctx, mode: 'rules' | 'sandbox', restart = false): void {

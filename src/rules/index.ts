@@ -14,7 +14,7 @@ import {
 import type { Action, DecisionAnswer, GameEvent, RuleError } from './model/actions.ts';
 import type { GameState, LogEntry, SetupChoices } from './model/state.ts';
 import { RANGE_TYPES } from './model/types.ts';
-import { freeRoll, sandboxPlace, sandboxSet, setEnforcement, validatePosition } from './sandbox.ts';
+import { freeRoll, positionWarnings, sandboxPlace, sandboxSet, setEnforcement, validatePosition } from './sandbox.ts';
 import {
   createGameState, createSetup, nextPicker, pickHero, picksComplete, setStartFile, setTurnOrder, setupReady, sidePicks,
 } from './setup.ts';
@@ -290,7 +290,7 @@ export function legalActions(state: GameState): Action[] {
   return out;
 }
 
-export { isInCheck, legalLeadTargets, legalMoveSquares, leadPreview, validatePosition };
+export { isInCheck, legalLeadTargets, legalMoveSquares, leadPreview, validatePosition, positionWarnings };
 export { DATA, RULES, loadStaticData, healthBar as healthBarOf } from './data.ts';
 export type { StaticData } from './data.ts';
 export * from './model/types.ts';
