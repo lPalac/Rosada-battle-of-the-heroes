@@ -58,8 +58,10 @@ describe('US6 – Sandbox mode', () => {
   });
 
   it('US6-AS5 a legal position resumes at Before Turn of the active hero (checkmate is checked first)', () => {
+    // 006 FR-006 replaces this scenario for a turn in play (the turn now continues, tests/rules/sandbox-resume.test.ts);
+    // the 001 behaviour stays for `restart: true` (position editor, test positions; guarantee 25).
     let s = act(board({ d2: 'P' }, { heroes: { H1: 'd1' } }), { type: 'setEnforcement', mode: 'sandbox' }).state;
-    s = act(s, { type: 'setEnforcement', mode: 'rules' }).state;
+    s = act(s, { type: 'setEnforcement', mode: 'rules', restart: true }).state;
     expect(s.enforcement).toBe('rules');
     expect(s.activeHeroId).toBe('H1');
     expect(s.phase).toBe('move');
@@ -68,7 +70,7 @@ describe('US6 – Sandbox mode', () => {
     // A mate set up by hand is detected on resume.
     let m = act(board({ a8: 'k', b6: 'K', h1: 'R' }), { type: 'setEnforcement', mode: 'sandbox' }).state;
     m = act(m, { type: 'sandboxPlace', target: { unitId: 'L-R@h1' }, to: sq('h8') }).state;
-    m = act(m, { type: 'setEnforcement', mode: 'rules' }).state;
+    m = act(m, { type: 'setEnforcement', mode: 'rules', restart: true }).state;
     expect(m.result).toMatchObject({ kind: 'win', winner: 'light', by: 'checkmate' });
   });
 

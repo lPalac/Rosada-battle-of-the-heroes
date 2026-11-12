@@ -92,6 +92,8 @@ let rolling = false;
 let settingsOpen = false;
 let modal = false;
 let trackerOpen = false;
+/** 006: the session came from the position editor; its first "rules back on" restarts at Before Turn. */
+let editorSession = false;
 let lastError: RuleError | null = null;
 let forcedRoll: number | null = null;
 let diceWorld: DiceWorld | null = null;
@@ -227,6 +229,7 @@ function startSession(initial: GameState, actions: Action[] = []): void {
   const hotSeat = new GameSession(initial);
   if (actions.length) hotSeat.reset(initial, actions);
   session = hotSeat;
+  editorSession = false;
   unsubscribe = session.onChange(onChange);
   selected = null;
   targeting = null;
@@ -283,6 +286,8 @@ function openPositionEditor(): void {
   s = state()!;
   startSession(createGame(s.setup));
   dispatch({ type: 'setEnforcement', mode: 'sandbox' });
+  // 006 FR-006: a position from the editor starts at Before Turn, so it is not a continued turn.
+  editorSession = true;
 }
 
 // --- player actions ---
@@ -400,7 +405,8 @@ async function sandboxOff(): Promise<void> {
     physics.dispose();
     pieces.sync(state()!, [], false);
   }
-  if (!dispatch({ type: 'setEnforcement', mode: 'rules' })) syncPhysics(state()!);
+  if (!dispatch({ type: 'setEnforcement', mode: 'rules', ...(editorSession ? { restart: true } : {}) })) syncPhysics(state()!);
+  else editorSession = false;
   render();
 }
 

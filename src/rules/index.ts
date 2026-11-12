@@ -116,7 +116,7 @@ function dispatch(ctx: Ctx, action: Action): void {
   }
   if (s.enforcement === 'sandbox') {
     switch (action.type) {
-      case 'setEnforcement': return setEnforcement(ctx, action.mode);
+      case 'setEnforcement': return setEnforcement(ctx, action.mode, action.restart);
       case 'sandboxPlace': return sandboxPlace(ctx, action.target, action.to);
       case 'sandboxSet': return sandboxSet(ctx, action.path, action.target, action.value);
       case 'submitRoll': return freeRoll(ctx, action.value);

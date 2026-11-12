@@ -1,8 +1,11 @@
 // Sandbox: rules off, free placement and editing, validation and resume (FR-100…FR-104).
 import { eq, inGrid, isBattlefield, squareName } from './board.ts';
-import { emit, fail, hero, RuleFailure, type Ctx } from './ctx.ts';
+import { clone, emit, fail, hero, RuleFailure, type Ctx } from './ctx.ts';
 import { FAVORS, heroDefinition, RULES } from './data.ts';
-import type { PositionProblem, SandboxPath } from './model/actions.ts';
+import type { PendingDecision, PositionProblem, SandboxPath } from './model/actions.ts';
+import { legalLeadsForUnit } from './check.ts';
+import { isForbiddenEndSquare } from './heroes.ts';
+import { leadOptionsForActiveHero } from './lead.ts';
 import type { GameState } from './model/state.ts';
 import { EPIC_DESTINIES, type Coord, type EpicDestiny, type FavorId, type HeroId, type Side, type UnitType } from './model/types.ts';
 import { enemyRoyalRank } from './paths.ts';
@@ -79,11 +82,18 @@ export function validatePosition(state: GameState): PositionProblem[] {
   return problems;
 }
 
-export function setEnforcement(ctx: Ctx, mode: 'rules' | 'sandbox'): void {
+export function setEnforcement(ctx: Ctx, mode: 'rules' | 'sandbox', restart = false): void {
   const { s } = ctx;
   if (s.status === 'setup') fail('NOT_PLAYING', 'Start the game first', 'Sandbox');
   if (s.enforcement === mode) fail('ALREADY_IN_MODE', `Already in ${mode} mode`, 'Sandbox');
   if (mode === 'sandbox') {
+    // 006 FR-006: keep the turn as it was, so turning rules back on can continue it.
+    s.sandboxResume = s.status === 'playing'
+      ? {
+          turnNumber: s.turnNumber, activeHeroId: s.activeHeroId, phase: s.phase, turn: clone(s.turn),
+          pendingDecision: clone(s.pendingDecision), decisionQueue: clone(s.decisionQueue),
+        }
+      : null;
     s.enforcement = 'sandbox';
     emit(ctx, { type: 'enforcementChanged', mode });
     return;
@@ -92,20 +102,69 @@ export function setEnforcement(ctx: Ctx, mode: 'rules' | 'sandbox'): void {
   if (problems.length > 0) {
     throw new RuleFailure({ code: 'POSITION_INVALID', message: 'The position is not legal', rule: 'Sandbox', problems });
   }
-  // Resume (FR-104): sandbox-moved units count as Led, en passant chances are gone, play restarts at Before Turn.
+  // Resume (FR-104): sandbox-moved units count as Led, en passant chances are gone.
   for (const u of s.units) {
     if (s.sandboxMoved.includes(u.id)) u.hasBeenLed = true;
     u.enPassantTarget = null;
   }
   s.sandboxMoved = [];
-  s.pendingDecision = null;
-  s.decisionQueue = [];
   s.status = 'playing';
   s.result = null;
   s.enforcement = 'rules';
-  s.turn = freshTurnFlags();
+  const resume = s.sandboxResume;
+  s.sandboxResume = null;
   emit(ctx, { type: 'enforcementChanged', mode });
+  if (!restart && resume && resume.turnNumber === s.turnNumber && resume.activeHeroId === s.activeHeroId) {
+    continueTurn(ctx, resume);
+    return;
+  }
+  // `restart` (position editor, test positions) or no matching resume point: play restarts at Before Turn (001).
+  s.pendingDecision = null;
+  s.decisionQueue = [];
+  s.turn = freshTurnFlags();
   startFirstTurn(ctx);
+}
+
+/**
+ * 006 FR-006 (data-model.md): put the saved turn back, then check what the sandbox may have changed: an announced
+ * Lead whose unit moved, or that is no longer legal, is cancelled (its Inspired Lead bonus goes back); square
+ * decisions keep only the squares still allowed; whether a Lead is possible is computed again. The turn's record of
+ * "King in check at the end of the Lead" is kept as it was (Basic Rules *Check*).
+ */
+function continueTurn(ctx: Ctx, resume: NonNullable<GameState['sandboxResume']>): void {
+  const { s } = ctx;
+  s.phase = resume.phase;
+  s.turn = resume.turn;
+  s.pendingDecision = resume.pendingDecision;
+  s.decisionQueue = resume.decisionQueue;
+  const lead = s.turn.lead;
+  if (lead && lead.success === null && !leadStillStands(s, lead)) {
+    const bonus = lead.modifiers.filter((m) => m.source === 'inspiredLead').reduce((a, m) => a + m.value, 0);
+    s.turn.lead = null;
+    s.turn.leadAttempted = false;
+    s.turn.inspiredLeadBonus += bonus;
+  }
+  const keep = (d: PendingDecision): PendingDecision | null => {
+    if (d.type === 'advanceSquare' || d.type === 'unconsciousTavern') {
+      const h = hero(s, d.heroId);
+      const options = d.options.filter((p) => !isForbiddenEndSquare(s, h.side, p, h));
+      return options.length ? { ...d, options } : null;
+    }
+    if (d.type === 'promotion') return s.units.some((u) => u.id === d.unitId && u.type === 'pawn') ? d : null;
+    return d;
+  };
+  const decisions = [s.pendingDecision, ...s.decisionQueue].filter((d): d is PendingDecision => !!d).map(keep).filter((d): d is PendingDecision => !!d);
+  s.pendingDecision = decisions.shift() ?? null;
+  s.decisionQueue = decisions;
+  if (s.phase === 'lead' && !s.turn.leadAttempted) s.turn.leadPossible = leadOptionsForActiveHero(s).length > 0;
+}
+
+/** The announced Lead's unit is still where the Lead began and the Lead is still legal. */
+function leadStillStands(s: GameState, lead: NonNullable<GameState['turn']['lead']>): boolean {
+  const unit = s.units.find((u) => u.id === lead.unitId);
+  if (!unit || !eq(unit.pos, lead.from)) return false;
+  if (lead.ability) return true; // an ability's own Lead (its path is the ability's)
+  return legalLeadsForUnit(s, unit).some((o) => eq(o.to, lead.to));
 }
 
 /** In sandbox a piece may lie on the table beside the board: squares −6…15 (002 research R-05). */

@@ -155,7 +155,8 @@ export function position(diagram: string, opts: PositionOptions = {}): GameState
     s.turnNumber = s.heroes.find((h) => h.id === opts.active)!.turnOrder;
   }
   s.log = [];
-  const r = apply(s, { type: 'setEnforcement', mode: 'rules' });
+  // A test position starts at Before Turn, as in 001 (006: without `restart` the turn would be continued).
+  const r = apply(s, { type: 'setEnforcement', mode: 'rules', restart: true });
   if (!r.ok) throw new Error(`Fixture position is not legal: ${r.error.problems?.map((p) => p.message).join('; ') ?? r.error.message}`);
   s = r.state;
   if (opts.phase) s = toPhase(s, opts.phase);
