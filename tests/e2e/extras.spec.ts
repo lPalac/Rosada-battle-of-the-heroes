@@ -12,7 +12,8 @@ test('result screen after checkmate; Rematch starts the same setup again', async
   for (const [id, to] of [['L-P-f', at(6, 3)], ['L-P-g', at(7, 4)], ['D-P-e', at(5, 5)], ['D-Q-d', at(8, 4)]] as const) {
     await hook(page, 'dispatch', { type: 'sandboxPlace', target: { unitId: id }, to });
   }
-  await hook(page, 'dispatch', { type: 'setEnforcement', mode: 'rules' });
+  // 006 FR-006: a continued turn rules the mate at the next Before Turn; `restart` starts at Before Turn as in 001.
+  await hook(page, 'dispatch', { type: 'setEnforcement', mode: 'rules', restart: true });
   await expect(page.getByTestId('result-title')).toHaveText('Dark wins by checkmate');
   await page.getByTestId('result-rematch').click();
   await expect(page.getByTestId('result')).toHaveCount(0);
