@@ -19,7 +19,8 @@ export function renderActions(m: HudModel, canUndo: boolean, busy: boolean, h: A
   return el('div', { class: 'row panel', 'data-testid': 'actions' },
     button(t('action.endPhase'), h.endPhase, { kind: 'primary', testid: 'end-phase', disabled: busy || !m.can.endPhase }),
     button(t('action.undo'), h.undo, { testid: 'undo', disabled: busy || !canUndo }),
-    m.can.inspiredLeadMax > 0 ? button(t('action.inspiredLead'), h.inspiredLead, { testid: 'inspired-lead', disabled: busy }) : null,
+    // 006 B-07: Before Lead only here; at the roll the Lead panel has its own button, so there is never two.
+    m.can.inspiredLeadMax > 0 && m.phase === 'beforeLead' ? button(t('action.inspiredLead'), h.inspiredLead, { testid: 'inspired-lead', disabled: busy }) : null,
     m.can.heroRetreat ? button(t('action.heroRetreat'), h.heroRetreat, { testid: 'hero-retreat', disabled: busy }) : null,
     ...m.can.becomeHeroUnit.map((types) => button(t('action.becomeHeroUnit', { types: types.map((x) => t(`unit.${x}`)).join(' + ') }),
       () => h.becomeHeroUnit(types), { testid: `become-hero-unit-${types.join('-')}`, disabled: busy })),

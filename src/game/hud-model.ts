@@ -5,6 +5,7 @@ import {
   type Side, type Stage, type UnitType,
 } from '../rules/index.ts';
 import { sheetModel, type AbilityRow } from './sheet-model.ts';
+import { modifierLabel } from './labels.ts';
 
 export interface HeroCard {
   id: HeroId;
@@ -40,6 +41,19 @@ export interface LeadPanel {
   total: number | null;
   success: boolean | null;
   awaitingRoll: boolean;
+  /** 006 FR-030: why no roll is needed (B-04): the King, the Peace side, an ability, or the Lead cannot fail. */
+  auto: 'king' | 'peace' | 'ability' | 'cannotFail' | null;
+  /** 006 FR-032: one name per modifier ("War +2", "Future Sight +2"), never a text key (X-01). */
+  modifierLabels: string[];
+}
+
+function autoReason(state: GameState, unitId: string | null, needsRoll: boolean, modifiers: Modifier[]): LeadPanel['auto'] {
+  if (needsRoll) return null;
+  const unit = unitId ? state.units.find((u) => u.id === unitId) : undefined;
+  if (unit?.type === 'king') return 'king';
+  if (state.tokens.peaceTreaty === 'peace') return 'peace';
+  if (1 + modifiers.reduce((a, m) => a + m.value, 0) >= RULES.leadTarget) return 'cannotFail';
+  return 'ability';
 }
 
 export interface HudModel {
@@ -133,6 +147,8 @@ export function hudModel(state: GameState, selectedUnitId: string | null = null)
           total: lead?.total ?? null,
           success: lead?.success ?? null,
           awaitingRoll: awaitingRoll(state),
+          auto: autoReason(state, lead?.unitId ?? selectedUnitId, lead?.needsRoll ?? preview?.needsRoll ?? false, modifiers),
+          modifierLabels: modifiers.map((x) => modifierLabel(x.source, x.value)),
         }
       : null,
     can: {

@@ -1,6 +1,7 @@
 // Turns log entries into readable lines (FR-112). Text comes from the string file (A-02).
 import { hasString, t } from '../i18n/strings.ts';
 import { squareName, type Coord, type LogEntry } from '../rules/index.ts';
+import { reasonLabel } from './labels.ts';
 
 const sq = (c: unknown): string => squareName(c as Coord);
 
@@ -29,14 +30,14 @@ export function formatLogEntry(e: LogEntry): string | null {
     case 'heroRammed': return t('log.heroRammed', { hero: d.heroId, unit: d.byUnitId, to: sq(d.landing) });
     case 'heroPushed': return t('log.heroPushed', { hero: d.heroId, to: sq(d.landing) });
     case 'heroWounded': return t('log.heroWounded', { hero: d.heroId, n: d.amount, health: d.health });
-    case 'heroHealed': return t('log.heroHealed', { hero: d.heroId, n: d.amount, health: d.health, reason: t(`reason.${d.reason}`) });
+    case 'heroHealed': return t('log.heroHealed', { hero: d.heroId, n: d.amount, health: d.health, reason: reasonLabel(d.reason) });
     case 'heroUnconscious': return t('log.heroUnconscious', { hero: d.heroId });
     case 'heroRecovered': return t('log.heroRecovered', { hero: d.heroId });
     case 'destinyChanged':
       return t(d.delta > 0 ? 'log.destinyGain' : 'log.destinySpend', {
         n: Math.abs(d.delta),
         pool: d.pool === 'hero' ? d.heroId : t(`side.${d.side}`),
-        reason: t(`reason.${d.reason}`),
+        reason: reasonLabel(d.reason),
       });
     case 'wellDepleted': return t('log.wellDepleted');
     case 'tokenChanged':

@@ -80,7 +80,6 @@
   "action.confirm": "Confirm",
   "action.close": "Close",
   "lead.preview": "d20 + {mods} ≥ {target}",
-  "lead.noRoll": "No roll needed",
   "lead.result": "Rolled {roll}: total {total} – {outcome}",
   "lead.success": "success",
   "lead.fail": "fail",
@@ -741,5 +740,9 @@
   "dialog.ownCheck.text": "This will put your King in check.",
   "dialog.ownCheck.continue": "Continue",
   "dialog.ownCheck.undo": "Undo",
-  "setup.confirmPick": "Click again to confirm"
+  "setup.confirmPick": "Click again to confirm",
+  "lead.auto.peace": "Peace Treaty: the Lead succeeds",
+  "lead.auto.king": "The King needs no roll",
+  "lead.auto.cannotFail": "Cannot fail: +{n}",
+  "lead.auto.ability": "An ability makes this Lead succeed"
 }

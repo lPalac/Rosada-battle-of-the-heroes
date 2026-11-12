@@ -7,6 +7,7 @@ import { DATA, destinyGeneration, EPIC_DESTINIES, healthBarOf, isBloodied, type 
 import { assetEntry } from './assets.ts';
 import { canvasTexture, drawCover, loadImage, parchment } from './canvas.ts';
 import { sheetModel, type SheetModel } from '../game/sheet-model.ts';
+import { markLabel } from '../game/labels.ts';
 import strings from '../data/strings.en.json';
 import { SQUARE } from './coords.ts';
 
@@ -205,7 +206,7 @@ export class SheetsView {
         }
       }
       for (const m of model.marks) {
-        tag(m, W - 160, ty, '#444');
+        tag(markLabel(m), W - 160, ty, '#444'); // 006 X-02: the mark by name, never its effect kind
         ty += 28;
       }
       sheet.tex.needsUpdate = true;

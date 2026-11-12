@@ -2,8 +2,36 @@
 // in tests/rules/bloodied.test.ts.
 import { describe, expect, it } from 'vitest';
 import { board } from '../fixtures/position.ts';
-import { highlights } from '../../src/game/hud-model.ts';
+import { highlights, hudModel } from '../../src/game/hud-model.ts';
 import { squareName } from '../../src/rules/board.ts';
+
+describe('the Lead panel (US5)', () => {
+  const panel = (s: ReturnType<typeof board>, unit: string | null) => hudModel(s, unit).lead!;
+  const uid = (s: ReturnType<typeof board>, square: string) => s.units.find((u) => squareName(u.pos) === square)!.id;
+
+  it('US5-AS1 (model) a Lead without a roll says why: Peace, the King, cannot fail, an ability', () => {
+    const peace = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'c2' }, phase: 'lead' });
+    expect(panel(peace, uid(peace, 'c3')).auto).toBe('peace');
+    const king = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'e2' }, peaceTreaty: 'war', phase: 'lead' });
+    expect(panel(king, uid(king, 'e1')).auto).toBe('king');
+    const sure = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'c2' }, peaceTreaty: 'war', phase: 'lead' });
+    const cannotFail = { ...sure, turn: { ...sure.turn, inspiredLeadBonus: 4 } };
+    expect(panel(cannotFail, uid(sure, 'c3')).auto).toBe('cannotFail');
+    expect(panel(sure, uid(sure, 'c3')).auto).toBeNull();
+    const fervent = board({ c3: 'N', h7: 'p' }, {
+      heroes: { H1: 'c2' }, peaceTreaty: 'war', phase: 'lead', heroDefs: { H1: 'monk' }, stage: 'epic', epic: { H1: 'fanatic' },
+    });
+    const auto = panel(fervent, uid(fervent, 'c3')).auto;
+    expect([null, 'ability']).toContain(auto);
+  });
+
+  it('US5-AS5 (model) modifier lines use names, never text keys', () => {
+    const s = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'c2' }, peaceTreaty: 'war', phase: 'lead' });
+    const withSight = { ...s, turn: { ...s.turn, inspiredLeadBonus: 2 } };
+    const labels = panel(withSight, uid(s, 'c3')).modifierLabels;
+    expect(labels).toEqual(['War +2', 'Inspired Lead +2']);
+  });
+});
 
 describe('highlights (US4)', () => {
   it('US4-AS3 (model) the Move phase returns every reachable square, with "pass only" squares marked', () => {

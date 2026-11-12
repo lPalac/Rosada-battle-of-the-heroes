@@ -805,7 +805,7 @@ function render(): void {
             el('span', {}, t('hud.targetHelp', { ability: t(`ability.${targeting.abilityId}.name`) })),
             button(t('action.cancel'), cancelTargeting, { testid: 'target-cancel' }))
         : null,
-      s.enforcement === 'rules' ? renderLeadPanel(m, rolling, () => void roll(), () => dispatch({ type: 'useRevenge' })) : null,
+      s.enforcement === 'rules' ? renderLeadPanel(m, rolling, () => void roll(), () => dispatch({ type: 'useRevenge' }), () => void inspiredLead()) : null,
       s.enforcement === 'rules' ? renderTavern(m, (item) => void buy(item)) : null,
       s.enforcement === 'rules' && s.status === 'playing' ? renderAbilities(m, busy, (id) => void useAbilityFromPanel(id)) : null,
       s.enforcement === 'rules' && s.status === 'playing'
