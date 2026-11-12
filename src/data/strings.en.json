@@ -536,7 +536,7 @@
   "error.ABILITY_ROYALTY": "This ability does not affect royalty.",
   "error.ABILITY_WOULD_CHECK": "That would place a King in check",
   "error.PUSH_BLOCKED": "It cannot be pushed there.",
-  "error.HERO_TAKEN": "In Draft each hero can be picked only once.",
+  "error.HERO_TAKEN": "That hero is already taken (Draft: each hero once; Mirror: the two heroes of a side differ).",
   "setup.pickNamedHero": "Pick a hero",
   "setup.heroUnitType": "Hero Unit",
   "effect.cannotLead": "Cannot be Led",

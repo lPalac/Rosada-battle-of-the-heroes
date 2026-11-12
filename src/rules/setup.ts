@@ -78,9 +78,12 @@ export function selectableHeroes(): HeroDefinition[] {
   return DATA.heroes.filter((h) => h.selectable);
 }
 
-/** Named heroes still free for a pick: Draft offers each hero once, Mirror any (spec Q-41). */
+/**
+ * Named heroes still free for a pick: Draft offers each hero once (004 Q-41). Mirror gives both sides the same heroes,
+ * and the two heroes of a side differ, so Dark's pick may not repeat Light's (006 FR-013, Q-79).
+ */
 export function pickableHeroes(setup: SetupChoices): HeroDefinition[] {
-  return selectableHeroes().filter((h) => setup.mode === 'mirror' || !setup.picks.some((p) => p.heroDefinitionId === h.id));
+  return selectableHeroes().filter((h) => !setup.picks.some((p) => p.heroDefinitionId === h.id));
 }
 
 export function pickHero(ctx: Ctx, side: Side, rangeType?: RangeType, heroDefinitionId?: string): void {
@@ -91,8 +94,8 @@ export function pickHero(ctx: Ctx, side: Side, rangeType?: RangeType, heroDefini
   let defId: string | undefined;
   if (heroDefinitionId) {
     if (!DATA.heroes.some((h) => h.id === heroDefinitionId)) fail('UNKNOWN_HERO', 'Unknown hero', 'Setup');
-    if (setup.mode === 'draft' && setup.picks.some((p) => p.heroDefinitionId === heroDefinitionId)) {
-      fail('HERO_TAKEN', 'In Draft each hero can be picked once', 'Setup');
+    if (setup.picks.some((p) => p.heroDefinitionId === heroDefinitionId)) {
+      fail('HERO_TAKEN', setup.mode === 'draft' ? 'In Draft each hero can be picked once' : 'That hero is already on this side', 'Setup');
     }
     defId = heroDefinitionId;
     rangeType = heroDefinition(heroDefinitionId).rangeType;

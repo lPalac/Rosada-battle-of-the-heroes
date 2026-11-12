@@ -24,12 +24,43 @@ export function choiceOrder(state: GameState): HeroId[] {
   return last ? [...order.filter((id) => id !== last), last] : order;
 }
 
+/**
+ * 006 FR-012 (research R-17): a Mirror game with named heroes, where each side holds the same two different heroes.
+ * The generic test heroes keep the 003 queue (one choice per hero).
+ */
+function mirrorPairs(s: GameState): boolean {
+  if (s.setup.mode !== 'mirror') return false;
+  if (!s.heroes.every((h) => heroDefinition(h.definitionId).forms)) return false;
+  const ids = (side: 'light' | 'dark') => s.heroes.filter((h) => h.side === side).map((h) => h.definitionId).sort().join(',');
+  const light = s.heroes.filter((h) => h.side === 'light').map((h) => h.definitionId);
+  return ids('light') === ids('dark') && new Set(light).size === light.length;
+}
+
+/** The hero with the same definition on the other side. */
+const twinOf = (s: GameState, id: HeroId): HeroId => {
+  const h = hero(s, id);
+  return s.heroes.find((x) => x.side !== h.side && x.definitionId === h.definitionId)!.id;
+};
+
+/**
+ * Mirror: two choices. The first hero of the 003 choice order chooses for its class (Q-75); then the hero of the other
+ * class on the other side chooses for the other class. Each choice applies to the chooser and its twin.
+ */
+function mirrorQueue(s: GameState): PendingDecision[] {
+  const first = choiceOrder(s)[0];
+  const f = hero(s, first);
+  const second = s.heroes.find((x) => x.side !== f.side && x.definitionId !== f.definitionId)!.id;
+  return [first, second].map((heroId) => ({ type: 'epicDestiny', heroId, options: [], appliesTo: [heroId, twinOf(s, heroId)] }));
+}
+
 /** Called on entering Before Turn (after the checkmate check): opens the destiny choice once. */
 export function maybeStartEpic(ctx: Ctx): void {
   const { s } = ctx;
   if (s.status !== 'playing' || !s.epicPending || s.stage !== 'starting') return;
   if (s.pendingDecision?.type === 'epicDestiny') return;
-  const queue: PendingDecision[] = choiceOrder(s).map((heroId) => ({ type: 'epicDestiny', heroId, options: [], appliesTo: [heroId] }));
+  const queue: PendingDecision[] = mirrorPairs(s)
+    ? mirrorQueue(s)
+    : choiceOrder(s).map((heroId) => ({ type: 'epicDestiny', heroId, options: [], appliesTo: [heroId] }));
   const first = queue.shift()!;
   if (first.type === 'epicDestiny') first.options = destinyOptions(s, first.heroId);
   s.decisionQueue = [...queue, ...s.decisionQueue];
@@ -37,19 +68,24 @@ export function maybeStartEpic(ctx: Ctx): void {
   else s.pendingDecision = first;
 }
 
-/** Answer one hero's destiny; after the last one the Epic Stage applies. */
-export function chooseDestiny(ctx: Ctx, heroId: HeroId, destiny: EpicDestiny): void {
+/**
+ * Answer one destiny choice: the chooser and every hero in `appliesTo` (006: its Mirror twin) take the destiny; after
+ * the last choice the Epic Stage applies.
+ */
+export function chooseDestiny(ctx: Ctx, heroId: HeroId, destiny: EpicDestiny, appliesTo: HeroId[] = [heroId]): void {
   const { s } = ctx;
   if (!destinyOptions(s, heroId).includes(destiny)) fail('BAD_DESTINY', 'That destiny is not allowed', 'Epic Heroes');
-  const h = hero(s, heroId);
-  h.epic = { destiny };
-  // 004: a named hero becomes its Epic form (Cavalier + Fanatic → Death Knight); form stats apply (Dragon Lord).
-  const form = heroDefinition(h.definitionId).forms?.[destiny];
-  if (form) {
-    h.form = form.id;
-    if (form.stats?.movement) h.movement = form.stats.movement;
+  for (const id of appliesTo.includes(heroId) ? appliesTo : [heroId, ...appliesTo]) {
+    const h = hero(s, id);
+    h.epic = { destiny };
+    // 004: a named hero becomes its Epic form (Cavalier + Fanatic → Death Knight); form stats apply (Dragon Lord).
+    const form = heroDefinition(h.definitionId).forms?.[destiny];
+    if (form) {
+      h.form = form.id;
+      if (form.stats?.movement) h.movement = form.stats.movement;
+    }
+    emit(ctx, { type: 'destinyChosen', heroId: id, destiny });
   }
-  emit(ctx, { type: 'destinyChosen', heroId, destiny });
   const next = s.decisionQueue[0];
   if (next?.type === 'epicDestiny') next.options = destinyOptions(s, next.heroId);
   if (!s.heroes.every((h) => h.epic)) return;

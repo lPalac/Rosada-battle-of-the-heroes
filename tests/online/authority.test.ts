@@ -68,6 +68,8 @@ describe('US2 authority', () => {
     const s = board({}, {});
     expect(who(roomAt({ ...s, pendingDecision: { type: 'promotion', unitId: 'x', chooserHeroId: 'H2' } }))).toEqual(['P2']);
     expect(who(roomAt({ ...s, pendingDecision: { type: 'epicDestiny', heroId: 'H3', options: ['fanatic'], appliesTo: ['H3'] } }))).toEqual(['P3']);
+    // 006 FR-012: a Mirror choice applies to the twin too, but belongs to the chooser's seat only.
+    expect(who(roomAt({ ...s, pendingDecision: { type: 'epicDestiny', heroId: 'H2', options: ['fanatic'], appliesTo: ['H2', 'H1'] } }))).toEqual(['P2']);
     expect(who(roomAt({ ...s, pendingDecision: { type: 'unconsciousTavern', heroId: 'H4', options: [] } }))).toEqual(['P4']);
     const reaction = roomAt({ ...s, pendingDecision: { type: 'abilityChoice', heroId: 'H2', abilityId: 'x', choices: ['a'] } });
     expect(who(reaction)).toEqual(['P2']);

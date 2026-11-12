@@ -75,7 +75,7 @@ function decide(ctx: Ctx, answer: DecisionAnswer): void {
   } else if (d.type === 'epicDestiny') {
     if (answer.type !== 'destiny') fail('BAD_ANSWER', 'Choose a destiny', 'Epic Heroes');
     s.pendingDecision = null;
-    chooseDestiny(ctx, d.heroId, answer.destiny);
+    chooseDestiny(ctx, d.heroId, answer.destiny, d.appliesTo);
   } else if (d.type === 'reaction') {
     if (answer.type !== 'reaction') fail('BAD_ANSWER', 'Use the reaction or decline it', 'Hero Abilities');
     answerReaction(ctx, answer.use, answer.targets, answer.pay);
