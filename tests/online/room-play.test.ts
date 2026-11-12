@@ -32,6 +32,18 @@ describe('US2 playing online', () => {
     expect(r.value[0]).toMatchObject({ seq: core.seq, by, roll: false, check: stateCheck(core.state) });
   });
 
+  it('006 US5-AS2 the active hero\'s seat may pay Inspired Lead in the Lead phase; other seats may not', () => {
+    const core = startedRoom();
+    pickAll(core);
+    for (let i = 0; i < 8 && core.state.phase !== 'lead'; i++) core.act(actor(core), { type: 'endPhase' });
+    expect(core.state.phase).toBe('lead');
+    const by = actor(core);
+    const other = core.room.seats.find((x) => x.id !== by)!.id;
+    expect(core.act(other, { type: 'inspiredLead', destiny: 1 })).toMatchObject({ ok: false, code: 'NOT_YOUR_TURN' });
+    expect(core.act(by, { type: 'inspiredLead', destiny: 1 }).ok).toBe(true);
+    expect(core.state.turn.abilitiesUsed).toContain('inspiredLead');
+  });
+
   it('US2-AS5 an illegal action is refused with the rules message and nothing changes', () => {
     const core = startedRoom();
     pickAll(core);

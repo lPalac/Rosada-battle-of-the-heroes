@@ -9,7 +9,8 @@ describe('US5 – general abilities and Revenge', () => {
     s = act(s, { type: 'inspiredLead', destiny: 3, pay: { hero: 1, common: 2 } }).state;
     expect(hero(s, 'H1').pool).toBe(2);
     expect(s.destiny.common.light).toBe(0);
-    expect(reject(s, { type: 'inspiredLead', destiny: 1 })).toBe('WRONG_PHASE');
+    // 006 FR-007: the Lead phase is an Inspired Lead window too, so a second use is refused as once per turn.
+    expect(reject(s, { type: 'inspiredLead', destiny: 1 })).toBe('ABILITY_USED');
     s = act(s, { type: 'announceLead', unitId: 'L-P@d2', to: sq('d4') }).state;
     expect(s.turn.lead?.modifiers).toContainEqual({ source: 'inspiredLead', value: 6 });
     // Even a 1 + War 2 + Inspired 6 = 9 succeeds, so no roll is made (spec Q-24).

@@ -20,7 +20,9 @@ function playout(rng: Rng, maxActions = 300, initial: GameState = newGame()): Pl
   const actions: Action[] = [];
   const states: GameState[] = [s];
   for (let i = 0; i < maxActions && s.status === 'playing'; i++) {
-    const legal = legalActions(s).filter((a) => a.type !== 'setEnforcement' && a.type !== 'offerDraw');
+    // 006: Inspired Lead in the Lead phase (FR-007) is left out so the playouts keep their mix of Leads, Rams and
+    // wounds; it has its own tests (tests/rules/inspired-lead.test.ts).
+    const legal = legalActions(s).filter((a) => a.type !== 'setEnforcement' && a.type !== 'offerDraw' && !(a.type === 'inspiredLead' && s.phase === 'lead'));
     if (legal.length === 0) break;
     const nonEnd = legal.filter((a) => a.type !== 'endPhase');
     const a = nonEnd.length > 0 && rng.nextFloat() < 0.8 ? rng.pick(nonEnd) : rng.pick(legal);

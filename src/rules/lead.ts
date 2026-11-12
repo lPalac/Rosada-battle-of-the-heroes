@@ -139,6 +139,21 @@ export function startLead(
   else resolve(ctx, opt, true);
 }
 
+/**
+ * 006 FR-007: a bonus paid after the Lead was announced (Inspired Lead until the roll). It joins the Lead's modifiers;
+ * when the Lead can no longer fail (1 + modifiers ≥ target) it needs no roll and succeeds at once.
+ */
+export function addLeadBonus(ctx: Ctx, mod: Modifier): void {
+  const lead = ctx.s.turn.lead;
+  if (!lead || lead.success !== null) return;
+  lead.modifiers.push(mod);
+  const lowest = 1 + lead.modifiers.reduce((a, m) => a + m.value, 0);
+  if (lead.needsRoll && lowest >= RULES.leadTarget) {
+    lead.needsRoll = false;
+    resolve(ctx, currentOption(ctx), true);
+  }
+}
+
 function currentOption(ctx: Ctx): LeadOption {
   const lead = ctx.s.turn.lead!;
   if (lead.option) return lead.option;

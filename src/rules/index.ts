@@ -264,6 +264,8 @@ export function legalActions(state: GameState): Action[] {
       out.push({ type: 'endPhase' });
       break;
     case 'lead':
+      // 006 FR-007: Inspired Lead until the die is rolled.
+      if (canInspiredLead(ctx)) for (let x = 1; x <= available(ctx, h); x++) out.push({ type: 'inspiredLead', destiny: x });
       if (awaitingRoll(s)) {
         for (let v = 1; v <= RULES.die; v++) out.push({ type: 'submitRoll', value: v });
         if (s.tokens.revenge[h.side] > 0) out.push({ type: 'useRevenge' });
