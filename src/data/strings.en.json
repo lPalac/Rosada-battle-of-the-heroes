@@ -132,7 +132,7 @@
   "result.newGame": "New game",
   "result.rematch": "Rematch (same setup)",
   "result.sandbox": "Continue in sandbox",
-  "notice.wellDepleted": "The initial 16 Destiny are used up. The Epic Stage comes in a later version – play continues with Starting Heroes.",
+  "notice.wellDepleted": "The initial 16 Destiny are used up. The Epic Stage begins at the start of the next turn.",
   "rule.panel": "Rule: {rule}",
   "reason.failedLead": "failed Lead",
   "reason.destroyEnemy": "destroyed an enemy unit",
@@ -728,5 +728,10 @@
   "dialog.checkmate.oneAtOnce": "{side}'s King is checkmated. If you continue, {winner} wins at once.",
   "dialog.checkmate.both": "Both Kings are checkmated. If you continue, the checkmate is ruled when the next turn begins.",
   "dialog.checkmate.continue": "Continue the game",
-  "dialog.checkmate.back": "Back to sandbox"
+  "dialog.checkmate.back": "Back to sandbox",
+  "dialog.destinyStep": "Choice {n} of {of}",
+  "dialog.destinyPlayer": "Player: {player}",
+  "dialog.destinyChosen": "Chosen so far: {list}",
+  "dialog.destinyBoth": "This choice is for both {heroes}",
+  "dialog.and": " and "
 }

@@ -1,10 +1,11 @@
 // Modal dialogs: every pendingDecision type (FR-112 context), payment split, amount pickers, confirmations,
 // and the position problems list (FR-103).
-import { t } from '../i18n/strings.ts';
+import { hasString, t } from '../i18n/strings.ts';
 import {
   DATA, EPIC_DESTINIES, otherSide, squareName, type Action, type GameState, type Payment, type PositionProblem, type Side,
 } from '../rules/index.ts';
-import { epicArtStyle, heroArtKeys } from './art.ts';
+import { epicArtStyle, imageUrl } from './art.ts';
+import { destinyChoiceModel } from '../game/destiny-model.ts';
 import { button, el, mount } from './dom.ts';
 
 export class Dialogs {
@@ -40,23 +41,43 @@ export class Dialogs {
       return true;
     }
     if (d.type === 'epicDestiny') {
-      // Three Epic forms; a side never holds one Fanatic and one Dominant hero (003 FR-002).
-      const h = s.heroes.find((x) => x.id === d.heroId)!;
-      const art = heroArtKeys(h).epic;
-      const other = s.heroes.find((x) => x.side === h.side && x.id !== h.id)?.epic?.destiny;
-      this.show(el('h3', {}, t('dialog.destiny', { hero: `${h.id} · ${t(`side.${h.side}`)} ${t(`range.${h.rangeType}`)}` })),
+      // 006 US3 (FR-010, FR-011): the choosing hero by name, side and player, its own three forms by name and portrait,
+      // and the choices made so far. A side never holds one Fanatic and one Dominant hero (003 FR-002).
+      const m = destinyChoiceModel(s)!;
+      const h = s.heroes.find((x) => x.id === m.heroId)!;
+      const player = s.setup.players.find((p) => p.id === m.playerId)?.name ?? m.playerId;
+      const heroLabel = m.named
+        ? `${m.heroName} (${t(`side.${m.side}`)})`
+        : `${h.id} · ${t(`side.${h.side}`)} ${t(`range.${h.rangeType}`)}`;
+      const twins = m.appliesTo.length > 1
+        ? el('div', { class: 'small', 'data-testid': 'destiny-applies' },
+            t('dialog.destinyBoth', { heroes: m.appliesTo.map((x) => `${x.heroName} (${t(`side.${x.side}`)})`).join(t('dialog.and')) }))
+        : null;
+      this.show(
+        el('h3', { 'data-testid': 'destiny-hero' }, t('dialog.destiny', { hero: heroLabel })),
+        el('div', { class: 'row muted' },
+          el('span', { 'data-testid': 'destiny-step' }, t('dialog.destinyStep', { n: m.step, of: m.of })),
+          el('span', {}, t('dialog.destinyPlayer', { player }))),
+        twins,
         el('div', { class: 'muted' }, t('notice.epicStage')),
-        el('div', { class: 'row destiny-cards' }, ...EPIC_DESTINIES.map((destiny) => {
-          const allowed = d.options.includes(destiny);
+        el('div', { class: 'row destiny-cards' }, ...m.cards.map((c) => {
+          const art = c.columns
+            ? el('div', { class: 'destiny-art', style: epicArtStyle(c.portraitKey, c.destiny) })
+            : el('img', { class: 'destiny-art destiny-portrait', src: imageUrl(c.portraitKey) ?? '', alt: c.formName ?? '' });
           return el('button', {
-            class: `destiny-card ${allowed ? '' : 'disabled'}`, disabled: !allowed, 'data-testid': `destiny-${destiny}`,
-            onclick: () => dispatch({ type: 'decide', decision: { type: 'destiny', destiny } }),
+            class: `destiny-card ${c.allowed ? '' : 'disabled'}`, disabled: !c.allowed, 'data-testid': `destiny-${c.destiny}`,
+            onclick: () => dispatch({ type: 'decide', decision: { type: 'destiny', destiny: c.destiny } }),
           },
-          el('div', { class: 'destiny-art', style: epicArtStyle(art, destiny) }),
-          el('strong', {}, t(`destiny.${destiny}`)),
-          el('div', { class: 'muted small' }, t(`destiny.${destiny}.quote`)),
-          !allowed && other ? el('div', { class: 'small warn' }, t('dialog.destinyTaken', { other: t(`destiny.${other}`) })) : null);
-        })));
+          art,
+          c.formName ? el('strong', { 'data-testid': `destiny-${c.destiny}-form` }, c.formName) : null,
+          el(c.formName ? 'span' : 'strong', {}, t(`destiny.${c.destiny}`)),
+          hasString(`destiny.${c.destiny}.quote`) ? el('div', { class: 'muted small' }, t(`destiny.${c.destiny}.quote`)) : null,
+          !c.allowed && c.blockedBy ? el('div', { class: 'small warn' }, t('dialog.destinyTaken', { other: t(`destiny.${c.blockedBy}`) })) : null);
+        })),
+        m.chosen.length
+          ? el('div', { class: 'small', 'data-testid': 'destiny-chosen' },
+              t('dialog.destinyChosen', { list: m.chosen.map((x) => `${x.heroName}: ${x.formName ?? t(`destiny.${x.destiny}`)}`).join(', ') }))
+          : null);
       return true;
     }
     if (d.type === 'reaction') {

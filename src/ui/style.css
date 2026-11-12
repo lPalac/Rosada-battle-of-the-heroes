@@ -159,3 +159,4 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .online-bar .your-turn { font-weight: 700; color: var(--accent, #e8c66a); }
 .seat { gap: 10px; align-items: center; }
 .error { color: #ff8a80; }
+.destiny-portrait { width: 100%; object-fit: cover; object-position: top; display: block; }
