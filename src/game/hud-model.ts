@@ -1,6 +1,6 @@
 // What the HUD shows, derived from the state only (US7-AS2, US7-AS3). Engine-free, so it is tested headless.
 import {
-  abilityStatus, awaitingRoll, blockedLeads, chebyshev, type AbilityStatus, destinyGeneration, isBloodied, leadRange, legalActions, legalLeadTargets, legalMoveSquares, leadPreview,
+  abilityStatus, awaitingRoll, blockedLeads, chebyshev, hasPower, isBattlefield, isInCheck, type AbilityStatus, destinyGeneration, isBloodied, leadRange, legalActions, legalLeadTargets, legalMoveSquares, leadPreview,
   moveReach, DATA, PHASES, RULES, type Action, type Coord, type EpicDestiny, type GameState, type HeroId, type Modifier, type Phase, type Reach,
   type Side, type Stage, type UnitType,
 } from '../rules/index.ts';
@@ -29,6 +29,8 @@ export interface HeroCard {
   /** 004: named hero or Epic form name ('' for generic heroes), and the ability rows of the sheet. */
   name: string;
   abilities: AbilityRow[];
+  /** 006 FR-037 (B-21): the unit types the hero becomes as a Hero Unit, and whether its side has the power. */
+  heroUnitIcons: { types: UnitType[]; unlocked: boolean };
 }
 
 export interface LeadPanel {
@@ -92,6 +94,10 @@ export interface HudModel {
   decision: GameState['pendingDecision'];
   /** 006 FR-004: each action ability of the active hero, usable now or why not (for the ability panel). */
   abilityStatus: AbilityStatus[];
+  /** 006 FR-039: the sides whose King is in check now (the "In check" pop-up). */
+  inCheck: Side[];
+  /** 006 FR-033: the current phase, for the ability panel's phase box. */
+  phaseLabelKey: string;
 }
 
 function heroUnitTypes(state: GameState, id: string | null): UnitType[] | null {
@@ -122,6 +128,10 @@ export function hudModel(state: GameState, selectedUnitId: string | null = null)
       pool: h.pool, active: h.id === state.activeHeroId, unconscious: h.status.unconscious, skipNextTurn: h.status.skipNextTurn,
       destiny: h.epic?.destiny ?? null, generation: destinyGeneration(state, h.side), bloodied: isBloodied(state, h.id),
       heroUnit: heroUnitTypes(state, h.heroUnitId),
+      heroUnitIcons: {
+        types: [h.heroUnitType, ...(hasPower(state, h.side, 'advancedWarfare') ? ['rook' as UnitType] : [])],
+        unlocked: hasPower(state, h.side, 'heroUnit'),
+      },
       ...(() => {
         const sheet = sheetModel(state, h.id);
         return { name: DATA.heroes.find((d) => d.id === h.definitionId)?.selectable ? sheet.name : '', abilities: sheet.abilities };
@@ -167,6 +177,8 @@ export function hudModel(state: GameState, selectedUnitId: string | null = null)
     shopOpen: !!state.turn.tavernShopOpen && state.phase === 'move',
     decision: state.pendingDecision,
     abilityStatus: state.status === 'playing' ? abilityStatus(state) : [],
+    inCheck: state.status === 'playing' ? (['light', 'dark'] as const).filter((side) => isInCheck(state, side)) : [],
+    phaseLabelKey: `phase.${state.phase}`,
   };
 }
 
@@ -185,7 +197,7 @@ export interface Highlights {
 
 /** Squares and units the table highlights now (US7-AS1, FR-111). */
 export function highlights(state: GameState, selectedUnitId: string | null): Highlights {
-  const out: Highlights = { selectable: [], moves: [], reach: [], leads: [], blocked: [], decision: [] };
+  const out: Highlights = { selectable: [], moves: [], reach: [], leads: [], blocked: [], decision: [], range: [] };
   if (state.status !== 'playing' || state.enforcement !== 'rules') return out;
   const d = state.pendingDecision;
   if (d && (d.type === 'advanceSquare' || d.type === 'unconsciousTavern')) {
@@ -196,6 +208,14 @@ export function highlights(state: GameState, selectedUnitId: string | null): Hig
   if (state.phase === 'move') {
     out.moves = legalMoveSquares(state);
     out.reach = moveReach(state);
+  }
+  if (state.phase === 'lead') {
+    // 006 FR-036 (B-20): the squares within the active hero's Range, outlined in the Lead phase.
+    const h = state.heroes.find((x) => x.id === state.activeHeroId)!;
+    const r = leadRange(state, h);
+    for (let x = h.pos.x - r; x <= h.pos.x + r; x++) {
+      for (let y = h.pos.y - r; y <= h.pos.y + r; y++) if (isBattlefield({ x, y })) out.range!.push({ x, y });
+    }
   }
   if (state.phase === 'lead' && !state.turn.leadAttempted) {
     const h = state.heroes.find((x) => x.id === state.activeHeroId)!;

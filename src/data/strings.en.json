@@ -744,5 +744,19 @@
   "lead.auto.peace": "Peace Treaty: the Lead succeeds",
   "lead.auto.king": "The King needs no roll",
   "lead.auto.cannotFail": "Cannot fail: +{n}",
-  "lead.auto.ability": "An ability makes this Lead succeed"
+  "lead.auto.ability": "An ability makes this Lead succeed",
+  "flash.wound": "{hero} −{n} health",
+  "flash.heal": "{hero} +{n} health ({reason})",
+  "flash.destroyed": "{unit} destroyed",
+  "flash.ability": "{hero}: {ability}",
+  "flash.rollFree": "Free roll: {value}",
+  "flash.rollSuccess": "Roll {value}, total {total}: success",
+  "flash.rollFail": "Roll {value}, total {total}: fail",
+  "flash.leadFailed": "The Lead fails",
+  "flash.destiny": "{n} D {owner}: {reason}",
+  "flash.skipped": "Phase '{phase}' skipped",
+  "flash.skippedLead": "Phase '{phase}' skipped: no Lead possible",
+  "check.flash": "CHECK",
+  "check.badge": "{side}: in check",
+  "check.rule": "If your King is in check at the end of your Lead, you cannot use After Lead nor End of Turn abilities that turn."
 }

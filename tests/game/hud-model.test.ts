@@ -33,6 +33,42 @@ describe('the Lead panel (US5)', () => {
   });
 });
 
+describe('hero cards and warnings (US6)', () => {
+  const SIX = ['overwhelm', 'decimate', 'greatIncursion', 'tacticalGenius', 'royalsFury', 'destinedForGreatness'] as const;
+
+  it('US6-AS6 (model) a named hero is shown by name, an Epic hero by its form; the generic test heroes keep today\'s text', () => {
+    const s = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' } });
+    expect(hudModel(s).heroes.find((h) => h.id === 'H1')!.name).toBe('Cavalier');
+    const e = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' }, stage: 'epic', epic: { H1: 'resolute' } });
+    expect(hudModel(e).heroes.find((h) => h.id === 'H1')!.name).toBe('Dragon Lord');
+    expect(hudModel(s).heroes.find((h) => h.id === 'H2')!.name).toBe('');
+  });
+
+  it('US6-AS8 (model) the Hero Unit icons: dimmed before Hero Unit, lit after; a Rook with Advanced Warfare', () => {
+    const s = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier', H3: 'monk' } });
+    const icons = (st: typeof s, id: string) => hudModel(st).heroes.find((h) => h.id === id)!.heroUnitIcons;
+    expect(icons(s, 'H1')).toEqual({ types: ['knight'], unlocked: false });
+    expect(icons(s, 'H3')).toEqual({ types: ['bishop'], unlocked: false });
+    const six = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' }, royalFavors: { light: [...SIX] } });
+    expect(icons(six, 'H1')).toEqual({ types: ['knight'], unlocked: true });
+    const eight = board({ c3: 'N', h7: 'p' }, { heroDefs: { H1: 'cavalier' }, royalFavors: { light: [...SIX, 'bloodyTheCastleGates', 'offenseIsTheBestDefense'] } });
+    expect(icons(eight, 'H1')).toEqual({ types: ['knight', 'rook'], unlocked: true });
+  });
+
+  it('US6-AS7 (model) the squares within the active hero\'s Range in the Lead phase', () => {
+    const s = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'lead' });
+    const range = highlights(s, null).range!.map(squareName);
+    expect(range).toHaveLength(9);
+    expect(range).toContain('c2');
+    expect(highlights(board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'move' }), null).range).toEqual([]);
+  });
+
+  it('US6-AS12 (model) the sides whose King is in check now', () => {
+    expect(hudModel(board({ a8: 'R', h1: 'R', a1: 'K', e8: 'k' }, { heroes: { H1: 'g1' } })).inCheck).toEqual(['dark']);
+    expect(hudModel(board({ c3: 'N', h7: 'p' })).inCheck).toEqual([]);
+  });
+});
+
 describe('highlights (US4)', () => {
   it('US4-AS3 (model) the Move phase returns every reachable square, with "pass only" squares marked', () => {
     const s = board({ d3: 'n', h7: 'p' }, { heroes: { H1: 'd1' }, phase: 'move' });
