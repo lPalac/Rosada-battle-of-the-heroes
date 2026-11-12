@@ -5,7 +5,7 @@ import { hook, quickSetup } from './helpers.ts';
 type Elements = {
   tableTop: boolean; roomFloor: boolean; boardBorder: boolean; strip: boolean;
   sheets: { heroId: string; name: string; portrait: string | null; portraitLoaded: boolean; healthMarker: number; pool: number; destiny: string | null; epicColumn: number | null; generation: number | null }[];
-  tracks: { side: string; slots: number; tokens: number }[];
+  track: { slots: number; light: number; dark: number };
   medallions: { heroId: string; number: number; active: boolean }[];
   assets: Record<string, { image?: string }>;
 };
@@ -24,12 +24,13 @@ test('US7-AS1…AS4 room, table, border, strip, sheets, tracks and medallions', 
     expect(sheet.pool).toBe(h.pool);
   }
   await expect.poll(async () => (await elements(page)).sheets.every((x) => x.portraitLoaded)).toBe(true);
-  expect(e.tracks.map((t) => [t.side, t.slots, t.tokens])).toEqual([['light', 16, 0], ['dark', 16, 0]]);
+  // 006 FR-041: one shared track with slots 1…11 instead of one 16-slot track per side.
+  expect(e.track).toEqual({ slots: 11, light: 0, dark: 0 });
   expect(e.medallions.map((m) => [m.number, m.active])).toEqual([[1, true], [2, false], [3, false], [4, false]]);
   // US7-AS3: a completed Royal Favor appears on the track.
   await hook(page, 'dispatch', { type: 'setEnforcement', mode: 'sandbox' });
   await hook(page, 'dispatch', { type: 'sandboxSet', path: 'favor', target: 'dark:decimate', value: 'done' });
-  expect((await elements(page)).tracks.find((t) => t.side === 'dark')!.tokens).toBe(1);
+  expect((await elements(page)).track.dark).toBe(1);
 });
 
 test('US7-AS5, AS6 Epic art column on the sheet; every image comes from assets.json', async ({ page }) => {

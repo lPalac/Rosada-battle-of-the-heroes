@@ -2,6 +2,7 @@
 import { GameSession, type SessionLike } from './game/session.ts';
 import { flashesFor } from './game/flash-model.ts';
 import { highlights, hudModel } from './game/hud-model.ts';
+import { viewSide } from './game/view-side.ts';
 import { FlashLayer } from './ui/hud/flashes.ts';
 import { toFixture } from './game/fixture.ts';
 import { hasString, t } from './i18n/strings.ts';
@@ -221,6 +222,7 @@ function attachOnline(s: OnlineSession): void {
   };
   if (s.state.status !== 'setup') pieces.sync(s.state, [], false);
   syncTable(s.state);
+  syncCamera(s.state);
   render();
 }
 
@@ -238,6 +240,17 @@ async function playServerRoll(value: number): Promise<void> {
   }
 }
 
+/**
+ * 006 FR-040 (B-13): the default camera looks from `viewSide`: online the local seat's side on every turn, hot-seat the
+ * active side. `setSide` acts only when the side changes, so a player's own orbiting is kept.
+ */
+function syncCamera(s: GameState): void {
+  if (s.status !== 'playing') return;
+  const net = onlineSession();
+  const seat = net?.room?.seats.find((x) => x.id === net.mySeat) ?? null;
+  camera.setSide(viewSide(s, seat));
+}
+
 function onChange(s: GameState, events: GameEvent[]): void {
   // The die has landed by now (hot-seat rolls before submitting; online plays the server's roll first).
   if (s.status !== 'setup') flashLayer.push(flashesFor(events, s));
@@ -247,10 +260,7 @@ function onChange(s: GameState, events: GameEvent[]): void {
   // 006: a plan is cleared by any change that is not its own walk; a target prompt by a phase change.
   if (!walking) plan = null;
   if (events.some((e) => e.type === 'phaseChanged')) targeting = null;
-  if (s.status === 'playing') {
-    const active = s.heroes.find((h) => h.id === s.activeHeroId);
-    if (active) camera.setSide(active.side);
-  }
+  syncCamera(s);
   // Online games are kept by the server (FR-044); only hot-seat games go to local storage.
   if (session && s.status !== 'setup' && !onlineSession()) saveLocal(session.initial, session.actions);
   if (s.status !== 'setup') pieces.sync(s, events);
@@ -992,16 +1002,30 @@ if (import.meta.env.DEV || isE2E) {
       boardBorder: !!boardView.border.parent,
       strip: !!strip.parent,
       sheets: sheets.list(),
-      tracks: tracks.trackList(),
+      track: tracks.trackInfo(),
       medallions: tracks.medallionList(),
       assets: assetsJson,
       // 004 US6: what each unit shows (TTS model or placeholder), and the TTS table pieces.
       pieceAssets: Object.fromEntries((state()?.units ?? []).map((u) => [u.id, pieces.unitObject(u.id)?.userData.assetKind ?? 'placeholder'])),
       sky: !!room.group.userData.sky,
       effectTokens: effectsView.list(),
-      ttsTable: !!room.tableTop.userData.tts,
+      ttsTable: !!room.group.userData.ttsTable,
       ttsStrip: !!strip.userData.tts,
+      // 006 FR-041: the strip's four corners on screen (to check it is fully visible at the default camera).
+      stripCorners: [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sz]) => {
+        const q = strip.position.clone().add({ x: sx * 1.8 * SQUARE, y: 0, z: sz * 4.8 * SQUARE } as never).project(ts.camera);
+        const rect = canvas.getBoundingClientRect();
+        return { x: rect.left + ((q.x + 1) / 2) * rect.width, y: rect.top + ((1 - q.y) / 2) * rect.height };
+      }),
     }),
+    /** 006 FR-043: a unit's turn on the table: the holder's yaw (by side) and the TTS model's own yaw inside it, in degrees. */
+    unitFacing: (id: string) => {
+      const holder = pieces.unitObject(id);
+      if (!holder) return null;
+      const model = holder.children.find((c) => c.children.length && c !== holder.children[0]);
+      const deg = (r: number) => Math.round((r * 180) / Math.PI);
+      return { holder: deg(holder.rotation.y), model: model ? deg(model.rotation.y) : null, assetKind: holder.userData.assetKind };
+    },
     sheetScreen: (heroId: string) => {
       const mesh = sheets.meshOf(heroId);
       if (!mesh) return null;

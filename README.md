@@ -69,6 +69,16 @@ Feature 005 adds online play: **Play online** creates a room with a 7-character 
 
 See `specs/001-standard-rules-game/quickstart.md` and `specs/002-sandbox-physics/quickstart.md` for the manual checks.
 
+Feature 006 brings the fixes and improvements from the first playtests (`specs/006-fixes-improvements/`, rulebook wording in its `rulebook-corrections.md`). Rules: 2 D for any new check (once per turn per side), 1 D per Destiny symbol on Starting abilities, *Inspired Lead* until the roll, Leads and abilities refused when they would check a King, *Preaching* one use or both, Mirror with different heroes per side, and the sandbox returning to the saved turn. Controls:
+
+- **Move the hero**: click a square to see the shortest path with step numbers; click it again (or double-click) to walk there. `Esc` clears the plan.
+- **Choose on the board**: ability targets light up on the board; click one. Hover a blocked square or an ability you cannot use to see why.
+- **Space** ends the phase (not while a dialog is open). **A** opens the Royal Favors.
+- **Pick a hero** in setup: click the card, then click it again to confirm.
+- **Settings**: sandbox, Offer draw, save, export and import, new game, and **Resume game** to go back.
+- **HUD**: the ability panel is docked on the right and folds with a click on its header; short messages slide to the log; "CHECK" blinks over a checked King and an "In check" box explains the rule on hover.
+- **Table**: online each player always sees the table from their own side; one shared Royal Favor track (1…11) lies between the board and the Graveyard / Well strip; the table is the Tabletop Simulator model.
+
 Feature 003 adds the rest of the basic rules: the Epic Stage (destiny choice, Common Pool split, Epic health, the War bonus ends), Hero Destiny Generation, Bloodied, the 12 Royal Favors with a tracker (button or `A`) and a track per side on the table, and the six Legendary Powers (Hero Units are units with `kind: 'hero'`; King's Forces creates auxiliary units). The table now looks closer to the Tabletop Simulator version: wooden table in a dim room, illustrated board border, Graveyard / Well strip, hero sheets with portrait, health track and Epic art, Royal Favor tracks and turn-order medallions. Older saves load with defaults for the new fields. See `specs/003-epic-stage/quickstart.md`; open rule questions are Q-35…Q-37 in its spec.
 
 Feature 002 adds physics to sandbox mode (pick up, drop and knock over units and hero figures; `src/physics/sandbox.ts`), a 25% larger board, and up to 2 friendly units per square (a Battle there destroys all of them).

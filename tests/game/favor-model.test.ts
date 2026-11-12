@@ -44,3 +44,40 @@ describe('US3-AS14 – tracker model', () => {
     expect(m.dark.next).toEqual({ power: 'heroUnit', nameKey: 'power.heroUnit.name', needed: 5 });
   });
 });
+
+// 006 US7 (FR-041, B-14): one shared track with slots 1…11 and both sides' markers; the per-side lists and their
+// 16-slot tracks stay for the Royal Favor menu.
+describe('006 – the shared Royal Favor track', () => {
+  const ORDER = ['bloodyTheCastleGates', 'overwhelm', 'greatIncursion', 'tacticalGenius', 'deployTroops', 'royalsFury',
+    'decimate', 'offenseIsTheBestDefense', 'vanquishYourFoes', 'destinedForGreatness', 'manifestEpicDestiny'] as const;
+  const shared = (light: number, dark: number) => favorModel(board({ ...PAWNS }, {
+    royalFavors: { light: [...ORDER.slice(0, light)], dark: [...ORDER.slice(0, dark)] },
+  })).shared;
+
+  it('US7-AS4 Light 2 and Dark 1: the shared track has 11 slots and both counts', () => {
+    expect(shared(2, 1)).toMatchObject({ slots: 11, light: 2, dark: 1 });
+  });
+
+  it('US7-AS4 two markers on one slot are both kept', () => {
+    expect(shared(3, 3)).toMatchObject({ light: 3, dark: 3 });
+  });
+
+  it('US7-AS2 the Legendary Power names sit at 6…11', () => {
+    const powers = shared(0, 0).powers;
+    expect(powers.map((p) => p.threshold)).toEqual([6, 7, 8, 9, 10, 11]);
+    for (const p of powers) expect(p.nameKey).toBe(`power.${p.id}.name`);
+  });
+
+  it('US7-AS4 a count above 11 is capped at 11', () => {
+    const s = structuredClone(board({ ...PAWNS }, { royalFavors: { light: [...ORDER], dark: [] } }));
+    s.royalFavors.light.track.push('tidesOfDestiny', 'tidesOfDestiny');
+    expect(favorModel(s).shared.light).toBe(11);
+  });
+
+  it('US7-AS5 the per-side lists and 16-slot tracks stay for the menu', () => {
+    const m = favorModel(board({ ...PAWNS }, { royalFavors: { light: ['overwhelm', 'decimate'], dark: ['deployTroops'] } }));
+    expect(m.light.track).toHaveLength(2);
+    expect(m.dark.track).toHaveLength(1);
+    expect(m.light.slots).toBe(16);
+  });
+});

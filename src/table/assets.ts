@@ -22,6 +22,10 @@ export interface AssetEntry {
   flipY?: boolean;
   color?: string;
   scale?: number;
+  /** 006 FR-043: turn of the TTS model inside its holder, in degrees (units: 180). */
+  yaw?: number;
+  /** 006 FR-042: the TTS table's height offset (world units). */
+  offsetY?: number;
 }
 
 const ASSETS = assetsJson as unknown as Record<string, AssetEntry>;
@@ -204,7 +208,7 @@ export function createAsset(key: string): Object3D {
     // Height of the placeholder piece, so the TTS model fills the same space (US6-AS1).
     // TTS pieces are slimmer than the lathe placeholders: 1.6× the placeholder height gives a similar footprint.
     const height = (key.startsWith('unit.') ? unitHeight(type) : 0.8) * TTS_HEIGHT_FACTOR;
-    loadTtsModel({ mesh: e.mesh, texture: e.texture, normal: e.normal, flipY: e.flipY }, height)
+    loadTtsModel({ mesh: e.mesh, texture: e.texture, normal: e.normal, flipY: e.flipY, yaw: e.yaw }, height)
       .then((model) => {
         // Picking reads userData on the hit mesh: give the model the holder's data (piece id, kind).
         const data = { ...holder.userData };
@@ -251,6 +255,11 @@ let assetLoaded: () => void = () => {};
 /** Called when a model finishes loading, so the on-demand renderer draws a frame (004). */
 export function onAssetLoaded(fn: () => void): void {
   assetLoaded = fn;
+}
+
+/** Ask for a frame after something outside this module finished loading (006: the TTS table). */
+export function notifyAssetLoaded(): void {
+  assetLoaded();
 }
 
 /** Load an image texture of an asset key (TTS art), or null when the key has no image. Requests a frame when loaded. */

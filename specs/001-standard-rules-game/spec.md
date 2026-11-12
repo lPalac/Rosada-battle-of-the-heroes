@@ -207,6 +207,7 @@ At any time from settings, or after the game ends, players can switch rule enfor
 3. **Given** sandbox mode is on, **Then** a clear indicator is always visible and no win/draw is declared automatically.
 4. **Given** sandbox mode, **When** the d20 is rolled by hand, **Then** the result is shown but not applied to any Lead.
 5. **Given** a game in sandbox mode, **When** a player turns enforcement back on and the position is legal, **Then** play resumes at the *Before Turn* phase of the current active hero (so checkmate is checked first).
+   *Replaced by 006 (FR-006, Q-66) for a turn in play: turning rules back on continues the saved turn; play restarts at Before Turn only for a new position or the position editor.*
 6. **Given** a game in sandbox mode, **When** a player turns enforcement back on and the position is not legal, **Then** the game lists each problem (for example "Light King shares a square") and stays in sandbox.
 
 ---

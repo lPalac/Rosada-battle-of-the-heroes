@@ -267,6 +267,8 @@ async function main(): Promise<void> {
       entries[`unit.${side}.${t}`] = {
         mesh: `tts/mesh/${t}.obj`, texture: `tts/${out}`, normal: `tts/texture/${t}-normal.webp`, collider: `tts/mesh/${t}-collider.obj`,
         flipY: await uvFlipY(join(OUT, `mesh/${t}.obj`), at(light)),
+        // 006 FR-043: the TTS unit models face the other way from the board's pieces.
+        yaw: 180,
       };
     }
     delete entries[`tts.${t}.normal`];

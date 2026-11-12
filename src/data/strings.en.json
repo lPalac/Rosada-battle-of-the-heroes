@@ -65,7 +65,6 @@
   "hud.moveHelp": "Click an adjacent square to move ({left} left)",
   "action.endPhase": "End phase",
   "action.undo": "Undo",
-  "action.offerDraw": "Offer draw",
   "action.roll": "Roll d20",
   "action.rolling": "Rolling…",
   "action.useRevenge": "Use Revenge token",
@@ -768,5 +767,7 @@
   "legend.range": "Range",
   "setup.healthBadge": "Health {health}",
   "ability.panel.usable": "{n} usable",
-  "settings.resume": "Resume game"
+  "settings.resume": "Resume game",
+  "track.shared": "Royal Favor track",
+  "settings.offerDraw": "Offer draw"
 }

@@ -123,9 +123,14 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .tracker > .row:first-child { justify-content: space-between; align-items: center; position: sticky; top: -10px; background: var(--panel); z-index: 1; }
 .tracker-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .tracker-side h3 { margin: 4px 0; }
-.tracker-slots { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin: 6px 0; }
-.tracker-slots .slot { text-align: center; font-size: 11px; padding: 3px 0; border: 1px solid var(--panel-border); border-radius: 4px; opacity: .6; }
-.tracker-slots .slot.filled { background: #a07a10; color: #fff; opacity: 1; }
+.tracker-shared { display: grid; grid-template-columns: repeat(11, 1fr); gap: 3px; margin: 6px 0 10px; }
+.tracker-shared .slot { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; padding: 3px 2px; border: 1px solid var(--panel-border); border-radius: 4px; min-height: 46px; }
+.tracker-shared .slot.power { border-color: #a07a10; }
+.tracker-shared .markers { display: flex; gap: 3px; min-height: 12px; }
+.tracker-shared .marker { width: 12px; height: 12px; border-radius: 50%; }
+.tracker-shared .marker.light { background: #e6b422; border: 2px solid #7a5a10; }
+.tracker-shared .marker.dark { background: #7e57c2; border: 2px solid #311b92; }
+.tracker-shared .power-name { font-size: 9px; text-align: center; opacity: .8; line-height: 1.1; }
 .tracker-list, .tracker-powers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .tracker-list .favor { padding: 4px 6px; border-radius: 6px; border-left: 4px solid transparent; }
 .tracker-list .favor.done { border-left-color: #4f8a3c; background: rgba(79,138,60,.15); }

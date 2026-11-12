@@ -192,6 +192,7 @@ The 3D table moves towards the Tabletop Simulator version: a wooden table in a d
 - The Well is depleted while a hero is Unconscious → that hero still chooses a destiny in turn order.
 - Both heroes of a side want the same destiny → allowed (only Fanatic with Dominant is forbidden).
 - In Mirror mode both sides have the same Starting Heroes → each side's heroes still choose separately.
+  - *Replaced by 006 (FR-012, Q-64, Q-75): in Mirror each destiny is chosen once per class, for both heroes of that class.*
 - A side completes several Royal Favors with one action → all are completed, in the order listed in the rulebook, each in its own slot.
 - A Royal Favor's state condition (e.g. *Great Incursion*) holds for both sides at the same time → each side completes its own.
 - A Hero Unit stands on a square with a friendly unit → not possible to become one.

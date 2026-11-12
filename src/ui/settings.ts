@@ -28,7 +28,7 @@ export function renderSettings(inSandbox: boolean, h: SettingsHandlers): HTMLEle
       if (f) h.importFile(f);
     },
   });
-  const offerDraw = button(t('action.offerDraw'), h.offerDraw, { testid: 'offer-draw', disabled: !h.canOfferDraw });
+  const offerDraw = button(t('settings.offerDraw'), h.offerDraw, { testid: 'offer-draw', disabled: !h.canOfferDraw });
   const resume = button(t('settings.resume'), h.close, { kind: 'primary', testid: 'settings-resume' });
   if (h.online) {
     return el('div', { class: 'panel dialog col', 'data-testid': 'settings' },

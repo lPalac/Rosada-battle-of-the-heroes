@@ -193,6 +193,7 @@ The placeholder pieces, table and tokens are replaced by the Tabletop Simulator 
 - **FR-001a**: Hero Rules 2_0 MUST be the source for every ability, cost, value and timing. The TTS sheet images are art only; where they print something else, the sheet MUST show the rule value over it (clarified).
 - **FR-002**: Abilities MUST be data with name, timing windows, cost (normal / Bloodied) or uses, conditions, "Always Active" or action, "Cannot be used while you are a Hero unit", "Does not work on royalty", "Must not check the King", and text keys. Their effects are rules-core code selected by ability id.
 - **FR-003**: Setup MUST offer the four named heroes. Each side picks as in 001 (Draft L, D, D, L; Mirror). In Draft each named hero can be picked only once; in Mirror both sides have the same heroes (clarified).
+  - *Changed by 006 (FR-013, Q-79): in Mirror the two heroes of a side are different; Light picks one hero for both sides, then Dark a different one.*
 
 **Ability engine**
 
@@ -241,6 +242,7 @@ The placeholder pieces, table and tokens are replaced by the Tabletop Simulator 
 | Q-40a | ~~Which abilities belong to the Cultist~~ Resolved (clarified): the seven listed in research R-13. | Luka | Resolved |
 | Q-40b | Cultist details left open in the text: the full name (Cultist + a hint such as Reaver / Lord / Occultist); the passive's name (Righteous Might, or Shield / Strength of Fate / Faith, Might of the Faithful); Religious Fervor's token removal (two wordings); Knightmare has no cost. Default: "Cultist", "Righteous Might", the wordings in R-13, Knightmare is Always Active. Names are strings in data, so a rename is a data change. | Luka | No (to fix later) |
 | Q-41 | ~~Duplicate picks~~ Resolved (clarified): no in Draft, yes in Mirror. | Luka | Resolved |
+| Q-41 (006) | *Changed by 006 Q-79: in Mirror the same hero cannot be on the same side.* | Vice | Changed |
 | Q-42 | Do the generic heroes stay selectable in setup? Default: no; they stay for tests and the position editor. | Luka | No |
 | Q-43 | Are units that "cannot be Led" counted when checking checkmate and "no eligible units"? Default: yes, a marked unit counts as unable to move for both. | Rules designer | No |
 | Q-44 | Protection vs damage: does a protection (Make Peace Not War, Divine Protector, Arcane Shackles, Crusade) always beat an effect that wounds or Destroys? Default: yes, while the protection lasts. | Rules designer | No |
@@ -250,6 +252,7 @@ The placeholder pieces, table and tokens are replaced by the Tabletop Simulator 
 | Q-48 | Undead Legions (Bloodied): "you can instantly make a Lead, without initiating Battle, with one of the created Pawns". Default: an extra move of one created Pawn without a roll, offered as a choice right after the ability. | Rules designer | No |
 | Q-49 | Shadow Demon "unit*": the TTS tokens show Demons of several types (Rook, Knight, Bishop, Pawn). Default: the player chooses a non-royal type; the Demon moves as that type but only into Battle (research R-07 corrected). | Rules designer | No |
 | Q-50 | Preaching "If you spend both uses of this ability": Default: both uses may be spent in the same turn (the ability is not once per turn); the second use on a unit already Preached makes it unable to be Led on the next turn. | Rules designer | No |
+| Q-50 (006) | *Replaced by 006 Q-62a and Q-78: Preaching is once per turn, with the choice of one use or both in that use.* | Vice | Changed |
 | Q-51 | Hero Rules abilities that heal, move or create without saying "enemy" or "friendly" (Leeching Touch "an adjacent hero", Magic Bombardment "a hero in range" / "an adjacent auxiliary unit"). Default: Leeching Touch and Magic Bombardment's wound option target enemy heroes; Magic Bombardment's Destroy option targets any auxiliary unit. | Rules designer | No |
 
 ## Assumptions
@@ -258,4 +261,5 @@ The placeholder pieces, table and tokens are replaced by the Tabletop Simulator 
 - **A-05**: The Cultist has no TTS sheet. It uses the canvas-drawn sheet (003 style) with its abilities from data, and the Monk's Fanatic portrait art, until a Cultist sheet image exists.
 - **A-02**: A hero's Epic form replaces its starting abilities (the Epic sheets do not repeat them).
 - **A-03**: Numbers before starting ability names ("1 Demoralise", "2 Preaching") are uses per game, shown as Destiny symbols on the sheet.
+  - *Corrected by 006 (FR-002, Q-62): each Destiny symbol is one use and costs 1 D; Warhorse, Rejuvenating Stroll, Elusive and Future Sight are free.*
 - **A-04**: The TTS assets are Luka's own and may be shipped with the game.

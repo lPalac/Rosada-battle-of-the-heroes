@@ -9,6 +9,8 @@ export interface MeshEntry {
   normal?: string;
   /** UV convention of this mesh (measured at import). */
   flipY?: boolean;
+  /** 006 FR-043: turn of the model about its vertical axis, in degrees. */
+  yaw?: number;
 }
 
 const objLoader = new OBJLoader();
@@ -73,12 +75,30 @@ export async function loadTtsModel(e: MeshEntry, height: number): Promise<Object
   const centre = box.getCenter(new Vector3());
   for (const child of g.children) child.position.set(-centre.x, -box.min.y, -centre.z);
   g.scale.setScalar(s);
+  g.rotation.y = ((e.yaw ?? 0) * Math.PI) / 180;
   g.userData.tts = true;
   return g;
 }
 
+/** 006 FR-042: a TTS model at its own size, centred in x/z, with its texture (the table). */
+export async function loadTtsRaw(e: MeshEntry): Promise<Group> {
+  const geos = await geometry(e.mesh);
+  const mat = await material(e);
+  const g = new Group();
+  for (const geo of geos) {
+    const mesh = new Mesh(geo, mat);
+    mesh.receiveShadow = true;
+    g.add(mesh);
+  }
+  const box = new Box3().setFromObject(g);
+  const centre = box.getCenter(new Vector3());
+  for (const child of g.children) child.position.set(-centre.x, 0, -centre.z);
+  g.userData.minY = box.min.y;
+  return g;
+}
+
 /** Collider points of a TTS collider OBJ (for convex hulls in the sandbox), scaled like the visual model. */
-export async function colliderPoints(path: string, height: number): Promise<Float32Array | null> {
+export async function colliderPoints(path: string, height: number, yaw = 0): Promise<Float32Array | null> {
   try {
     const geos = await geometry(path);
     const pts: number[] = [];
@@ -94,10 +114,15 @@ export async function colliderPoints(path: string, height: number): Promise<Floa
     const cx = (minX + maxX) / 2;
     const cz = (minZ + maxZ) / 2;
     const out = new Float32Array(pts.length);
+    // 006 FR-043: turned like the visual model (a rotation about y by `yaw` degrees).
+    const c = Math.cos((yaw * Math.PI) / 180);
+    const sn = Math.sin((yaw * Math.PI) / 180);
     for (let i = 0; i < pts.length; i += 3) {
-      out[i] = (pts[i] - cx) * s;
+      const x = (pts[i] - cx) * s;
+      const z = (pts[i + 2] - cz) * s;
+      out[i] = x * c + z * sn;
       out[i + 1] = (pts[i + 1] - minY) * s;
-      out[i + 2] = (pts[i + 2] - cz) * s;
+      out[i + 2] = -x * sn + z * c;
     }
     return out;
   } catch {

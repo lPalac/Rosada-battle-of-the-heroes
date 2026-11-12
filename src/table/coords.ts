@@ -18,10 +18,11 @@ const sq = (x: number, z: number) => new Vector3(x * SQUARE, 0, z * SQUARE);
 
 /** Side zones beside the board, in squares from the board centre. */
 export const ZONES = {
-  graveyard: { light: sq(-7.2, 2.6), dark: sq(-7.2, -2.6) },
+  // 006 FR-041: moved outwards from x = −7.2 to make room for the shared Royal Favor track.
+  graveyard: { light: sq(-8.6, 2.6), dark: sq(-8.6, -2.6) },
   /** Graveyard rectangle size (width, depth) in world units. */
   graveyardSize: { w: 3 * SQUARE, d: 2.6 * SQUARE },
-  well: sq(-7.2, 0),
+  well: sq(-8.6, 0),
   common: { light: sq(6.6, 4.4), dark: sq(6.6, -4.4) },
   tokens: sq(8.2, -2.2),
 } as const;

@@ -16,11 +16,11 @@ const W = 640;
 const H = 400;
 export const SHEET_SIZE = { w: 2.9 * SQUARE, d: 1.8 * SQUARE };
 
-/** Seat layout: each side's two sheets and its Royal Favor track along its own table edge (research R-09). */
-export function seatPose(side: Side, slot: number | 'track' | 'medallion0' | 'medallion1'): { x: number; z: number; rot: number } {
+/** Seat layout: each side's two sheets and medallions along its own table edge (research R-09; 006: the track is shared). */
+export function seatPose(side: Side, slot: number | 'medallion0' | 'medallion1'): { x: number; z: number; rot: number } {
   const s = side === 'light' ? 1 : -1;
   const z = 6.65 * SQUARE;
-  const x = slot === 'track' ? 3.7 * SQUARE : slot === 0 || slot === 'medallion0' ? -4.15 * SQUARE : -0.5 * SQUARE;
+  const x = slot === 0 || slot === 'medallion0' ? -4.15 * SQUARE : -0.5 * SQUARE;
   const dx = slot === 'medallion0' || slot === 'medallion1' ? -SHEET_SIZE.w / 2 - 0.4 * SQUARE : 0;
   return { x: s * (x + dx), z: s * z, rot: side === 'light' ? 0 : Math.PI };
 }

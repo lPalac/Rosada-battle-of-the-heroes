@@ -37,10 +37,21 @@ export interface SideFavors {
   tides: number;
 }
 
+/** 006 FR-041: the one shared track on the table and in the menu: slots 1…11, both sides' counts (capped at 11). */
+export interface SharedTrack {
+  slots: number;
+  light: number;
+  dark: number;
+  powers: { threshold: number; id: PowerId; nameKey: string }[];
+}
+
 export interface FavorModel {
   light: SideFavors;
   dark: SideFavors;
+  shared: SharedTrack;
 }
+
+export const SHARED_SLOTS = 11;
 
 /** Slots on a track: every numbered Royal Favor once, Tides up to its repeat count. */
 export const TRACK_SLOTS = FAVORS.favors.reduce((a, f) => a + (f.repeat ?? 1), 0);
@@ -70,5 +81,13 @@ function sideModel(state: GameState, side: Side): SideFavors {
 }
 
 export function favorModel(state: GameState): FavorModel {
-  return { light: sideModel(state, 'light'), dark: sideModel(state, 'dark') };
+  const light = sideModel(state, 'light');
+  const dark = sideModel(state, 'dark');
+  const shared: SharedTrack = {
+    slots: SHARED_SLOTS,
+    light: Math.min(SHARED_SLOTS, light.track.length),
+    dark: Math.min(SHARED_SLOTS, dark.track.length),
+    powers: FAVORS.powers.map((p) => ({ threshold: p.threshold, id: p.id, nameKey: `power.${p.id}.name` })),
+  };
+  return { light, dark, shared };
 }

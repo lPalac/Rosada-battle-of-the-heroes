@@ -7,7 +7,8 @@
     "texture": "tts/texture/king-light.webp",
     "normal": "tts/texture/king-normal.webp",
     "collider": "tts/mesh/king-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.light.queen": {
     "placeholder": "queen",
@@ -16,7 +17,8 @@
     "texture": "tts/texture/queen-light.webp",
     "normal": "tts/texture/queen-normal.webp",
     "collider": "tts/mesh/queen-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.light.rook": {
     "placeholder": "rook",
@@ -25,7 +27,8 @@
     "texture": "tts/texture/rook-light.webp",
     "normal": "tts/texture/rook-normal.webp",
     "collider": "tts/mesh/rook-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.light.bishop": {
     "placeholder": "bishop",
@@ -34,7 +37,8 @@
     "texture": "tts/texture/bishop-light.webp",
     "normal": "tts/texture/bishop-normal.webp",
     "collider": "tts/mesh/bishop-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.light.knight": {
     "placeholder": "knight",
@@ -43,7 +47,8 @@
     "texture": "tts/texture/knight-light.webp",
     "normal": "tts/texture/knight-normal.webp",
     "collider": "tts/mesh/knight-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.light.pawn": {
     "placeholder": "pawn",
@@ -52,7 +57,8 @@
     "texture": "tts/texture/pawn-light.webp",
     "normal": "tts/texture/pawn-normal.webp",
     "collider": "tts/mesh/pawn-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.dark.king": {
     "placeholder": "king",
@@ -61,7 +67,8 @@
     "texture": "tts/texture/king-dark.webp",
     "normal": "tts/texture/king-normal.webp",
     "collider": "tts/mesh/king-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.dark.queen": {
     "placeholder": "queen",
@@ -70,7 +77,8 @@
     "texture": "tts/texture/queen-dark.webp",
     "normal": "tts/texture/queen-normal.webp",
     "collider": "tts/mesh/queen-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.dark.rook": {
     "placeholder": "rook",
@@ -79,7 +87,8 @@
     "texture": "tts/texture/rook-dark.webp",
     "normal": "tts/texture/rook-normal.webp",
     "collider": "tts/mesh/rook-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.dark.bishop": {
     "placeholder": "bishop",
@@ -88,7 +97,8 @@
     "texture": "tts/texture/bishop-dark.webp",
     "normal": "tts/texture/bishop-normal.webp",
     "collider": "tts/mesh/bishop-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.dark.knight": {
     "placeholder": "knight",
@@ -97,7 +107,8 @@
     "texture": "tts/texture/knight-dark.webp",
     "normal": "tts/texture/knight-normal.webp",
     "collider": "tts/mesh/knight-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "unit.dark.pawn": {
     "placeholder": "pawn",
@@ -106,7 +117,8 @@
     "texture": "tts/texture/pawn-dark.webp",
     "normal": "tts/texture/pawn-normal.webp",
     "collider": "tts/mesh/pawn-collider.obj",
-    "flipY": true
+    "flipY": true,
+    "yaw": 180
   },
   "hero.short": {
     "placeholder": "hero-short"
@@ -514,6 +526,9 @@
   },
   "tts.table": {
     "mesh": "tts/mesh/table.obj",
-    "texture": "tts/texture/table.webp"
+    "texture": "tts/texture/table.webp",
+    "scale": 0.58,
+    "offsetY": -0.13,
+    "yaw": 0
   }
 }

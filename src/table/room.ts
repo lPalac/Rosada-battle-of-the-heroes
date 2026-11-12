@@ -4,7 +4,8 @@ import {
   Color, ExtrudeGeometry, Fog, Group, Mesh, MeshStandardMaterial, PlaneGeometry, PointLight, RepeatWrapping, Scene, Shape,
 } from 'three';
 import { EquirectangularReflectionMapping } from 'three';
-import { assetEntry, loadImageTexture } from './assets.ts';
+import { assetEntry, loadImageTexture, notifyAssetLoaded, ttsModelsEnabled } from './assets.ts';
+import { loadTtsRaw } from './tts-models.ts';
 import { canvasTexture, rng, woodGrain } from './canvas.ts';
 
 export interface RoomView {
@@ -17,6 +18,8 @@ export interface RoomView {
 const HALF_W = 15;
 const HALF_D = 13.5;
 const THICK = 0.6;
+/** The slab's top surface (y), just under the board and the strip. */
+const SLAB_TOP = -0.13;
 
 function slabShape(): Shape {
   const r = rng(11);
@@ -97,6 +100,30 @@ export function createRoom(scene: Scene): RoomView {
     const l = new PointLight('#ffb36b', 60, 40, 1.6);
     l.position.set(x, 9, z);
     group.add(l);
+  }
+  // 006 FR-042 (B-23): the Tabletop Simulator table model, loaded after the first frame. The drawn slab shows until it
+  // has loaded, and stays with `?placeholders`; the sandbox keeps its flat collider and rim.
+  const tableEntry = assetEntry('tts.table');
+  if (tableEntry.mesh && ttsModelsEnabled()) {
+    requestAnimationFrame(() => setTimeout(() => {
+      loadTtsRaw({ mesh: tableEntry.mesh!, texture: tableEntry.texture, flipY: tableEntry.flipY })
+        .then((model) => {
+          const scale = tableEntry.scale ?? 0.58;
+          model.scale.setScalar(scale);
+          model.rotation.y = ((tableEntry.yaw ?? 0) * Math.PI) / 180;
+          // The model's top (y = 0) at the slab's top; the floor at the feet of its legs.
+          model.position.y = tableEntry.offsetY ?? SLAB_TOP;
+          model.traverse((c) => (c.userData = { kind: 'table' }));
+          group.add(model);
+          tableTop.visible = false;
+          floor.position.y = model.position.y + (model.userData.minY as number) * scale - 0.02;
+          group.userData.ttsTable = true;
+          notifyAssetLoaded();
+        })
+        .catch(() => {
+          // The slab stays: the table model is a decoration.
+        });
+    }, 0));
   }
   scene.add(group);
   return { group, tableTop, floor };
