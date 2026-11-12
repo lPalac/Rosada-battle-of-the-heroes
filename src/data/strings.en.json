@@ -758,5 +758,15 @@
   "flash.skippedLead": "Phase '{phase}' skipped: no Lead possible",
   "check.flash": "CHECK",
   "check.badge": "{side}: in check",
-  "check.rule": "If your King is in check at the end of your Lead, you cannot use After Lead nor End of Turn abilities that turn."
+  "check.rule": "If your King is in check at the end of your Lead, you cannot use After Lead nor End of Turn abilities that turn.",
+  "hud.move": "Move {left}/{total}",
+  "hud.rangeBadge": "Range {range}",
+  "hud.healthAria": "Health {health} of {max}",
+  "hud.heroUnitIcon": "Hero Unit: {types}",
+  "hud.activeNamed": "{hero} · {name} ({side})",
+  "legend.movement": "Movement",
+  "legend.range": "Range",
+  "setup.healthBadge": "Health {health}",
+  "ability.panel.usable": "{n} usable",
+  "settings.resume": "Resume game"
 }

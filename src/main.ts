@@ -1,6 +1,8 @@
 // Wires game ↔ table ↔ physics ↔ ui: input → `apply` → table sync + animations + HUD (T058, T073).
 import { GameSession, type SessionLike } from './game/session.ts';
+import { flashesFor } from './game/flash-model.ts';
 import { highlights, hudModel } from './game/hud-model.ts';
+import { FlashLayer } from './ui/hud/flashes.ts';
 import { toFixture } from './game/fixture.ts';
 import { hasString, t } from './i18n/strings.ts';
 import type { OnlineSession } from './net/online-session.ts';
@@ -50,7 +52,8 @@ import { SetupWizard } from './ui/setup/index.ts';
 import { renderPicks } from './ui/setup/picks.ts';
 import { OnlineController, roomCodeFromHash } from './ui/online/controller.ts';
 import { renderOnlineBar } from './ui/online/screens.ts';
-import { clearLocal, downloadText, exportFile, loadLocal, readSaveFile, saveLocal } from './ui/storage.ts';
+import { clearLocal, downloadText, exportFile, loadLocal, loadUiFlag, readSaveFile, saveLocal, saveUiFlag } from './ui/storage.ts';
+import { renderInCheck } from './ui/hud/check.ts';
 
 const canvas = document.getElementById('table') as HTMLCanvasElement;
 const hudRoot = document.getElementById('hud') as HTMLElement;
@@ -85,6 +88,17 @@ const picker = new Picker(ts.camera, canvas, () => [pieces.group, boardView.grou
 
 // --- ui ---
 const toasts = new Toasts();
+// 006 FR-035, FR-039: flashes slide to the log; the CHECK notice stands above the checked King.
+const flashLayer = new FlashLayer({
+  instant: import.meta.env.MODE === 'e2e',
+  logRect: () => hudRoot.querySelector('[data-testid="log-panel"]')?.getBoundingClientRect() ?? null,
+  kingScreen: (side) => {
+    const king = state()?.units.find((u) => u.type === 'king' && u.side === side);
+    if (!king) return null;
+    const p = picker.screenOf(king.pos);
+    return { x: p.x, y: p.y };
+  },
+});
 const dialogs = new Dialogs(dialogRoot);
 let session: SessionLike | null = null;
 let selected: string | null = null;
@@ -108,6 +122,9 @@ let modal = false;
 let trackerOpen = false;
 /** 006: the session came from the position editor; its first "rules back on" restarts at Before Turn. */
 let editorSession = false;
+/** 006 FR-033: the ability panel collapsed (kept in this browser; starts collapsed below 1500 px width). */
+const ABILITY_PANEL_KEY = 'rosada.ui.abilities';
+let abilitiesCollapsed = loadUiFlag(ABILITY_PANEL_KEY) ?? window.innerWidth < 1500;
 let lastError: RuleError | null = null;
 let forcedRoll: number | null = null;
 let diceWorld: DiceWorld | null = null;
@@ -222,6 +239,8 @@ async function playServerRoll(value: number): Promise<void> {
 }
 
 function onChange(s: GameState, events: GameEvent[]): void {
+  // The die has landed by now (hot-seat rolls before submitting; online plays the server's roll first).
+  if (s.status !== 'setup') flashLayer.push(flashesFor(events, s));
   if (events.some((e) => e.type === 'wellDepleted')) toasts.wellDepleted();
   if (events.some((e) => e.type === 'epicStageStarted')) toasts.show(t('log.epicStageStarted'), { testid: 'epic-notice' });
   if (events.some((e) => e.type === 'phaseChanged' || e.type === 'unitLed' || e.type === 'leadAnnounced')) selected = null;
@@ -242,6 +261,7 @@ function onChange(s: GameState, events: GameEvent[]): void {
 
 function startSession(initial: GameState, actions: Action[] = []): void {
   unsubscribe?.();
+  flashLayer.clear();
   physics.dispose();
   const hotSeat = new GameSession(initial);
   if (actions.length) hotSeat.reset(initial, actions);
@@ -695,7 +715,7 @@ let onlinePendingPick: string | null = null;
 /** 005: online picks: the seat whose pick it is chooses; the others wait (US2-AS1). */
 function renderOnlinePicks(net: OnlineSession): void {
   const s = net.state;
-  hudRoot.replaceChildren(toasts.root);
+  hudRoot.replaceChildren(toasts.root, flashLayer.root);
   hl.group.clear();
   const picks = renderPicks(s.setup, (side, choice) => dispatch({ type: 'pickHero', side, ...choice }),
     { id: onlinePendingPick, set: (id) => { onlinePendingPick = id; render(); } });
@@ -710,10 +730,22 @@ function renderOnlinePicks(net: OnlineSession): void {
   ts.requestRender();
 }
 
+/** 006 FR-038: Offer draw from Settings; Settings closes. */
+function offerDraw(): void {
+  settingsOpen = false;
+  dispatch({ type: 'offerDraw' });
+  render();
+}
+
+function canOfferDraw(): boolean {
+  const s = state();
+  return !!s && s.enforcement === 'rules' && s.status === 'playing' && !rolling && !walking && hudModel(s, selected).can.offerDraw;
+}
+
 function render(): void {
   const s = state();
   if (online.active && online.ownsOverlay()) {
-    hudRoot.replaceChildren(toasts.root);
+    hudRoot.replaceChildren(toasts.root, flashLayer.root);
     hl.group.clear();
     online.render();
     ts.requestRender();
@@ -722,7 +754,7 @@ function render(): void {
   const net = onlineSession();
   if (net && s?.status === 'setup') return renderOnlinePicks(net);
   if (!s || s.status === 'setup') {
-    hudRoot.replaceChildren(toasts.root);
+    hudRoot.replaceChildren(toasts.root, flashLayer.root);
     hl.group.clear();
     wizard.render();
     ts.requestRender();
@@ -751,6 +783,8 @@ function render(): void {
       exportFile: () => exportFile(net.initial, net.actions),
       importFile: () => {},
       newGame: () => { settingsOpen = false; void online.leave(); },
+      offerDraw,
+      canOfferDraw: canOfferDraw() && net.canAct(),
       close: () => { settingsOpen = false; render(); },
     }));
   } else if (settingsOpen) {
@@ -769,6 +803,8 @@ function render(): void {
         }
       },
       newGame: () => { settingsOpen = false; clearLocal(); session = null; wizard.reset(); render(); },
+      offerDraw,
+      canOfferDraw: canOfferDraw(),
       close: () => { settingsOpen = false; render(); },
     }));
   } else if (trackerOpen) {
@@ -792,7 +828,20 @@ function render(): void {
     renderPhaseBar(m),
     renderSandboxBadge(s.enforcement === 'sandbox'),
     renderHeroes(m, playerName),
-    renderPools(m),
+    // 006 FR-033 (B-17): the right-hand column: pools, the "In check" pop-ups, the docked ability panel, the log.
+    el('div', { class: 'right-col', 'data-testid': 'right-col' },
+      renderPools(m),
+      s.enforcement === 'rules' && s.status === 'playing' ? renderInCheck(m) : null,
+      s.enforcement === 'rules' && s.status === 'playing'
+        ? renderAbilities(m, {
+            busy, collapsed: abilitiesCollapsed,
+            onToggle: () => { abilitiesCollapsed = !abilitiesCollapsed; saveUiFlag(ABILITY_PANEL_KEY, abilitiesCollapsed); render(); },
+            onUse: (id, option) => void useAbilityFromPanel(id, option),
+            bothUses: (id) => offersOf(s, id).filter((o) => o.option === 'one' || o.option === 'both').map((o) => ({ option: o.option!, cost: o.cost })),
+          })
+        : null,
+      renderLog(s.log),
+    ),
     s.enforcement === 'sandbox'
       ? renderSandboxEditors(s, dispatch, () => void roll(), () => void sandboxOff(), () => downloadText('position.fixture.ts', toFixture(s), 'text/plain'),
           { canUndo: session!.canUndo(), undo: () => { session!.undo(); } })
@@ -807,12 +856,10 @@ function render(): void {
         : null,
       s.enforcement === 'rules' ? renderLeadPanel(m, rolling, () => void roll(), () => dispatch({ type: 'useRevenge' }), () => void inspiredLead()) : null,
       s.enforcement === 'rules' ? renderTavern(m, (item) => void buy(item)) : null,
-      s.enforcement === 'rules' && s.status === 'playing' ? renderAbilities(m, busy, (id) => void useAbilityFromPanel(id)) : null,
       s.enforcement === 'rules' && s.status === 'playing'
         ? renderActions(m, session!.canUndo(), busy, {
             endPhase: () => dispatch({ type: 'endPhase' }),
             undo: () => { session!.undo(); },
-            offerDraw: () => dispatch({ type: 'offerDraw' }),
             inspiredLead: () => void inspiredLead(),
             heroRetreat,
             // 006 FR-024: Legendary Power actions get the own-King warning too.
@@ -822,13 +869,13 @@ function render(): void {
           })
         : null,
     ),
-    renderLog(s.log),
-    el('div', { class: 'tools' },
+    el('div', { class: 'tools', 'data-testid': 'tools' },
       button(t('action.settings'), () => { settingsOpen = true; render(); }, { testid: 'open-settings' }),
       button(t('action.tracker'), toggleTracker, { testid: 'open-tracker' }),
       button(t('action.resetCamera'), () => camera.reset(), { testid: 'reset-camera' }),
     ),
     toasts.root,
+    flashLayer.root,
   );
 
   const extra: Overlay[] = [];
@@ -985,10 +1032,27 @@ if (import.meta.env.DEV || isE2E) {
     targeting: () => (targeting?.kind === 'ability' ? { abilityId: targeting.abilityId, chosen: targeting.chosen, length: targeting.length } : targeting),
     /** 006 tests: play on from a prepared game state (hot-seat), e.g. one with ability tokens on the board. */
     startPosition: (s: GameState) => startSession(s),
-    flashes: (): { kind: string; text: string; tone: string }[] => [],
-    panelRects: (): Record<string, { x: number; y: number; w: number; h: number }> => ({}),
-    boardRect: (): { x: number; y: number }[] => [],
-    viewSide: (): 'light' | 'dark' | null => null,
+    flashes: (): { kind: string; text: string; tone: string }[] => flashLayer.shown(),
+    /** 006 SC-004: the screen rectangles of the HUD panels that sit over the table. */
+    panelRects: (): Record<string, { x: number; y: number; w: number; h: number }> => {
+      const out: Record<string, { x: number; y: number; w: number; h: number }> = {};
+      for (const id of ['phase-bar', 'heroes', 'pools', 'ability-panel', 'log-panel', 'actions', 'tools', 'in-check-light', 'in-check-dark']) {
+        const e = hudRoot.querySelector(`[data-testid="${id}"]`);
+        if (!e) continue;
+        const r = e.getBoundingClientRect();
+        if (r.width && r.height) out[id] = { x: r.left, y: r.top, w: r.width, h: r.height };
+      }
+      return out;
+    },
+    /** The four outer corners of the playing area on screen. */
+    boardRect: (): { x: number; y: number }[] => {
+      const rect = canvas.getBoundingClientRect();
+      return [{ x: 0.5, y: 0.5 }, { x: 8.5, y: 0.5 }, { x: 8.5, y: 8.5 }, { x: 0.5, y: 8.5 }].map((c) => {
+        const q = toWorld(c).project(ts.camera);
+        return { x: rect.left + ((q.x + 1) / 2) * rect.width, y: rect.top + ((1 - q.y) / 2) * rect.height };
+      });
+    },
+    viewSide: (): 'light' | 'dark' | null => camera.side(),
     /** 005: the online view of this window (seat, room, whether it may act). */
     online: () => {
       const net = onlineSession();

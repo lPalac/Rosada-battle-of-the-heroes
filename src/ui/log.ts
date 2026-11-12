@@ -12,5 +12,5 @@ export function renderLog(log: LogEntry[]): HTMLElement {
     .map(({ e, text }) => el('li', { class: e.type === 'turnStarted' ? 'turn' : '' }, text!));
   const list = el('ol', { 'data-testid': 'log' }, ...items);
   queueMicrotask(() => (list.scrollTop = list.scrollHeight));
-  return el('div', { class: 'panel log' }, el('strong', {}, t('hud.log')), list);
+  return el('div', { class: 'panel log', 'data-testid': 'log-panel' }, el('strong', {}, t('hud.log')), list);
 }

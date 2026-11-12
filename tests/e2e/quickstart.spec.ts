@@ -54,7 +54,7 @@ test('step 4: Ram an enemy hero with a Rook: lands past the Rook, −3 health, R
   await page.getByTestId('end-phase').click();
   await clickSquare(page, 'a1');
   await clickSquare(page, 'a5');
-  await expect(page.getByTestId('hero-H2-health')).toHaveText('Health 7/10');
+  await expect(page.getByTestId('hero-H2-health')).toHaveText('7/10');
   const s = await hook<any>(page, 'state');
   expect(s.heroes.find((h: any) => h.id === 'H2').pos).toEqual(at(1, 6));
   await expect(page.getByTestId('log')).toContainText('Resilient Destiny');
@@ -67,10 +67,10 @@ test('step 5: pause in a tavern, buy a Drink, continue; no buying after leaving'
   await walkTo(page, '<0');
   await expect(page.getByTestId('tavern')).toBeVisible();
   await page.getByTestId('buy-drink').click();
-  await expect(page.getByTestId('hero-H1-health')).toHaveText('Health 7/10');
+  await expect(page.getByTestId('hero-H1-health')).toHaveText('7/10');
   await walkTo(page, '<1');
   await expect(page.getByTestId('tavern')).toHaveCount(0);
-  await expect(page.getByTestId('active-movement')).toHaveText('Movement 1/5');
+  await expect(page.getByTestId('active-movement')).toHaveText('Move 1/5');
 });
 
 test('FR-200: a refresh keeps the game; Resume saved game restores it', async ({ page }) => {
@@ -78,7 +78,7 @@ test('FR-200: a refresh keeps the game; Resume saved game restores it', async ({
   await walkTo(page, 'd1');
   await page.reload();
   await page.getByTestId('resume-saved').click();
-  await expect(page.getByTestId('active-movement')).toHaveText('Movement 4/5');
+  await expect(page.getByTestId('active-movement')).toHaveText('Move 4/5');
   const s = await hook<any>(page, 'state');
   expect(s.heroes[0].pos).toEqual(at(4, 1));
 });

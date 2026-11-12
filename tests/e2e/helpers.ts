@@ -46,3 +46,11 @@ export async function quickSetup(page: Page): Promise<void> {
   await page.getByTestId('start-game').click();
   await expect(page.getByTestId('phase-bar')).toBeVisible();
 }
+
+/** 006 FR-033: the ability panel starts collapsed below 1500 px; open it (the choice is kept in this browser). */
+export async function openAbilities(page: Page): Promise<void> {
+  const panel = page.getByTestId('ability-panel');
+  await expect(panel).toBeVisible();
+  if ((await panel.getAttribute('data-collapsed')) === 'true') await page.getByTestId('ability-panel-toggle').click();
+  await expect(panel).toHaveAttribute('data-collapsed', 'false');
+}

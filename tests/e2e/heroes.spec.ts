@@ -8,8 +8,11 @@ test('Draft through the UI picks named heroes; a picked hero is disabled', async
   await page.getByTestId('mode-draft').click();
   await expect(page.getByTestId('pick-short')).toHaveCount(0);
   const cav = page.getByTestId('pick-cavalier');
-  await expect(cav.locator('img')).toBeVisible();
-  await expect(cav).toContainText('Short range');
+  await expect(cav.locator('img.hero-portrait')).toBeVisible();
+  // 006 FR-036 (Q-72): badges instead of "Short range".
+  await expect(cav).not.toContainText('Short range');
+  await expect(cav).toContainText('Move 5/5');
+  await expect(cav).toContainText('Range 1');
   await pickNamed(page, 'cavalier');
   await expect(page.getByTestId('pick-cavalier')).toBeDisabled();
   for (const id of ['scout', 'magus', 'monk']) await pickNamed(page, id);

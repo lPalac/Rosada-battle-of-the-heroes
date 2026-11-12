@@ -1,7 +1,7 @@
 // 006 US4 in the browser: targets on the board (B-02), reach, plan and walk (B-16), pick confirm (B-12), Space (B-15),
 // the own-King warning (FR-024), blocked Lead squares and ability reasons on hover (FR-025, FR-026).
 import { expect, test, type Page } from '@playwright/test';
-import { clickSquare, hook, pickNamed, planOf, quickSetup } from './helpers.ts';
+import { clickSquare, hook, openAbilities, pickNamed, planOf, quickSetup } from './helpers.ts';
 
 const at = (x: number, y: number) => ({ x, y });
 type State = {
@@ -15,19 +15,8 @@ const dispatch = (page: Page, a: unknown) => hook<boolean>(page, 'dispatch', a);
 const highlighted = (page: Page) => hook<{ kind: string; square: string }[]>(page, 'highlighted');
 const h1 = async (page: Page) => (await state(page)).heroes.find((h) => h.id === 'H1')!;
 
-/**
- * A click on a board square sent to the table canvas itself. Until Phase 8 docks the ability panel at the side (B-17),
- * the panel covers the near squares at the default camera, where a real mouse click would land on the panel.
- */
-async function clickBoard(page: Page, square: string): Promise<void> {
-  await page.evaluate((sq) => {
-    const p = (window as any).__rosada.screenOf(sq);
-    const canvas = document.getElementById('table')!;
-    const opts = { clientX: p.x, clientY: p.y, button: 0, bubbles: true, pointerId: 1 };
-    canvas.dispatchEvent(new PointerEvent('pointerdown', opts));
-    canvas.dispatchEvent(new PointerEvent('pointerup', opts));
-  }, square);
-}
+/** A real mouse click on a board square: since 006 Phase 8 the ability panel is docked at the side (B-17). */
+const clickBoard = clickSquare;
 
 async function namedSetup(page: Page, ids = ['cavalier', 'scout', 'magus', 'monk']): Promise<void> {
   await page.goto('/');
@@ -38,6 +27,7 @@ async function namedSetup(page: Page, ids = ['cavalier', 'scout', 'magus', 'monk
   await page.getByTestId('order-confirm-dark').click();
   await page.getByTestId('start-game').click();
   await expect(page.getByTestId('phase-bar')).toBeVisible();
+  await openAbilities(page);
 }
 
 async function toPhase(page: Page, phase: string): Promise<void> {
@@ -166,7 +156,7 @@ test('US4-AS11 Space ends the phase; not while a dialog is open, not while disab
   await page.getByTestId('open-settings').click();
   await page.keyboard.press('Space');
   await expect(page.getByTestId('current-phase')).toHaveText('Move');
-  await page.getByTestId('settings-close').click();
+  await page.getByTestId('settings-resume').click();
   // Held down: the phase ends once.
   await page.keyboard.down('Space');
   await page.keyboard.down('Space');

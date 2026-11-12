@@ -1,4 +1,4 @@
-// Action buttons: End phase, Undo, Offer draw, Inspired Lead, Hero Retreat (FR-073, FR-012).
+// Action buttons: End phase, Undo, Inspired Lead, Hero Retreat (FR-073, FR-012).
 import type { HudModel } from '../../game/hud-model.ts';
 import { t } from '../../i18n/strings.ts';
 import type { UnitType } from '../../rules/index.ts';
@@ -7,7 +7,6 @@ import { button, el } from '../dom.ts';
 export interface ActionHandlers {
   endPhase(): void;
   undo(): void;
-  offerDraw(): void;
   inspiredLead(): void;
   heroRetreat(): void;
   becomeHeroUnit(types: UnitType[]): void;
@@ -26,7 +25,6 @@ export function renderActions(m: HudModel, canUndo: boolean, busy: boolean, h: A
       () => h.becomeHeroUnit(types), { testid: `become-hero-unit-${types.join('-')}`, disabled: busy })),
     m.can.leaveHeroUnit ? button(t('action.leaveHeroUnit'), h.leaveHeroUnit, { testid: 'leave-hero-unit', disabled: busy }) : null,
     m.can.kingsForces ? button(t('action.kingsForces'), h.kingsForces, { testid: 'kings-forces', disabled: busy }) : null,
-    button(t('action.offerDraw'), h.offerDraw, { testid: 'offer-draw', disabled: busy || !m.can.offerDraw }),
   );
 }
 

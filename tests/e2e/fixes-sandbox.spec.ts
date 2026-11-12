@@ -1,6 +1,6 @@
 // 006 US2 in the browser: Undo after End phase (B-03), the sandbox keeps the turn (B-06), the checkmate alert.
 import { expect, test, type Page } from '@playwright/test';
-import { hook, pickNamed, quickSetup } from './helpers.ts';
+import { hook, openAbilities, pickNamed, quickSetup } from './helpers.ts';
 
 type State = { phase: string; activeHeroId: string; status: string; enforcement: string; result: unknown; turn: { movementLeft: number }; pendingDecision: { type: string; options?: unknown[] } | null };
 const state = (page: Page) => hook<State>(page, 'state');
@@ -42,6 +42,7 @@ test('US2-AS1 the Undo button is enabled after End phase from After Lead and goe
   await expect(page.getByTestId('undo')).toBeEnabled();
   await page.getByTestId('undo').click();
   await expect(page.getByTestId('current-phase')).toHaveText('After Lead');
+  await openAbilities(page);
   await expect(page.getByTestId('use-cavalier.warhorse')).toBeVisible();
 });
 

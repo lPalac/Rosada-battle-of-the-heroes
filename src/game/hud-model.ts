@@ -209,9 +209,11 @@ export function highlights(state: GameState, selectedUnitId: string | null): Hig
     out.moves = legalMoveSquares(state);
     out.reach = moveReach(state);
   }
-  if (state.phase === 'lead') {
-    // 006 FR-036 (B-20): the squares within the active hero's Range, outlined in the Lead phase.
-    const h = state.heroes.find((x) => x.id === state.activeHeroId)!;
+  const lead = state.phase === 'lead' ? state.heroes.find((x) => x.id === state.activeHeroId) : undefined;
+  // 006 FR-036 (B-20): the squares within the active hero's Range, outlined in the Lead phase. Named heroes only: the
+  // generic test heroes keep what they showed before 006.
+  if (lead && DATA.heroes.find((d) => d.id === lead.definitionId)?.selectable) {
+    const h = lead;
     const r = leadRange(state, h);
     for (let x = h.pos.x - r; x <= h.pos.x + r; x++) {
       for (let y = h.pos.y - r; y <= h.pos.y + r; y++) if (isBattlefield({ x, y })) out.range!.push({ x, y });

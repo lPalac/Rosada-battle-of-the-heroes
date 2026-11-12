@@ -37,11 +37,11 @@ test('US7-AS3 active hero, phase, health, Movement and Range are visible without
   await quickSetup(page);
   await expect(page.getByTestId('active-hero')).toContainText('H1');
   await expect(page.getByTestId('current-phase')).toHaveText('Move');
-  await expect(page.getByTestId('hero-H1-health')).toHaveText('Health 10/10');
-  await expect(page.getByTestId('active-movement')).toHaveText('Movement 5/5');
+  await expect(page.getByTestId('hero-H1-health')).toHaveText('10/10');
+  await expect(page.getByTestId('active-movement')).toHaveText('Move 5/5');
   await expect(page.getByTestId('active-range')).toHaveText('Range 1');
   await walkTo(page, 'd1');
-  await expect(page.getByTestId('active-movement')).toHaveText('Movement 4/5');
+  await expect(page.getByTestId('active-movement')).toHaveText('Move 4/5');
   await page.waitForTimeout(600);
   await page.screenshot({ path: 'test-results/default-camera.png' });
 });

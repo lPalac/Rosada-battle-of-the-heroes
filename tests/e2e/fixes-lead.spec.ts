@@ -1,7 +1,7 @@
 // 006 US5 in the browser: the Lead prompt says why no roll is needed (B-04), offers Inspired Lead at the roll (B-07),
 // and names its modifiers (X-01).
 import { expect, test, type Page } from '@playwright/test';
-import { clickSquare, hook, pickNamed, quickSetup } from './helpers.ts';
+import { clickSquare, hook, openAbilities, pickNamed, quickSetup } from './helpers.ts';
 
 const at = (x: number, y: number) => ({ x, y });
 type State = { phase: string; turn: { lead: { success: boolean | null; needsRoll: boolean; modifiers: { source: string; value: number }[] } | null } };
@@ -79,6 +79,7 @@ test('US5-AS5 modifiers by name: War, Bear Traps, Future Sight', async ({ page }
     r.startPosition(s);
   });
   await toPhase(page, 'beforeLead');
+  await openAbilities(page);
   await page.getByTestId('use-magus.futureSight').click();
   await toPhase(page, 'lead');
   await dispatch(page, { type: 'announceLead', unitId: 'L-N-b', to: at(3, 3) });

@@ -9,6 +9,8 @@ export interface TableCamera {
   controls: OrbitControls;
   setSide(side: Side, animate?: boolean): void;
   reset(): void;
+  /** The side the default view looks from (006 test hook `viewSide`). */
+  side(): Side;
 }
 
 /** Looks slightly towards the active side so its hero sheets are in view with the whole board (003 FR-042). */
@@ -69,5 +71,6 @@ export function createCamera(ts: TableScene, canvas: HTMLCanvasElement): TableCa
     reset() {
       moveTo(homePosition(side), true);
     },
+    side: () => side,
   };
 }

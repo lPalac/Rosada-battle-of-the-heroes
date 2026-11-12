@@ -5,6 +5,7 @@ import { t } from '../../i18n/strings.ts';
 import { DATA, nextPicker, pickableHeroes, RANGE_TYPES, type RangeType, type SetupChoices, type Side } from '../../rules/index.ts';
 import { imageUrl } from '../art.ts';
 import { el } from '../dom.ts';
+import { movementBadge, rangeBadge } from '../hud/badges.ts';
 
 export function heroStats(rangeType: RangeType): string {
   const def = DATA.heroes.find((h) => h.rangeType === rangeType)!;
@@ -49,8 +50,15 @@ export function renderPicks(setup: SetupChoices, onPick: (side: Side, choice: Pi
     },
       portrait ? el('img', { class: 'hero-portrait', src: portrait, alt: '' }) : el('div', { class: 'hero-portrait' }),
       el('h3', {}, t(`hero.${def.id}.name`)),
-      el('div', { class: 'muted' }, `${t(`range.${def.rangeType}`)} · ${t('setup.heroUnitType')}: ${t(`unit.${def.heroUnitType}`)}`),
-      el('div', { class: 'muted' }, t('setup.heroStats', { movement: def.movement, range: def.range, health: def.maxHealth })),
+      // 006 Q-72 (B-20, B-21): Movement, Range and Health badges and the Hero Unit icon instead of "Short range".
+      el('div', { class: 'row badges', 'data-testid': `pick-${def.id}-stats` },
+        movementBadge(def.movement, def.movement), rangeBadge(def.range),
+        el('span', { class: 'badge stat-badge' }, t('setup.healthBadge', { health: def.maxHealth })),
+        el('span', { class: 'hero-unit-icons', title: t('hud.heroUnitIcon', { types: t(`unit.${def.heroUnitType}`) }) },
+          (() => {
+            const url = imageUrl(`token.ring.${def.heroUnitType}`);
+            return url ? el('img', { class: 'hero-unit-icon', src: url, alt: t(`unit.${def.heroUnitType}`) }) : el('span', {}, t(`unit.${def.heroUnitType}`));
+          })())),
       isPending ? el('div', { class: 'pick-confirm', 'data-testid': 'pick-confirm-hint' }, t('setup.confirmPick')) : null,
     );
   });

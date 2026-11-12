@@ -174,7 +174,25 @@ export class SheetsView {
       };
       let x = 8;
       x += tag(`D ${h.pool}`, x, 8, '#3b2a6e') + 6;
-      x += tag(`${h.health}/${h.maxHealth}`, x, 8, '#2e5c2e') + 6;
+      // 006 B-18: a green / red health bar with the numbers inside, instead of a "7/8" tag.
+      {
+        const bw = 160;
+        const pct = h.maxHealth > 0 ? Math.max(0, Math.min(1, h.health / h.maxHealth)) : 0;
+        g.fillStyle = '#b03a2e';
+        g.fillRect(x, 8, bw, 24);
+        g.fillStyle = '#3f9b4b';
+        g.fillRect(x, 8, bw * pct, 24);
+        g.font = 'bold 18px sans-serif';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.lineWidth = 4;
+        g.strokeStyle = '#000';
+        g.strokeText(`${h.health}/${h.maxHealth}`, x + bw / 2, 20);
+        g.fillStyle = '#fff';
+        g.fillText(`${h.health}/${h.maxHealth}`, x + bw / 2, 20);
+        g.textAlign = 'left';
+        x += bw + 6;
+      }
       if (model.bloodied) x += tag('BLOODIED', x, 8, '#b03a2e') + 6;
       if (h.status.unconscious) x += tag('Unconscious', x, 8, '#555') + 6;
       // A Destiny crystal (purple diamond) for each spent use of an ability that costs Destiny (006 FR-002).

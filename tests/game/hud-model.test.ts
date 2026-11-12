@@ -56,11 +56,13 @@ describe('hero cards and warnings (US6)', () => {
   });
 
   it('US6-AS7 (model) the squares within the active hero\'s Range in the Lead phase', () => {
-    const s = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'lead' });
+    const s = board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'lead', heroDefs: { H1: 'cavalier' } });
     const range = highlights(s, null).range!.map(squareName);
     expect(range).toHaveLength(9);
     expect(range).toContain('c2');
-    expect(highlights(board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'move' }), null).range).toEqual([]);
+    expect(highlights(board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'move', heroDefs: { H1: 'cavalier' } }), null).range).toEqual([]);
+    // The generic test heroes are kept as they were: no outline.
+    expect(highlights(board({ c3: 'N', h7: 'p' }, { heroes: { H1: 'd3' }, phase: 'lead' }), null).range).toEqual([]);
   });
 
   it('US6-AS12 (model) the sides whose King is in check now', () => {

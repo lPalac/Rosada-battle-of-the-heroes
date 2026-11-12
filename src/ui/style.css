@@ -170,3 +170,46 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .ability-row.has-status { position: relative; }
 .ability-row .ability-status { display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 20; padding: 4px 8px; border-radius: 6px; background: rgba(20, 14, 8, .95); color: #ffe082; border: 1px solid #ffb300; font-size: 12px; }
 .ability-row.has-status:hover .ability-status, .ability-row.has-status:focus .ability-status, .ability-row.has-status:focus-within .ability-status { display: block; }
+/* 006 US6: badges, the health bar (B-18), Hero Unit icons (B-21). */
+.stat-badge { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid var(--panel-border); font-size: 12px; color: #e6e6e6; }
+.badge-icon { width: 14px; height: 14px; object-fit: contain; }
+.health-bar { position: relative; height: 18px; border-radius: 5px; background: #b03a2e; overflow: hidden; margin: 4px 0; }
+.health-fill { position: absolute; inset: 0 auto 0 0; background: #3f9b4b; }
+.health-text { position: relative; display: block; text-align: center; line-height: 18px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 1px #000; }
+.hero-unit-icons { display: inline-flex; gap: 2px; margin-left: 6px; vertical-align: middle; }
+.hero-unit-icons.dim { opacity: .35; filter: grayscale(1); }
+.hero-unit-icon { width: 18px; height: 18px; object-fit: contain; }
+.hero-unit-glyph { font-size: 15px; line-height: 18px; }
+.hero-card .name.row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+/* 006 FR-033 (B-17): the right-hand column: pools, the "In check" pop-ups, the docked ability panel, the log. */
+.right-col { position: absolute; top: 10px; right: 10px; bottom: 12px; width: 232px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.right-col > * { pointer-events: auto; }
+.right-col .pools { position: static; width: auto; }
+.right-col .log { position: static; width: auto; max-height: 32vh; margin-top: auto; flex: 0 0 auto; }
+.right-col .abilities { max-width: none; max-height: none; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+.abilities[data-collapsed="true"] { flex: 0 0 auto; }
+.ability-panel-header { display: flex; align-items: center; gap: 6px; width: 100%; background: none; border: none; color: inherit; padding: 0; cursor: pointer; text-align: left; font: inherit; }
+.ability-panel-header strong { flex: 1; }
+.phase-box { background: #c8e6c9; color: #1b5e20; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.chevron { opacity: .7; }
+.in-check-list { display: flex; flex-direction: column; gap: 4px; }
+.in-check { position: relative; padding: 6px 10px; text-align: center; font-weight: 700; cursor: help; }
+.in-check.light { border-color: #ffd54f; color: #ffd54f; }
+.in-check.dark { border-color: #b39ddb; color: #b39ddb; }
+.in-check .in-check-rule { display: none; position: absolute; right: 0; top: 100%; width: 260px; z-index: 30; margin-top: 4px; padding: 6px 8px; border-radius: 6px; background: rgba(20,14,8,.95); color: #ffe082; border: 1px solid #ffb300; font-weight: 400; font-size: 12px; text-align: left; }
+.in-check:hover .in-check-rule, .in-check:focus .in-check-rule { display: block; }
+@media (max-width: 1100px) { .right-col { width: 200px; } }
+/* 006 FR-035: flashes (centre of the table, then to the log). */
+#hud > .flash-layer, #hud > .right-col { pointer-events: none; }
+.flash-layer { position: absolute; inset: 0; z-index: 25; }
+.flash-list { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.flash { padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 16px; background: rgba(20,14,8,.88); border: 1px solid #8d6e63; color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.5); transition: transform .4s ease-in, opacity .4s ease-in; animation: flash-in .15s ease-out; white-space: nowrap; }
+.flash.tone-good { border-color: #66bb6a; color: #c8e6c9; }
+.flash.tone-bad { border-color: #ef5350; color: #ffcdd2; }
+.flash.leaving { opacity: 0; }
+@keyframes flash-in { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+/* 006 FR-039: the CHECK notice above the checked King. */
+.check-flash { position: absolute; transform: translate(-50%, -100%) translateY(-46px); padding: 4px 14px; border-radius: 6px; font-size: 26px; font-weight: 900; letter-spacing: 2px; color: #fff; background: #c62828; border: 2px solid #ffeb3b; text-shadow: 0 1px 2px #000; pointer-events: none; animation: check-blink 1s ease-in-out 3; }
+.check-flash.steady { animation: none; }
+@keyframes check-blink { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) { .flash { transition: opacity .4s; animation: none; } .check-flash { animation: none; } }

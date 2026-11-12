@@ -29,6 +29,24 @@ export function clearLocal(): void {
   }
 }
 
+/** 006 FR-033: interface choices kept per browser (spec A-05), e.g. the ability panel collapsed (`rosada.ui.abilities`). */
+export function loadUiFlag(key: string): boolean | null {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? null : v === '1';
+  } catch {
+    return null;
+  }
+}
+
+export function saveUiFlag(key: string, on: boolean): void {
+  try {
+    localStorage.setItem(key, on ? '1' : '0');
+  } catch {
+    // Storage may be unavailable (private mode); the choice then lasts for this page only.
+  }
+}
+
 export function downloadText(filename: string, text: string, type = 'application/json'): void {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');

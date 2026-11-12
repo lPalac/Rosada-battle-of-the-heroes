@@ -1,6 +1,6 @@
 // Hero sheets like the Tabletop Simulator version and the ability panel (004 T056, US5).
 import { expect, test } from '@playwright/test';
-import { hook, pickNamed } from './helpers.ts';
+import { hook, openAbilities, pickNamed } from './helpers.ts';
 
 interface SheetInfo { heroId: string; name: string; sheetKey: string; healthMarker: number; pool: number; uses: Record<string, number>; crystals: Record<string, number>; badges: string[] }
 
@@ -24,6 +24,7 @@ test('US5-AS1…AS5 TTS sheet images with health, pool and uses; US5-AS6 the abi
   expect(byKey['sheet.magus'].pool).toBe(3);
   expect(byKey['sheet.monk'].uses['monk.preaching']).toBe(2);
   // Ability panel: the Cavalier rests in Before Move with Demoralise usable.
+  await openAbilities(page);
   await expect(page.getByTestId('ability-panel')).toContainText('Cavalier');
   await expect(page.getByTestId('ability-cavalier.demoralise')).toContainText('Before Move');
   await page.getByTestId('use-cavalier.demoralise').click();
