@@ -37,12 +37,62 @@ export function isForbiddenEndSquare(state: Pick<GameState, 'units'> & Partial<G
   return true;
 }
 
+/** 006 FR-008: squares a hero standing on `pos` may step to (the rule `moveStep` checks): adjacent squares and
+ * extra ones from effects (Smuggler's Grotto). */
+export function moveSquaresFrom(state: GameState, hero: Hero, pos: Coord): Coord[] {
+  const h = eq(hero.pos, pos) ? hero : { ...hero, pos };
+  const extra = hookSources(state, 'extraMoveSquares').flatMap(({ hooks, src }) => hooks.extraMoveSquares(state, src, h));
+  return [...adjacent8(pos).filter(inGrid), ...extra.filter((p) => !adjacent8(pos).some((q) => eq(q, p)))];
+}
+
 export function legalMoveSquares(state: GameState): Coord[] {
   if (state.status !== 'playing' || state.enforcement !== 'rules' || state.phase !== 'move' || state.pendingDecision) return [];
   if (state.turn.movementLeft <= 0) return [];
   const h = activeHero(state);
-  const extra = hookSources(state, 'extraMoveSquares').flatMap(({ hooks, src }) => hooks.extraMoveSquares(state, src, h));
-  return [...adjacent8(h.pos).filter(inGrid), ...extra.filter((p) => !adjacent8(h.pos).some((q) => eq(q, p)))];
+  return moveSquaresFrom(state, h, h.pos);
+}
+
+/** 006 FR-008: a square the active hero can reach this Move, the shortest path to it, and whether it may end there. */
+export interface Reach {
+  to: Coord;
+  cost: number;
+  path: Coord[];
+  canEnd: boolean;
+}
+
+/**
+ * Every square the active hero can reach with the Movement left (research R-09), by breadth-first search over
+ * `moveSquaresFrom`. Between equally short paths: fewest squares with a visible enemy square token (a Bear Trap), then
+ * fewest diagonal steps. Empty outside the Move phase. Never changes the state (guarantee 20).
+ */
+export function moveReach(state: GameState): Reach[] {
+  if (!legalMoveSquares(state).length) return [];
+  const h = activeHero(state);
+  const key = (p: Coord) => `${p.x},${p.y}`;
+  const tokens = new Set(state.effects
+    .filter((e) => 'square' in e.target && state.heroes.find((x) => x.id === e.source.heroId)?.side !== h.side)
+    .map((e) => key((e.target as { square: Coord }).square)));
+  type Node = { pos: Coord; path: Coord[]; traps: number; diagonals: number };
+  const better = (a: Node, b: Node) => a.traps !== b.traps ? a.traps < b.traps : a.diagonals < b.diagonals;
+  const best = new Map<string, Node>([[key(h.pos), { pos: h.pos, path: [], traps: 0, diagonals: 0 }]]);
+  let layer: Node[] = [best.get(key(h.pos))!];
+  for (let cost = 1; cost <= state.turn.movementLeft && layer.length; cost++) {
+    const next = new Map<string, Node>();
+    for (const n of layer) {
+      for (const p of moveSquaresFrom(state, h, n.pos)) {
+        const k = key(p);
+        if (best.has(k)) continue;
+        const diagonal = p.x !== n.pos.x && p.y !== n.pos.y && chebyshev(p, n.pos) === 1 ? 1 : 0;
+        const cand: Node = { pos: p, path: [...n.path, p], traps: n.traps + (tokens.has(k) ? 1 : 0), diagonals: n.diagonals + diagonal };
+        const had = next.get(k);
+        if (!had || better(cand, had)) next.set(k, cand);
+      }
+    }
+    for (const [k, n] of next) best.set(k, n);
+    layer = [...next.values()];
+  }
+  best.delete(key(h.pos));
+  return [...best.values()].map((n) => ({ to: n.pos, cost: n.path.length, path: n.path, canEnd: !isForbiddenEndSquare(state, h.side, n.pos, h) }));
 }
 
 /** A hero arrives on a square by Move, push or placement: square tokens react (Bear Trap, Religious Fervor, Portal). */

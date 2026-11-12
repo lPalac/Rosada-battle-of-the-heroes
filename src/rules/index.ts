@@ -7,7 +7,7 @@ import { DATA, RULES, type StaticData } from './data.ts';
 import { available, DESTINY, gain } from './destiny.ts';
 import { otherSide } from './model/types.ts';
 import { answerDraw, offerDraw } from './endgame.ts';
-import { isForbiddenEndSquare, legalMoveSquares, moveStep, placeHero } from './heroes.ts';
+import { isForbiddenEndSquare, legalMoveSquares, moveReach, moveSquaresFrom, moveStep, placeHero, type Reach } from './heroes.ts';
 import {
   announceLead, awaitingRoll, leadOptionsForActiveHero, leadPreview, legalLeadTargets, promote, submitRoll, useRevenge,
 } from './lead.ts';
@@ -290,7 +290,7 @@ export function legalActions(state: GameState): Action[] {
   return out;
 }
 
-export { isInCheck, legalLeadTargets, legalMoveSquares, leadPreview, validatePosition, positionWarnings };
+export { isInCheck, legalLeadTargets, legalMoveSquares, leadPreview, validatePosition, positionWarnings, moveReach, moveSquaresFrom, type Reach };
 export { DATA, RULES, loadStaticData, healthBar as healthBarOf } from './data.ts';
 export type { StaticData } from './data.ts';
 export * from './model/types.ts';
