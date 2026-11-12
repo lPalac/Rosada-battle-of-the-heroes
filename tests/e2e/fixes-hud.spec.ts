@@ -272,7 +272,6 @@ test.describe('1920×1080 HUD', () => {
     });
     expect(where).toEqual({ text: 'CHECK', dx: expect.any(Number), above: true, events: 'none' });
     expect(where.dx).toBeLessThan(4);
-    await page.screenshot({ path: 'test-results/fixes-hud-check-notice.png' });
     const popup = page.getByTestId('in-check-dark');
     await expect(popup).toBeVisible();
     await expect(popup).toContainText('Dark');

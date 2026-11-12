@@ -223,9 +223,9 @@
 - [X] T082 [P] Correct the earlier specs with one-line pointers to this feature: 004 A-03 (symbols are uses and cost 1 D), Q-50 (*Preaching*) and Q-41 / FR-003 (in Mirror the two heroes of a side differ) in specs/004-named-heroes/spec.md; the Mirror edge case in specs/003-epic-stage/spec.md; User Story 6 scenario 5 (sandbox resume) in specs/001-standard-rules-game/spec.md
 - [X] T083 [P] Write specs/006-fixes-improvements/rulebook-corrections.md: the sentences to add to `Basic Rules 2_5 - corrections.docx`, one per decision of 2026-11-11 (2 D for a new check of any kind, once per turn per side, also when a side uncovers its own King; 1 D per Destiny symbol; *Inspired Lead* until the roll; Mirror: the two heroes of a side differ, and the Epic destinies are chosen once per hero for both sides; "Must not check the King" for every ability, discovered checks allowed; *Preaching* one use or both, once per turn; the start square counts as in the path; sandbox return and the checkmate alert)
 - [X] T084 [P] Update README.md (controls: Space, plan and walk, hover reasons; Settings) and CLAUDE.md (active feature 006, the new `src/game` modules, the rule that `turn.movePath` keeps meaning "squares entered")
-- [ ] T085 Run tests/e2e/perf.spec.ts with the table model and the reach highlights and confirm first load ≤ 10 s and about 60 fps (SC-006); if the table model costs too much, load it later or lower its texture size in src/table/room.ts
+- [X] T085 Run tests/e2e/perf.spec.ts with the table model and the reach highlights and confirm first load ≤ 10 s and about 60 fps (SC-006); if the table model costs too much, load it later or lower its texture size in src/table/room.ts
 - [X] T086 Run `npm test` and `npm run test:e2e` in full; every acceptance scenario of spec.md has a test named `US<n>-AS<m>` (list any that is missing and add it) (FR-050)
-- [ ] T087 Walk through the manual check table of specs/006-fixes-improvements/quickstart.md in the browser, save the screenshots of T072 and T080, and compare them with specs/006-fixes-improvements/screenshots/
+- [X] T087 Walk through the manual check table of specs/006-fixes-improvements/quickstart.md in the browser, save the screenshots of T072 and T080, and compare them with specs/006-fixes-improvements/screenshots/
 
 ---
 
