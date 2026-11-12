@@ -1,4 +1,4 @@
-// 006 US6 (FR-035, FR-039, research R-10): the flash layer. A flash appears, stays 0.5 s, then moves to the log panel and
+// 006 US6 (FR-035, FR-039, research R-10): the flash layer. A flash appears, stays 1 s, then moves to the log panel and
 // fades (about 0.4 s); flashes start 120 ms apart, at most 4 are visible and the rest wait. With reduced motion a flash
 // only fades; e2e builds take no animation time. The "CHECK" notice is drawn above the checked King instead, follows it
 // every frame, blinks three times (steady for three seconds with reduced motion) and takes no clicks.
@@ -15,7 +15,7 @@ export interface FlashLayerOptions {
   kingScreen: (side: Side) => { x: number; y: number } | null;
 }
 
-const STAY_MS = 500;
+const STAY_MS = 1000;
 const LEAVE_MS = 400;
 const GAP_MS = 120;
 const MAX_VISIBLE = 4;

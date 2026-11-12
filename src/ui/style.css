@@ -190,7 +190,9 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .right-col { position: absolute; top: 10px; right: 10px; bottom: 12px; width: 232px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
 .right-col > * { pointer-events: auto; }
 .right-col .pools { position: static; width: auto; }
-.right-col .log { position: static; width: auto; max-height: 32vh; margin-top: auto; flex: 0 0 auto; }
+/* The log gives way first (it shrinks to a few lines) so the ability panel can show every row without scrolling. */
+.right-col .log { position: static; width: auto; max-height: 32vh; margin-top: auto; flex: 0 1000 auto; min-height: 92px; }
+.right-col .log ol { flex: 1 1 auto; min-height: 0; }
 .right-col .abilities { max-width: none; max-height: none; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 .abilities[data-collapsed="true"] { flex: 0 0 auto; }
 .ability-panel-header { display: flex; align-items: center; gap: 6px; width: 100%; background: none; border: none; color: inherit; padding: 0; cursor: pointer; text-align: left; font: inherit; }
@@ -218,3 +220,14 @@ input, select { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px
 .check-flash.steady { animation: none; }
 @keyframes check-blink { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
 @media (prefers-reduced-motion: reduce) { .flash { transition: opacity .4s; animation: none; } .check-flash { animation: none; } }
+/* 006 FR-033: compact ability rows: timing and the Use button on one line. */
+.ability-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.ability-foot button { padding: 2px 10px; }
+.ability-uses { display: flex; gap: 4px; flex-wrap: wrap; }
+/* Short screens (e.g. 1366×768): tighter rows before the panel ever needs to scroll. */
+@media (max-height: 860px) {
+  .right-col .abilities { font-size: 12px; padding-top: 6px; padding-bottom: 6px; }
+  .right-col .ability-row { padding: 2px 0; }
+  .right-col .ability-icon { width: 16px; height: 16px; }
+  .right-col .pools { padding-top: 6px; padding-bottom: 6px; }
+}

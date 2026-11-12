@@ -1,5 +1,5 @@
 // 006 US6 (FR-035, FR-039, research R-10): short notices ("flashes") built from the events of one action. Engine-free.
-// The DOM layer (ui/hud/flashes.ts) shows them for 0.5 s and slides them to the log; the "CHECK" notice is drawn above
+// The DOM layer (ui/hud/flashes.ts) shows them for 1 s and slides them to the log; the "CHECK" notice is drawn above
 // the checked King instead.
 import { t } from '../i18n/strings.ts';
 import { DATA, heroAbilityIds, type GameEvent, type GameState, type HeroId, type Phase, type Side } from '../rules/index.ts';

@@ -55,14 +55,16 @@ export function renderAbilities(m: HudModel, o: AbilityPanelOptions): HTMLElemen
         el('span', { class: 'ability-name' }, t(a.nameKey)),
         el('span', { class: 'muted small', 'data-testid': `ability-${a.id}-cost` }, a.costText),
         a.printedCost ? el('span', { class: 'badge', title: t('ability.corrected') }, `≠ ${a.printedCost[0]}/${a.printedCost[1]}`) : null),
-      el('div', { class: 'muted small' }, a.timings.length ? a.timings.map((x) => t(`timing.${x}`)).join(' / ') : t('timing.always')),
-      both.length
-        ? el('div', { class: 'row' }, ...both.map((b) => button(
-            hasString(`option.${a.id}.${b.option}`) ? t(`option.${a.id}.${b.option}`, { cost: b.cost }) : t(`option.${b.option}`),
-            () => o.onUse(a.id, b.option), { testid: `use-${a.id}-${b.option}`, disabled: o.busy })))
-        : a.usableNow && a.kind === 'action'
-          ? button(t('ability.use'), () => o.onUse(a.id), { testid: `use-${a.id}`, disabled: o.busy })
-          : null,
+      // Compact (006 FR-033): the timing and the Use button share one line, so every ability fits without scrolling.
+      el('div', { class: 'ability-foot' },
+        el('span', { class: 'muted small' }, a.timings.length ? a.timings.map((x) => t(`timing.${x}`)).join(' / ') : t('timing.always')),
+        both.length
+          ? el('span', { class: 'ability-uses' }, ...both.map((b) => button(
+              hasString(`option.${a.id}.${b.option}`) ? t(`option.${a.id}.${b.option}`, { cost: b.cost }) : t(`option.${b.option}`),
+              () => o.onUse(a.id, b.option), { testid: `use-${a.id}-${b.option}`, disabled: o.busy })))
+          : a.usableNow && a.kind === 'action'
+            ? button(t('ability.use'), () => o.onUse(a.id), { testid: `use-${a.id}`, disabled: o.busy })
+            : null),
       why ? el('div', { class: 'ability-status', role: 'tooltip', id: `ability-${a.id}-status`, 'data-testid': `ability-${a.id}-status` }, why) : null);
   });
   return el('div', { class: 'panel abilities col', 'data-testid': 'ability-panel', 'data-collapsed': String(o.collapsed) }, header, ...rows);

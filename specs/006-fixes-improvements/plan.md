@@ -58,7 +58,7 @@ All questions are answered; none is open.
 **Performance Goals**:
 - 60 fps with the table model (24,651 faces) and the reach highlights (up to 100 squares, one instanced or merged mesh).
 - `moveReach` under 1 ms per call (a 10×10 grid).
-- A flash is visible for 0.5 s and gone within 1 s; at most 4 at once.
+- A flash is visible for 1 s and gone within 1.5 s; at most 4 at once.
 - First load stays ≤ 10 s: the table model (2.8 MB) loads after the first frame.
 
 **Constraints**:

@@ -116,6 +116,20 @@ for (const size of SIZES) {
       await expectBoardClear(page, 'dark view');
       await page.screenshot({ path: `test-results/fixes-hud-${size.width}-dark.png` });
     });
+
+    test('US6-AS1 the open panel shows every ability of a 7-ability hero without scrolling and covers no board', async ({ page }) => {
+      await namedSetup(page);
+      // Holy Paladin and Cultist have the most abilities (7).
+      await arrange(page, [{ type: 'sandboxSet', path: 'form', target: 'H1', value: 'holyPaladin' }]);
+      const panel = page.getByTestId('ability-panel');
+      if ((await panel.getAttribute('data-collapsed')) === 'true') await page.getByTestId('ability-panel-toggle').click();
+      await expect(panel).toHaveAttribute('data-collapsed', 'false');
+      await expect(panel.locator('.ability-row')).toHaveCount(7);
+      const fit = await panel.evaluate((p) => ({ scroll: p.scrollHeight, client: p.clientHeight }));
+      expect(fit.scroll).toBeLessThanOrEqual(fit.client + 1);
+      await expectBoardClear(page, 'Holy Paladin, panel open');
+      await page.screenshot({ path: `test-results/fixes-hud-${size.width}-seven-abilities.png` });
+    });
   });
 }
 
